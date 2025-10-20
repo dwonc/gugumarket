@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - GUGU Market</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #6B4F4F;
+            --secondary: #8B7070;
+        }
+        .bg-primary { background-color: var(--primary); }
+        .bg-secondary { background-color: var(--secondary); }
+        .text-primary { color: var(--primary); }
+        .border-primary { border-color: var(--primary); }
+        .hover\:bg-primary:hover { background-color: var(--primary); }
+        .hover\:bg-secondary:hover { background-color: var(--secondary); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <a href="/" class="flex items-center space-x-3 group">
+                    <i class="bi bi-shop text-4xl text-primary group-hover:text-secondary transition-colors duration-300"></i>
+                    <span class="text-3xl font-bold text-primary group-hover:text-secondary transition-colors duration-300">GUGU Market</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Signup Container -->
+    <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 space-y-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">회원가입</h2>
+                    <p class="text-gray-500">GUGU Market 회원이 되어보세요</p>
+                </div>
+
+                <!-- Signup Form -->
+                <form th:action="@{/signup}" th:object="${userDto}" method="post" class="space-y-6">
+                    <!-- Username -->
+                    <div>
+                        <label for="userName" class="block text-sm font-medium text-gray-700 mb-2">
+                            아이디 <span class="text-red-500">*</span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input 
+                                type="text" 
+                                id="userName" 
+                                th:field="*{userName}"
+                                required
+                                class="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                                placeholder="영문, 숫자 조합 5-20자"
+                            />
+                            <button 
+                                type="button"
+                                class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+                            >
+                                중복확인
+                            </button>
+                        </div>
+                        <p th:if="${#fields.hasErrors('userName')}" th:errors="*{userName}" class="mt-1 text-sm text-red-500"></p>
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                            이메일 <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            th:field="*{email}"
+                            required
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                            placeholder="example@email.com"
+                        />
+                        <p th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="mt-1 text-sm text-red-500"></p>
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                            비밀번호 <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            th:field="*{password}"
+                            required
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                            placeholder="영문, 숫자, 특수문자 조합 8자 이상"
+                        />
+                        <p th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="mt-1 text-sm text-red-500"></p>
+                    </div>
+
+                    <!-- Password Confirm -->
+                    <div>
+                        <label for="passwordConfirm" class="block text-sm font-medium text-gray-700 mb-2">
+                            비밀번호 확인 <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="password" 
+                            id="passwordConfirm" 
+                            name="passwordConfirm"
+                            required
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                            placeholder="비밀번호를 다시 입력하세요"
+                        />
+                    </div>
+
+                    <!-- Nickname -->
+                    <div>
+                        <label for="nickname" class="block text-sm font-medium text-gray-700 mb-2">
+                            닉네임 <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="nickname" 
+                            th:field="*{nickname}"
+                            required
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                            placeholder="거래 시 사용할 닉네임"
+                        />
+                        <p th:if="${#fields.hasErrors('nickname')}" th:errors="*{nickname}" class="mt-1 text-sm text-red-500"></p>
+                    </div>
+
+                    <!-- Phone -->
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                            전화번호
+                        </label>
+                        <input 
+                            type="tel" 
+                            id="phone" 
+                            th:field="*{phone}"
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                            placeholder="010-0000-0000"
+                        />
+                    </div>
+
+                    <!-- Address -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="col-span-1">
+                            <label for="postalCode" class="block text-sm font-medium text-gray-700 mb-2">
+                                우편번호 <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    id="postalCode" 
+                                    th:field="*{postalCode}"
+                                    required
+                                    readonly
+                                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-gray-50"
+                                    placeholder="우편번호"
+                                />
+                            </div>
+                        </div>
+                        <div class="col-span-2 flex items-end">
+                            <button 
+                                type="button"
+                                onclick="searchAddress()"
+                                class="w-full px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+                            >
+                                주소 검색
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="address" class="block text-sm font-medium text-gray-700 mb-2">
+                            주소 <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="address" 
+                            th:field="*{address}"
+                            required
+                            readonly
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-gray-50 mb-2"
+                            placeholder="기본 주소"
+                        />
+                        <input 
+                            type="text" 
+                            id="addressDetail" 
+                            th:field="*{addressDetail}"
+                            required
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                            placeholder="상세 주소"
+                        />
+                    </div>
+
+                    <!-- Terms Agreement -->
+                    <div class="space-y-3 pt-4 border-t border-gray-200">
+                        <div class="flex items-center">
+                            <input 
+                                id="agree-all" 
+                                type="checkbox"
+                                class="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+                            />
+                            <label for="agree-all" class="ml-2 block text-sm font-semibold text-gray-700">
+                                전체 동의
+                            </label>
+                        </div>
+                        <div class="flex items-center ml-4">
+                            <input 
+                                id="agree-terms" 
+                                name="agreeTerms"
+                                type="checkbox"
+                                required
+                                class="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+                            />
+                            <label for="agree-terms" class="ml-2 block text-sm text-gray-700">
+                                이용약관 동의 <span class="text-red-500">(필수)</span>
+                            </label>
+                        </div>
+                        <div class="flex items-center ml-4">
+                            <input 
+                                id="agree-privacy" 
+                                name="agreePrivacy"
+                                type="checkbox"
+                                required
+                                class="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+                            />
+                            <label for="agree-privacy" class="ml-2 block text-sm text-gray-700">
+                                개인정보 수집 및 이용 동의 <span class="text-red-500">(필수)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="flex gap-4 pt-4">
+                        <button 
+                            type="button"
+                            onclick="location.href='/'"
+                            class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg transition-all duration-300"
+                        >
+                            취소
+                        </button>
+                        <button 
+                            type="submit"
+                            class="flex-1 bg-primary hover:bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+                        >
+                            회원가입
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전체 동의 체크박스
+        document.getElementById('agree-all').addEventListener('change', function(e) {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][name^="agree"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+            });
+        });
+
+        // 주소 검색 (Daum Postcode API 연동 예시)
+        function searchAddress() {
+            // 실제로는 Daum Postcode API를 연동해야 합니다
+            alert('주소 검색 기능은 Daum Postcode API를 연동해야 합니다.');
+        }
+    </script>
+</body>
+</html>

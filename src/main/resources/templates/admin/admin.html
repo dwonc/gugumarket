@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 페이지 - GUGU Market</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #6B4F4F;
+            --secondary: #8B7070;
+        }
+        .bg-primary { background-color: var(--primary); }
+        .bg-secondary { background-color: var(--secondary); }
+        .text-primary { color: var(--primary); }
+        .hover\:bg-primary:hover { background-color: var(--primary); }
+        .hover\:bg-secondary:hover { background-color: var(--secondary); }
+        .active-tab { background-color: var(--primary); color: white; }
+        .admin-gradient {
+            background: linear-gradient(to right, #6B4F4F, #8B7070);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Top Bar -->
+    <div class="bg-primary text-white py-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center text-sm">
+                <span><i class="bi bi-shield-check mr-2"></i>관리자 모드</span>
+                <div class="flex items-center space-x-6">
+                    <span th:text="${admin.userName}">관리자</span>
+                    <a href="/logout" class="hover:underline">로그아웃</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <a href="/" class="flex items-center space-x-3">
+                    <i class="bi bi-shop text-4xl text-primary"></i>
+                    <span class="text-3xl font-bold text-primary">GUGU Market</span>
+                </a>
+                <div class="flex items-center space-x-8">
+                    <a href="/" class="text-gray-700 hover:text-primary font-medium">홈</a>
+                    <a href="/admin" class="text-primary font-bold">관리자</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Admin Info Card -->
+        <div class="admin-gradient rounded-2xl shadow-lg p-8 mb-8 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2">관리자 대시보드</h1>
+                    <p class="opacity-90">GUGU Market 관리자 페이지에 오신 것을 환영합니다</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm opacity-75">마지막 로그인</p>
+                    <p class="text-lg font-semibold">2025-01-19 14:30</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm mb-1">총 회원 수</p>
+                        <p class="text-3xl font-bold text-gray-800" th:text="${totalUsers}">1,234</p>
+                    </div>
+                    <div class="bg-blue-100 p-4 rounded-full">
+                        <i class="bi bi-people text-blue-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm mb-1">총 상품 수</p>
+                        <p class="text-3xl font-bold text-gray-800" th:text="${totalProducts}">5,678</p>
+                    </div>
+                    <div class="bg-green-100 p-4 rounded-full">
+                        <i class="bi bi-box-seam text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm mb-1">미답변 Q&A</p>
+                        <p class="text-3xl font-bold text-gray-800" th:text="${unansweredQna}">23</p>
+                    </div>
+                    <div class="bg-red-100 p-4 rounded-full">
+                        <i class="bi bi-question-circle text-red-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-white rounded-t-2xl shadow-lg">
+            <div class="flex border-b border-gray-200">
+                <button onclick="showTab('users')" id="tab-users" class="flex-1 py-4 px-6 font-semibold text-gray-600 hover:bg-gray-50 active-tab">
+                    <i class="bi bi-people mr-2"></i>회원 관리
+                </button>
+                <button onclick="showTab('products')" id="tab-products" class="flex-1 py-4 px-6 font-semibold text-gray-600 hover:bg-gray-50">
+                    <i class="bi bi-box-seam mr-2"></i>제품 관리
+                </button>
+                <button onclick="showTab('qna')" id="tab-qna" class="flex-1 py-4 px-6 font-semibold text-gray-600 hover:bg-gray-50">
+                    <i class="bi bi-chat-square-dots mr-2"></i>Q&A 답변
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="bg-white rounded-b-2xl shadow-lg p-8">
+            <!-- 회원 관리 Tab -->
+            <div id="content-users" class="tab-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">회원 관리</h2>
+                    <div class="flex gap-2">
+                        <input type="text" placeholder="회원 검색..." class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                        <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Users Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-y border-gray-200">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">아이디</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">닉네임</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">이메일</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">가입일</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">상태</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr th:each="user : ${users}" class="hover:bg-gray-50">
+                                <td class="px-6 py-4 text-sm text-gray-800" th:text="${user.userName}">user123</td>
+                                <td class="px-6 py-4 text-sm text-gray-800" th:text="${user.nickname}">닉네임</td>
+                                <td class="px-6 py-4 text-sm text-gray-600" th:text="${user.email}">user@email.com</td>
+                                <td class="px-6 py-4 text-sm text-gray-600" th:text="${#temporals.format(user.createdDate, 'yyyy-MM-dd')}">2025-01-01</td>
+                                <td class="px-6 py-4">
+                                    <span th:if="${user.isActive}" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">활성</span>
+                                    <span th:unless="${user.isActive}" class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">정지</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <button class="text-blue-600 hover:text-blue-800 mr-3">상세</button>
+                                    <button class="text-red-600 hover:text-red-800">정지</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 제품 관리 Tab -->
+            <div id="content-products" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">제품 관리</h2>
+                    <div class="flex gap-2">
+                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                            <option>전체</option>
+                            <option>판매중</option>
+                            <option>거래완료</option>
+                            <option>삭제됨</option>
+                        </select>
+                        <input type="text" placeholder="상품 검색..." class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                        <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div class="space-y-4">
+                    <div th:each="product : ${products}" class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all">
+                        <div class="flex gap-4">
+                            <img 
+                                th:src="${product.mainImage}" 
+                                th:alt="${product.title}"
+                                class="w-24 h-24 object-cover rounded-lg"
+                                onerror="this.src='https://via.placeholder.com/100/6B4F4F/FFFFFF?text=No+Image'"
+                            />
+                            <div class="flex-1">
+                                <h3 class="font-bold text-gray-800 mb-1" th:text="${product.title}">상품명</h3>
+                                <p class="text-primary font-bold mb-1">
+                                    <span th:text="${#numbers.formatInteger(product.price, 0, 'COMMA')}">0</span>원
+                                </p>
+                                <p class="text-sm text-gray-600">
+                                    판매자: <span th:text="${product.seller.nickname}">판매자</span>
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    등록일: <span th:text="${#temporals.format(product.createdDate, 'yyyy-MM-dd')}">2025-01-01</span>
+                                </p>
+                            </div>
+                            <div class="flex flex-col justify-between items-end">
+                                <span th:if="${!product.isDeleted}" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">판매중</span>
+                                <span th:if="${product.isDeleted}" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">삭제됨</span>
+                                <div class="flex gap-2">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm">상세</button>
+                                    <button class="text-red-600 hover:text-red-800 text-sm">삭제</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q&A 답변 Tab -->
+            <div id="content-qna" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Q&A 답변</h2>
+                
+                <!-- QNA List -->
+                <div class="space-y-4">
+                    <div th:each="qna : ${qnaPosts}" class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h3 class="text-lg font-bold text-gray-800" th:text="${qna.title}">질문 제목</h3>
+                                    <span th:if="${!qna.isAnswered}" class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">미답변</span>
+                                    <span th:if="${qna.isAnswered}" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">답변완료</span>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-2">
+                                    작성자: <span th:text="${qna.user.nickname}">사용자</span>
+                                    | 작성일: <span th:text="${#temporals.format(qna.createdDate, 'yyyy-MM-dd HH:mm')}">2025-01-01</span>
+                                </p>
+                                <p class="text-gray-700 whitespace-pre-line" th:text="${qna.content}">질문 내용</p>
+                            </div>
+                        </div>
+
+                        <!-- Answer Form -->
+                        <div th:if="${!qna.isAnswered}" class="mt-4 pt-4 border-t border-gray-200">
+                            <form th:action="@{/admin/qna/answer}" method="post">
+                                <input type="hidden" name="qnaId" th:value="${qna.qnaId}" />
+                                <textarea 
+                                    name="content"
+                                    rows="3"
+                                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary resize-none mb-3"
+                                    placeholder="답변을 입력하세요..."
+                                    required
+                                ></textarea>
+                                <div class="flex justify-end">
+                                    <button type="submit" class="bg-primary hover:bg-secondary text-white px-6 py-2 rounded-lg font-medium transition-all">
+                                        답변 등록
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Existing Answer -->
+                        <div th:if="${qna.isAnswered && qna.qnaAnswers != null && !qna.qnaAnswers.empty}" class="mt-4 pt-4 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
+                            <div th:each="answer : ${qna.qnaAnswers}">
+                                <p class="text-sm text-gray-600 mb-2">
+                                    <i class="bi bi-reply-fill mr-1"></i>
+                                    관리자 답변 | <span th:text="${#temporals.format(answer.createdDate, 'yyyy-MM-dd HH:mm')}">2025-01-01</span>
+                                </p>
+                                <p class="text-gray-800 whitespace-pre-line" th:text="${answer.content}">답변 내용</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div th:if="${qnaPosts == null || qnaPosts.empty}" class="text-center py-16">
+                        <i class="bi bi-chat-square-dots text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500 text-lg">등록된 Q&A가 없습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-primary text-white mt-20 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 GUGU Market. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active from all tabs
+            document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+                tab.classList.remove('active-tab');
+            });
+            
+            // Show selected content
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            
+            // Activate selected tab
+            document.getElementById('tab-' + tabName).classList.add('active-tab');
+        }
+    </script>
+</body>
+</html>
