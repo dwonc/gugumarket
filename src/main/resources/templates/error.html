@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>오류 발생 - GUGU Market</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+<div class="max-w-2xl w-full mx-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 text-center">
+        <div class="text-6xl mb-4">⚠️</div>
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">오류가 발생했습니다</h1>
+
+        <div class="bg-red-50 border-2 border-red-200 rounded-lg p-6 mb-6 text-left">
+            <p class="text-gray-700 mb-2">
+                <strong>상태 코드:</strong>
+                <span th:text="${status}" class="font-mono">500</span>
+            </p>
+            <p class="text-gray-700 mb-2">
+                <strong>에러:</strong>
+                <span th:text="${error}">Internal Server Error</span>
+            </p>
+            <p class="text-gray-700 mb-2">
+                <strong>경로:</strong>
+                <span th:text="${path}" class="font-mono">/</span>
+            </p>
+            <p class="text-gray-700">
+                <strong>메시지:</strong>
+                <span th:text="${message}">오류가 발생했습니다.</span>
+            </p>
+
+            <!-- 개발 중일 때만 표시 -->
+            <div th:if="${trace}" class="mt-4 pt-4 border-t border-red-300">
+                <p class="text-sm text-gray-600 mb-2"><strong>스택 트레이스:</strong></p>
+                <pre class="text-xs bg-red-100 p-3 rounded overflow-auto max-h-64" th:text="${trace}"></pre>
+            </div>
+        </div>
+
+        <div class="flex gap-4 justify-center">
+            <a href="/main"
+               class="bg-primary hover:bg-secondary text-white font-bold py-3 px-6 rounded-lg transition-all"
+               style="background-color: #6B4F4F;">
+                🏠 메인으로
+            </a>
+            <button onclick="history.back()"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg transition-all">
+                ← 뒤로가기
+            </button>
+        </div>
+    </div>
+</div>
+</body>
+</html>
