@@ -24,7 +24,7 @@ public class LikeController {
     /**
      * 좋아요 토글 (추가/삭제)
      */
-    @PostMapping("/products/{productId}/like")
+    @PostMapping("/product/{productId}/like")
     @ResponseBody
     public ResponseEntity<?> toggleLike(
             @PathVariable Long productId,

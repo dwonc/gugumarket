@@ -7,21 +7,16 @@ import com.project.gugumarket.entity.Category;
 import com.project.gugumarket.entity.Product;
 import com.project.gugumarket.entity.ProductImage;
 import com.project.gugumarket.entity.User;
-import com.project.gugumarket.repository.CategoryRepository;
 import com.project.gugumarket.repository.ProductImageRepository;
 import com.project.gugumarket.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,11 +26,6 @@ public class ProductService {
     private final ProductImageRepository productImageRepository;
     private final CategoryService categoryService;
     private final FileService fileService;
-
-
-    // 파일 저장 경로 설정 (application.properties에서 관리하는 것을 권장)
-    @Value("${file.upload-dir:uploads/products}")
-    private String uploadDir;
 
     public Product getProduct(Long id) {
         Optional<Product> product = this.productRepository.findById(id);
@@ -65,55 +55,20 @@ public class ProductService {
             if (!productDto.getMainImage().equals(product.getMainImage())) {
                 // 기존 이미지 삭제
                 if (product.getMainImage() != null) {
-                    String oldFileName = product.getMainImage().substring(product.getMainImage().lastIndexOf("/") + 1);
-                    fileService.deleteFile(oldFileName);
+                    try {
+                        String oldFileName = product.getMainImage().substring(product.getMainImage().lastIndexOf("/") + 1);
+                        fileService.deleteFile(oldFileName);
+                        System.out.println("✅ 기존 이미지 삭제 완료: " + oldFileName);
+                    } catch (IOException e) {
+                        System.err.println("⚠️ 기존 이미지 삭제 실패: " + e.getMessage());
+                        // 이미지 삭제 실패해도 계속 진행
+                    }
                 }
                 product.setMainImage(productDto.getMainImage());
             }
         }
 
         productRepository.save(product);
-    }
-
-    // 파일 저장 메서드
-    private String saveFile(MultipartFile file) throws IOException {
-        // 업로드 디렉토리가 없으면 생성
-        File uploadPath = new File(uploadDir);
-        if (!uploadPath.exists()) {
-            uploadPath.mkdirs();
-        }
-
-        // 원본 파일명
-        String originalFilename = file.getOriginalFilename();
-
-        // 파일명 중복 방지를 위해 UUID 사용
-        String uuid = UUID.randomUUID().toString();
-        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        String savedFileName = uuid + extension;
-
-        // 파일 저장 경로
-        String filePath = uploadDir + File.separator + savedFileName;
-
-        // 파일 저장
-        File dest = new File(filePath);
-        file.transferTo(dest);
-
-        return savedFileName; // DB에는 파일명만 저장
-    }
-
-    // 기존 이미지 삭제 메서드
-    private void deleteOldImage(String fileName) {
-        if (fileName != null && !fileName.isEmpty()) {
-            try {
-                File file = new File(uploadDir + File.separator + fileName);
-                if (file.exists()) {
-                    file.delete();
-                }
-            } catch (Exception e) {
-                // 로그만 남기고 계속 진행
-                System.err.println("이미지 삭제 실패: " + e.getMessage());
-            }
-        }
     }
 
     // ✅ 조회수 증가
@@ -124,15 +79,33 @@ public class ProductService {
         productRepository.save(product);
     }
 
-    // ✅ 삭제 (soft delete 권장)
+    // ✅ 삭제 (soft delete)
     @Transactional
     public void delete(Product product) {
-        // Hard delete 대신 soft delete 권장
+        // Soft delete
         product.setIsDeleted(true);
         productRepository.save(product);
 
-        // 또는 Hard delete
-        // productRepository.delete(product);
+        // 🔥 이미지 파일도 삭제하려면 아래 주석 해제
+        /*
+        try {
+            // 메인 이미지 삭제
+            if (product.getMainImage() != null) {
+                String fileName = product.getMainImage().substring(product.getMainImage().lastIndexOf("/") + 1);
+                fileService.deleteFile(fileName);
+            }
+
+            // 추가 이미지 삭제
+            if (product.getImages() != null) {
+                for (ProductImage image : product.getImages()) {
+                    String fileName = image.getImageUrl().substring(image.getImageUrl().lastIndexOf("/") + 1);
+                    fileService.deleteFile(fileName);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("⚠️ 이미지 삭제 중 오류: " + e.getMessage());
+        }
+        */
     }
 
     // ✅ 상태 변경
@@ -174,6 +147,8 @@ public class ProductService {
         // 상품 저장
         Product savedProduct = productRepository.save(product);
 
+        System.out.println("✅ 상품 등록 완료: " + savedProduct.getTitle());
+
         // 추가 이미지가 있다면 저장
         if (productForm.getAdditionalImages() != null && !productForm.getAdditionalImages().isEmpty()) {
             List<ProductImage> productImages = new ArrayList<>();
@@ -191,6 +166,7 @@ public class ProductService {
             }
 
             productImageRepository.saveAll(productImages);
+            System.out.println("✅ 추가 이미지 " + productImages.size() + "개 저장 완료");
         }
 
         return savedProduct;

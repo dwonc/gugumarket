@@ -28,6 +28,26 @@ public class FileService {
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
     /**
+     * 절대 경로 가져오기
+     */
+    private String getAbsolutePath() {
+        return new File(uploadDir).getAbsolutePath();
+    }
+
+    /**
+     * 업로드 디렉토리 생성
+     */
+    private void createUploadDirectory() {
+        String absolutePath = getAbsolutePath();
+        File uploadPath = new File(absolutePath);
+
+        if (!uploadPath.exists()) {
+            boolean created = uploadPath.mkdirs();
+            System.out.println("📁 업로드 디렉토리 생성: " + absolutePath + " (성공: " + created + ")");
+        }
+    }
+
+    /**
      * 파일 업로드
      * @param file 업로드할 파일
      * @return 저장된 파일명
@@ -62,21 +82,28 @@ public class FileService {
             throw new IllegalArgumentException("허용되지 않는 파일 형식입니다. (jpg, jpeg, png, gif, webp만 가능)");
         }
 
-        // 업로드 디렉토리 생성
-        File uploadPath = new File(uploadDir);
-        if (!uploadPath.exists()) {
-            uploadPath.mkdirs();
-        }
+        // 🔥 업로드 디렉토리 생성 (절대 경로)
+        createUploadDirectory();
 
         // UUID로 고유한 파일명 생성
         String savedFileName = UUID.randomUUID().toString() + extension;
 
-        // 파일 저장 경로
-        String filePath = uploadDir + File.separator + savedFileName;
+        // 🔥 절대 경로로 파일 저장
+        String absolutePath = getAbsolutePath();
+        String filePath = absolutePath + File.separator + savedFileName;
+
+        System.out.println("💾 파일 저장 시작: " + originalFilename);
+        System.out.println("📂 저장 경로: " + filePath);
 
         // 파일 저장
         File dest = new File(filePath);
-        file.transferTo(dest);
+        try {
+            file.transferTo(dest);
+            System.out.println("✅ 파일 저장 성공: " + savedFileName);
+        } catch (IOException e) {
+            System.err.println("❌ 파일 저장 실패: " + e.getMessage());
+            throw new IOException("파일 저장 중 오류가 발생했습니다.", e);
+        }
 
         return savedFileName;
     }
@@ -85,17 +112,26 @@ public class FileService {
      * 파일 삭제
      * @param fileName 삭제할 파일명
      */
-    public void deleteFile(String fileName) {
+    public void deleteFile(String fileName) throws IOException {
         if (fileName == null || fileName.isEmpty()) {
             return;
         }
 
         try {
-            Path filePath = Paths.get(uploadDir, fileName);
-            Files.deleteIfExists(filePath);
+            // 🔥 절대 경로 사용
+            String absolutePath = getAbsolutePath();
+            Path filePath = Paths.get(absolutePath, fileName);
+
+            boolean deleted = Files.deleteIfExists(filePath);
+
+            if (deleted) {
+                System.out.println("🗑️ 파일 삭제 완료: " + fileName);
+            } else {
+                System.out.println("⚠️ 파일이 존재하지 않음: " + fileName);
+            }
         } catch (IOException e) {
-            // 로그만 남기고 계속 진행
-            System.err.println("파일 삭제 실패: " + e.getMessage());
+            System.err.println("❌ 파일 삭제 실패: " + e.getMessage());
+            throw e;
         }
     }
 
@@ -114,6 +150,7 @@ public class FileService {
             }
         }
 
+        System.out.println("✅ 총 " + savedFileNames.size() + "개 파일 업로드 완료");
         return savedFileNames;
     }
 
@@ -127,7 +164,9 @@ public class FileService {
             return false;
         }
 
-        File file = new File(uploadDir + File.separator + fileName);
+        // 🔥 절대 경로 사용
+        String absolutePath = getAbsolutePath();
+        File file = new File(absolutePath + File.separator + fileName);
         return file.exists();
     }
 }

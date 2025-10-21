@@ -24,30 +24,50 @@ public class ImageController {
      * 단일 이미지 업로드
      */
     @PostMapping("/upload")
-    public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> upload(@RequestParam(value = "file", required = false) MultipartFile file,
+                                    @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
+            // 🔥 file 또는 image 파라미터 둘 다 지원
+            MultipartFile uploadFile = (file != null) ? file : image;
+
+            if (uploadFile == null || uploadFile.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of(
+                                "success", false,
+                                "message", "파일이 비어있습니다."
+                        ));
+            }
+
+            System.out.println("📤 파일 업로드 시작: " + uploadFile.getOriginalFilename());
+
             // 파일 업로드
-            String savedFileName = fileService.uploadFile(file);
+            String savedFileName = fileService.uploadFile(uploadFile);
 
             // 이미지 URL 생성
             String imageUrl = "/uploads/products/" + savedFileName;
+
+            System.out.println("✅ 파일 업로드 성공: " + imageUrl);
 
             // 응답 데이터
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("fileName", savedFileName);
             response.put("imageUrl", imageUrl);
+            response.put("url", imageUrl);  // 🔥 url 필드 추가 (호환성)
             response.put("message", "이미지 업로드 성공");
 
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
+            System.err.println("❌ 잘못된 요청: " + e.getMessage());
             return ResponseEntity.badRequest()
                     .body(Map.of(
                             "success", false,
                             "message", e.getMessage()
                     ));
         } catch (IOException e) {
+            System.err.println("❌ 업로드 오류: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
                             "success", false,

@@ -35,7 +35,7 @@ public class ProductController {
     /**
      * 상품 등록 폼 페이지
      */
-    @GetMapping("/products/new")
+    @GetMapping("/product/new")
     public String createForm(Model model, Principal principal) {
         // 로그인 확인
         if (principal == null) {
@@ -108,7 +108,7 @@ public class ProductController {
     /**
      * 상품 수정 폼 페이지 (✅ 개선)
      */
-    @GetMapping("/products/{id}/edit")
+    @GetMapping("/product/{id}/edit")
     public String editForm(@PathVariable Long id, Model model, Principal principal) {
         // 로그인 확인
         if (principal == null) {
@@ -150,7 +150,7 @@ public class ProductController {
     /**
      * 상품 수정 처리 (✅ 개선)
      */
-    @PostMapping("/products/{id}/edit")
+    @PostMapping("/product/{id}/edit")
     public String update(
             @PathVariable Long id,
             @Valid @ModelAttribute("productDto") ProductForm productDto,
@@ -204,7 +204,7 @@ public class ProductController {
     /**
      * 상품 삭제 (✅ 개선 - JSON 응답)
      */
-    @DeleteMapping("/products/{id}")
+    @DeleteMapping("/product/{id}")
     @ResponseBody
     public ResponseEntity<?> delete(@PathVariable Long id, Principal principal) {
         // 로그인 확인
@@ -240,7 +240,7 @@ public class ProductController {
     /**
      * 상태 변경
      */
-    @PutMapping("/products/{id}/status")
+    @PutMapping("/product/{id}/status")
     @ResponseBody
     public ResponseEntity<?> changeStatus(
             @PathVariable Long id,
@@ -309,6 +309,6 @@ public class ProductController {
             model.addAttribute("isLiked", false);
         }
 
-        return "product/detail";
+        return "products/detail";
     }
 }

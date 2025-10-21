@@ -46,6 +46,6 @@ public class MainController {
     // 홈 페이지 (로그인 전)
     @GetMapping("/")
     public String home() {
-        return "index";
+        return "redirect:/main";
     }
 }
