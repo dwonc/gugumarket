@@ -83,5 +83,8 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
-
+    @PostMapping("/logout")
+    public String logout() {
+        return "redirect:/";
+    }
 }
