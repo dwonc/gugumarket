@@ -2,9 +2,14 @@ package com.project.gugumarket.controller;
 
 import com.project.gugumarket.dto.UserDto;
 import com.project.gugumarket.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -84,7 +89,17 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
     @PostMapping("/logout")
-    public String logout() {
+    public String logout(HttpServletRequest request, HttpServletResponse response) {
+        // 현재 인증 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null) {
+            // Spring Security의 로그아웃 핸들러 사용
+            new SecurityContextLogoutHandler().logout(request, response, authentication);
+            System.out.println("로그아웃 성공 - 사용자: " + authentication.getName());
+        }
+
         return "redirect:/";
     }
+
 }
