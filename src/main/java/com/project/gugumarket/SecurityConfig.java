@@ -8,6 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
@@ -17,8 +18,13 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers(
+                                new AntPathRequestMatcher("/test/**"),
                                 new AntPathRequestMatcher("/users/**"),  // /users/로 시작하는 모든 경로 허용
+                                new AntPathRequestMatcher("/users/signup"),
+                                new AntPathRequestMatcher("/users/login"),
+                                new AntPathRequestMatcher("/users/check-username"),
                                 new AntPathRequestMatcher("/"),
+                                new AntPathRequestMatcher("/main"),
                                 new AntPathRequestMatcher("/h2-console/**"),
                                 new AntPathRequestMatcher("/js/**"),
                                 new AntPathRequestMatcher("/images/**"),
@@ -29,9 +35,11 @@ public class SecurityConfig {
                 //로그인 설정
                 .formLogin(form -> form
                         .loginPage("/users/login")           // 커스텀 로그인 페이지
-                        .loginProcessingUrl("/users/login")  // 로그인 처리 URL
-                        .defaultSuccessUrl("/", true)        // 로그인 성공 시 이동
-                        .failureUrl("/users/login?error")    // 로그인 실패 시
+                        .loginProcessingUrl("/users/login") // 로그인 처리 URL
+                        .usernameParameter("username")
+                        .passwordParameter("password")
+                        .defaultSuccessUrl("/main", true)        // 로그인 성공 시 이동
+                        .failureUrl("/users/login?error=true")    // 로그인 실패 시
                         .permitAll()
                 )
                 //로그아웃 설정

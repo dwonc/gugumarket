@@ -47,6 +47,7 @@ public class UserController {
             userService.create(userDto);
             model.addAttribute("successMessage", "회원가입이 완료되었습니다!");
             System.out.println("컨트롤러 - 회원가입 성공");
+            return "redirect:/users/login?signup=success";
         } catch (DataIntegrityViolationException e) {
             e.printStackTrace();
             bindingResult.reject("signupFailed", "이미 등록된 사용자입니다.");
@@ -56,12 +57,12 @@ public class UserController {
             bindingResult.reject("signupFailed", e.getMessage());
             return "users/signup";
         }
-
-
-        return "redirect:/users/login";
     }
     @GetMapping("/login")
-    public String loginForm() {
+    public String loginForm(@RequestParam(value = "error", required = false) String error, Model model) {
+        if (error != null) {
+            model.addAttribute("error", "아이디 또는 비밀번호가 올바르지 않습니다.");
+        }
         return "users/login";
     }
     // 아이디 중복 체크
