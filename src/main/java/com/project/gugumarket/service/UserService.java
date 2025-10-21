@@ -5,6 +5,7 @@ import com.project.gugumarket.dto.UserDto;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Service
 public class UserService {
+    @Autowired
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
@@ -49,10 +51,14 @@ public class UserService {
         // 2. 비밀번호 검증 (선택사항)
         validatePassword(userDto.getPassword());
 
+        String encodedPassword=passwordEncoder.encode(userDto.getPassword());
+        System.out.println("원본 비밀번호: "+userDto.getPassword());
+        System.out.println("암호화된 비밀번호: "+encodedPassword);
+
         // 3. 새 사용자 객체 생성 및 설정
         User user = User.builder()
                 .userName(userDto.getUserName())
-                .password(passwordEncoder.encode(userDto.getPassword()))
+                .password(encodedPassword)
                 .email(userDto.getEmail())
                 .nickname(userDto.getNickname())
                 .phone(userDto.getPhone())
@@ -84,5 +90,34 @@ public class UserService {
             throw new IllegalArgumentException("비밀번호는 영문과 숫자를 포함해야 합니다.");
         }
     }
-
+    //내 정보 조회
+    public UserDto getUserInfo(String userName) {
+        User user=userRepository.findByUserName(userName)
+                .orElseThrow(()->new IllegalArgumentException("사용자를 찾을 수 없습니다:"+userName));
+        UserDto dto=new UserDto();
+        dto.setUserName(user.getUserName());
+        dto.setEmail(user.getEmail());
+        dto.setPhone(user.getPhone());
+        return dto;
+    }
+    //내 정보 수정
+    public void updateUserInfo(String userName,UserDto userDto) {
+        User user=userRepository.findByUserName(userName)
+                .orElseThrow(()->new IllegalArgumentException("사용자를 찾을 수 없습니다:"+userName));
+        user.setUserName(userDto.getUserName());
+        user.setEmail(userDto.getEmail());
+        user.setPhone(userDto.getPhone());
+        userRepository.save(user);
+    }
+    //비밀번호 변경
+    public boolean changePassword(String userName, String currentpassword,String newpassword) {
+        User user=userRepository.findByUserName(userName)
+                .orElseThrow(()-> new IllegalArgumentException("사용자를 찾을 수 없습니다:"+userName));
+        if(!passwordEncoder.matches(newpassword,user.getPassword())) {
+            return false;
+        }
+        user.setPassword(passwordEncoder.encode(newpassword));
+        userRepository.save(user);
+        return true;
+    }
 }
