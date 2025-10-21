@@ -118,7 +118,7 @@
                             <div class="flex items-center gap-4 text-sm text-gray-500">
                                 <span>
                                     <i class="bi bi-person-circle mr-1"></i>
-                                    <span th:text="${qna.user.nickname}">작성자</span>
+                                    <span th:text="${qna.nickName}">작성자</span>
                                 </span>
                                 <span>
                                     <i class="bi bi-calendar3 mr-1"></i>
@@ -141,7 +141,7 @@
                                 <i class="bi bi-person text-white"></i>
                             </div>
                             <div class="flex-1">
-                                <p class="font-semibold text-gray-800 mb-1" th:text="${qna.user.nickname}">작성자</p>
+                                <p class="font-semibold text-gray-800 mb-1" th:text="${qna.nickName}">작성자</p>
                                 <p class="text-gray-700 whitespace-pre-line leading-relaxed" th:text="${qna.content}">
                                     질문 내용이 여기에 표시됩니다.
                                 </p>

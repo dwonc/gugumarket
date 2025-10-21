@@ -1,5 +1,6 @@
 package com.project.gugumarket.controller;
 
+import com.project.gugumarket.dto.CategoryDto;
 import com.project.gugumarket.dto.ProductForm;
 import com.project.gugumarket.dto.ProductStatusRequest;
 import com.project.gugumarket.entity.Category;
@@ -46,7 +47,7 @@ public class ProductController {
         User user = userService.getUser(principal.getName());
 
         // 카테고리 목록 조회
-        List<Category> categories = categoryService.getAllCategories();
+        List<CategoryDto> categories = categoryService.getAllCategories();
 
         // 빈 ProductForm 객체
         ProductForm productForm = new ProductForm();
@@ -76,7 +77,7 @@ public class ProductController {
 
         // 유효성 검증 실패 시
         if (bindingResult.hasErrors()) {
-            List<Category> categories = categoryService.getAllCategories();
+            List<CategoryDto> categories = categoryService.getAllCategories();
             User user = userService.getUser(principal.getName());
             model.addAttribute("categories", categories);
             model.addAttribute("user", user);
@@ -97,7 +98,7 @@ public class ProductController {
             // 에러 발생 시
             bindingResult.reject("createError", "상품 등록 중 오류가 발생했습니다: " + e.getMessage());
 
-            List<Category> categories = categoryService.getAllCategories();
+            List<CategoryDto> categories = categoryService.getAllCategories();
             User user = userService.getUser(principal.getName());
             model.addAttribute("categories", categories);
             model.addAttribute("user", user);
@@ -137,7 +138,7 @@ public class ProductController {
         productDto.setAccountHolder(product.getAccountHolder());
 
         // ✅ 카테고리 목록 추가
-        List<Category> categories = categoryService.getAllCategories();
+        List<CategoryDto> categories = categoryService.getAllCategories();
 
         model.addAttribute("productDto", productDto);
         model.addAttribute("categories", categories);
@@ -165,7 +166,7 @@ public class ProductController {
 
         // 유효성 검증 실패 시
         if (bindingResult.hasErrors()) {
-            List<Category> categories = categoryService.getAllCategories();
+            List<CategoryDto> categories = categoryService.getAllCategories();
             User user = userService.getUser(principal.getName());
             model.addAttribute("categories", categories);
             model.addAttribute("user", user);
@@ -192,7 +193,7 @@ public class ProductController {
         } catch (Exception e) {
             bindingResult.reject("updateError", "상품 수정 중 오류가 발생했습니다: " + e.getMessage());
 
-            List<Category> categories = categoryService.getAllCategories();
+            List<CategoryDto> categories = categoryService.getAllCategories();
             User user = userService.getUser(principal.getName());
             model.addAttribute("categories", categories);
             model.addAttribute("user", user);
