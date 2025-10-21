@@ -26,17 +26,21 @@
 <body class="bg-gray-50">
     <!-- Top Bar -->
     <div class="bg-primary text-white py-2">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-end items-center space-x-6 text-sm">
                 <a href="/notifications" class="relative hover:text-light transition-colors">
                     <i class="bi bi-bell text-lg"></i>
-                    <span th:if="${unreadCount > 0}" 
+                    <span th:if="${unreadCount > 0}"
                           th:text="${unreadCount}"
-                          class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                    </span>
+                          class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"></span>
                 </a>
-                <span th:text="${user.nickname}">사용자님</span>
-                <a href="/logout" class="hover:text-light transition-colors">로그아웃</a>
+
+                <span th:if="${user != null}" th:text="${user.nickname} + '님'">사용자님</span>
+                <form th:if="${user != null}" th:action="@{/users/logout}" method="post" class="inline">
+                    <button type="submit" class="hover:text-light transition-colors bg-transparent border-0">로그아웃</button>
+                </form>
+
+                <a th:if="${user == null}" href="/users/login" class="hover:text-light transition-colors">로그인</a>
             </div>
         </div>
     </div>

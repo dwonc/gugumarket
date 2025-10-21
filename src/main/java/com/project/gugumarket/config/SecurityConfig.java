@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
@@ -41,6 +42,10 @@ public class SecurityConfig {
                         .failureUrl("/users/login?error=true")
                         .permitAll()
                 )
+                //세션 유지
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // 세션 유지
+                )
                 //로그아웃 설정
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/users/logout", "POST"))
@@ -61,7 +66,8 @@ public class SecurityConfig {
                         ))
                 .headers((headers)->headers.addHeaderWriter(
                         new XFrameOptionsHeaderWriter(
-                                XFrameOptionsHeaderWriter.XFrameOptionsMode.SAMEORIGIN)));
+                                XFrameOptionsHeaderWriter.XFrameOptionsMode.SAMEORIGIN))
+                );
         return http.build();
     }
 
