@@ -1,5 +1,6 @@
 package com.project.gugumarket.service;
 
+import com.project.gugumarket.DataNotFoundException;
 import com.project.gugumarket.dto.UserDto;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.UserRepository;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
