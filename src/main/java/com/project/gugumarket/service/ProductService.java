@@ -10,8 +10,12 @@ import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.ProductImageRepository;
 import com.project.gugumarket.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+    // ← 추가
+import org.springframework.data.domain.Pageable;  // ← 추가
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -170,5 +174,18 @@ public class ProductService {
         }
 
         return savedProduct;
+    }
+    public Page<ProductForm> getProductList(Pageable pageable) {
+        Page<Product> products = productRepository.findByIsDeletedFalseOrderByCreatedDateDesc(pageable);
+        return products.map(ProductForm::fromEntity);
+    }
+
+    /**
+     * 카테고리별 상품 조회 (페이징)
+     * 특정 카테고리의 삭제되지 않은 상품을 최신순으로 조회
+     */
+    public Page<ProductForm> getProductsByCategory(Long categoryId, Pageable pageable) {
+        Page<Product> products = productRepository.findByCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(categoryId, pageable);
+        return products.map(ProductForm::fromEntity);
     }
 }
