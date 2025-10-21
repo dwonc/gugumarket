@@ -121,30 +121,21 @@
     <div class="bg-white py-6 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-wrap justify-center gap-3">
-                <button class="px-6 py-2.5 bg-primary text-white rounded-full font-medium hover:bg-secondary transition-all duration-300 transform hover:scale-105 shadow-md">
+                <!-- 전체 버튼 -->
+                <a href="/"
+                   th:classappend="${selectedCategoryId == null} ? 'bg-primary text-white shadow-md' : 'bg-white text-primary border-2 border-accent hover:bg-primary hover:text-white'"
+                   class="px-6 py-2.5 rounded-full font-medium transition-all duration-300 transform hover:scale-105">
                     전체
-                </button>
-                <button class="px-6 py-2.5 bg-white text-primary border-2 border-accent rounded-full font-medium hover:bg-primary hover:text-white transition-all duration-300 transform hover:scale-105">
-                    전자기기
-                </button>
-                <button class="px-6 py-2.5 bg-white text-primary border-2 border-accent rounded-full font-medium hover:bg-primary hover:text-white transition-all duration-300 transform hover:scale-105">
-                    의류
-                </button>
-                <button class="px-6 py-2.5 bg-white text-primary border-2 border-accent rounded-full font-medium hover:bg-primary hover:text-white transition-all duration-300 transform hover:scale-105">
-                    가구/인테리어
-                </button>
-                <button class="px-6 py-2.5 bg-white text-primary border-2 border-accent rounded-full font-medium hover:bg-primary hover:text-white transition-all duration-300 transform hover:scale-105">
-                    생활용품
-                </button>
-                <button class="px-6 py-2.5 bg-white text-primary border-2 border-accent rounded-full font-medium hover:bg-primary hover:text-white transition-all duration-300 transform hover:scale-105">
-                    도서
-                </button>
-                <button class="px-6 py-2.5 bg-white text-primary border-2 border-accent rounded-full font-medium hover:bg-primary hover:text-white transition-all duration-300 transform hover:scale-105">
-                    스포츠
-                </button>
-                <button class="px-6 py-2.5 bg-white text-primary border-2 border-accent rounded-full font-medium hover:bg-primary hover:text-white transition-all duration-300 transform hover:scale-105">
-                    기타
-                </button>
+                </a>
+
+                <!-- 카테고리 버튼들 (DB에서 동적으로 가져옴) -->
+                <a th:each="category : ${categories}"
+                   th:href="@{/(categoryId=${category.categoryId})}"
+                   th:text="${category.name}"
+                   th:classappend="${selectedCategoryId != null && selectedCategoryId == category.categoryId} ? 'bg-primary text-white shadow-md' : 'bg-white text-primary border-2 border-accent hover:bg-primary hover:text-white'"
+                   class="px-6 py-2.5 rounded-full font-medium transition-all duration-300 transform hover:scale-105">
+                    카테고리명
+                </a>
             </div>
         </div>
     </div>
@@ -159,7 +150,7 @@
             <div th:each="product : ${products}" class="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
                 <div class="relative overflow-hidden">
                     <a th:href="@{/product/{id}(id=${product.productId})}">
-                        <img th:src="${product.mainImage}" 
+                        <img th:Isrc="${product.mainmage}"
                              th:alt="${product.title}" 
                              class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                              onerror="this.src='https://via.placeholder.com/400x300/6B4F4F/FFFFFF?text=No+Image'">

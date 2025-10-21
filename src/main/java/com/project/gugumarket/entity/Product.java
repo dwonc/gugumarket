@@ -1,5 +1,6 @@
 package com.project.gugumarket.entity;
 
+import com.project.gugumarket.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -66,6 +67,12 @@ public class Product {
 
     @Column(name = "ACCOUNT_HOLDER", length = 50)
     private String accountHolder;
+
+    // 판매 상태
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "STATUS", length = 20)
+    private ProductStatus status = ProductStatus.SALE; // 기본값: 판매중
 
     // 연관관계
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)

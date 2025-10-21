@@ -130,15 +130,130 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex gap-3 mt-6">
-                        <button class="flex-1 bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold py-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2">
-                            <i class="bi bi-heart text-xl"></i>
-                            찜하기
-                        </button>
-                        <button onclick="location.href='/purchase?productId=' + [[${product.productId}]]" class="flex-1 bg-primary hover:bg-secondary text-white font-bold py-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
-                            <i class="bi bi-cart text-xl"></i>
-                            구매하기
-                        </button>
+                    <div class="mt-6">
+                        <!-- 판매자인 경우 -->
+                        <div th:if="${#authentication.principal != 'anonymousUser' && product.seller.userId == #authentication.principal.userId}">
+
+                            <!-- 상태 변경 UI (기존 코드) -->
+                            <div class="mb-4 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-700 font-medium">상품 상태</span>
+                                    <select
+                                            id="statusSelect"
+                                            th:data-product-id="${product.productId}"
+                                            class="border-2 border-primary rounded-lg px-4 py-2 font-medium">
+                                        <option value="SALE" th:selected="${product.status == 'SALE'}">🟢 판매중</option>
+                                        <option value="RESERVED" th:selected="${product.status == 'RESERVED'}">🟡 예약중</option>
+                                        <option value="SOLD_OUT" th:selected="${product.status == 'SOLD_OUT'}">🔴 판매완료</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button
+                                    onclick="saveStatus()"
+                                    class="w-full bg-primary hover:bg-secondary text-white font-bold py-4 rounded-lg transition-all mb-3">
+                                <i class="bi bi-check-circle text-xl mr-2"></i>상태 변경 저장
+                            </button>
+
+                            <!-- 🔥 구매 희망자 목록 -->
+                            <div class="p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                                <h3 class="font-bold text-gray-800 mb-3 flex items-center justify-between">
+                <span>
+                    <i class="bi bi-people-fill mr-2"></i>구매 희망자 목록
+                </span>
+                                    <span class="text-sm text-blue-600" th:text="'총 ' + ${interestedBuyers.size()} + '명'">총 0명</span>
+                                </h3>
+
+                                <div class="space-y-2 max-h-64 overflow-y-auto" th:if="${interestedBuyers != null && !interestedBuyers.empty}">
+                                    <div th:each="buyer : ${interestedBuyers}"
+                                         class="flex items-center justify-between bg-white p-3 rounded-lg hover:shadow-md transition-all">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center">
+                                                <i class="bi bi-person text-white"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold" th:text="${buyer.nickname}">구매자명</p>
+                                                <p class="text-sm text-gray-500">
+                                                    <i class="bi bi-geo-alt"></i>
+                                                    <span th:text="${buyer.address}">주소</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <form th:action="@{/products/{id}/complete(id=${product.productId})}"
+                                              method="post"
+                                              onsubmit="return confirm('이 사용자와 거래를 완료하시겠습니까?\n거래 완료 후에는 취소할 수 없습니다.');">
+                                            <input type="hidden" name="buyerId" th:value="${buyer.userId}">
+                                            <button
+                                                    type="submit"
+                                                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
+                                                    th:disabled="${product.status == 'SOLD_OUT'}">
+                                                <i class="bi bi-check-circle"></i>
+                                                거래완료
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <div th:if="${interestedBuyers == null || interestedBuyers.empty}"
+                                     class="text-center py-8 text-gray-500">
+                                    <i class="bi bi-inbox text-4xl mb-2"></i>
+                                    <p>아직 찜한 사용자가 없습니다.</p>
+                                    <p class="text-sm mt-1">상품을 찜한 사용자가 여기에 표시됩니다.</p>
+                                </div>
+                            </div>
+
+                            <!-- 수정/삭제 버튼 -->
+                            <div class="flex gap-3 mt-3">
+                                <button
+                                        th:onclick="|location.href='/products/${product.productId}/edit'|"
+                                        class="flex-1 bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold py-3 rounded-lg transition-all">
+                                    <i class="bi bi-pencil mr-1"></i>수정
+                                </button>
+                                <button
+                                        onclick="deleteProduct()"
+                                        class="flex-1 bg-white border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold py-3 rounded-lg transition-all">
+                                    <i class="bi bi-trash mr-1"></i>삭제
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 일반 사용자인 경우 -->
+                        <div th:if="${#authentication.principal == 'anonymousUser' || product.seller.userId != #authentication.principal.userId}">
+                            <!-- 판매완료/예약중 표시 -->
+                            <div th:if="${product.status == 'SOLD_OUT'}" class="mb-4 p-4 bg-red-50 border-2 border-red-200 rounded-lg text-center">
+                                <p class="text-red-700 font-bold text-lg">🔴 판매완료된 상품입니다</p>
+                            </div>
+
+                            <div th:if="${product.status == 'RESERVED'}" class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg text-center">
+                                <p class="text-yellow-700 font-bold text-lg">🟡 예약중인 상품입니다</p>
+                            </div>
+
+                            <div class="flex gap-3">
+                                <!-- 🔥 찜하기 버튼 -->
+                                <button
+                                        id="likeButton"
+                                        onclick="toggleLike()"
+                                        th:classappend="${isLiked} ? 'bg-red-500 text-white border-red-500' : 'bg-white text-primary border-primary hover:bg-primary hover:text-white'"
+                                        class="flex-1 border-2 font-bold py-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                                        th:disabled="${product.status == 'SOLD_OUT'}">
+                                    <i th:class="${isLiked} ? 'bi bi-heart-fill' : 'bi bi-heart'" class="text-xl"></i>
+                                    <span id="likeText" th:text="${isLiked} ? '찜 취소' : '찜하기'">찜하기</span>
+                                    <span id="likeCount"
+                                          class="ml-1 px-2 py-0.5 bg-black/10 rounded-full text-sm"
+                                          th:text="${likeCount}">0</span>
+                                </button>
+
+                                <!-- 구매하기 버튼 -->
+                                <button
+                                        th:onclick="${product.status == 'SOLD_OUT'} ? 'alert(\'판매완료된 상품입니다.\')' : 'location.href=\'/purchase?productId=' + ${product.productId} + '\''"
+                                        class="flex-1 bg-primary hover:bg-secondary text-white font-bold py-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+                                        th:classappend="${product.status == 'SOLD_OUT'} ? 'opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400' : ''"
+                                        th:disabled="${product.status == 'SOLD_OUT'}">
+                                    <i class="bi bi-cart text-xl"></i>
+                                    <span th:text="${product.status == 'SOLD_OUT'} ? '판매완료' : '구매하기'">구매하기</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Share & Report -->
@@ -236,5 +351,139 @@
             document.getElementById('mainImage').src = src;
         }
     </script>
+
+    <script>
+        // Change main image when clicking thumbnail
+        function changeMainImage(src) {
+            document.getElementById('mainImage').src = src;
+        }
+
+        // 🔥 찜하기 토글 (완전 구현 버전)
+        async function toggleLike() {
+            const productId = [[${product.productId}]];
+
+            try {
+                const response = await fetch(`/products/${productId}/like`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const result = await response.json();
+
+                // 로그인 필요
+                if (result.needLogin) {
+                    if (confirm('로그인이 필요한 기능입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                        location.href = '/login';
+                    }
+                    return;
+                }
+
+                if (result.success) {
+                    const likeButton = document.getElementById('likeButton');
+                    const likeText = document.getElementById('likeText');
+                    const likeCount = document.getElementById('likeCount');
+                    const icon = likeButton.querySelector('i');
+
+                    if (result.isLiked) {
+                        // 찜하기 완료
+                        likeButton.classList.remove('bg-white', 'text-primary', 'border-primary');
+                        likeButton.classList.add('bg-red-500', 'text-white', 'border-red-500');
+                        icon.classList.remove('bi-heart');
+                        icon.classList.add('bi-heart-fill');
+                        likeText.textContent = '찜 취소';
+                    } else {
+                        // 찜하기 취소
+                        likeButton.classList.remove('bg-red-500', 'text-white', 'border-red-500');
+                        likeButton.classList.add('bg-white', 'text-primary', 'border-primary');
+                        icon.classList.remove('bi-heart-fill');
+                        icon.classList.add('bi-heart');
+                        likeText.textContent = '찜하기';
+                    }
+
+                    likeCount.textContent = result.likeCount;
+                } else {
+                    alert(result.message);
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+            }
+        }
+
+        // 🔥 상태 변경 저장
+        let originalStatus = document.getElementById('statusSelect')?.value;
+
+        async function saveStatus() {
+            const selectElement = document.getElementById('statusSelect');
+            const productId = selectElement.dataset.productId;
+            const newStatus = selectElement.value;
+
+            // 변경사항이 없으면
+            if (newStatus === originalStatus) {
+                alert('변경된 상태가 없습니다.');
+                return;
+            }
+
+            const statusText = selectElement.options[selectElement.selectedIndex].text;
+            if (!confirm(`상품 상태를 "${statusText}"(으)로 변경하시겠습니까?`)) {
+                selectElement.value = originalStatus;
+                return;
+            }
+
+            try {
+                const response = await fetch(`/products/${productId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ 상태가 변경되었습니다.');
+                    originalStatus = newStatus;
+                    location.reload();
+                } else {
+                    alert('❌ ' + (result.message || '상태 변경에 실패했습니다.'));
+                    selectElement.value = originalStatus;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ 상태 변경 중 오류가 발생했습니다.');
+                selectElement.value = originalStatus;
+            }
+        }
+
+        // 🔥 상품 삭제
+        async function deleteProduct() {
+            if (!confirm('정말로 이 상품을 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.')) {
+                return;
+            }
+
+            const productId = document.getElementById('statusSelect').dataset.productId;
+
+            try {
+                const response = await fetch(`/products/${productId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('✅ 상품이 삭제되었습니다.');
+                    location.href = '/mypage';
+                } else {
+                    alert('❌ 상품 삭제에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ 상품 삭제 중 오류가 발생했습니다.');
+            }
+        }
+    </script>
+
 </body>
 </html>
