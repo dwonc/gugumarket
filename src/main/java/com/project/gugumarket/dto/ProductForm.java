@@ -1,13 +1,16 @@
 package com.project.gugumarket.dto;
 
 import jakarta.validation.constraints.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductForm {
 
     private Long productId;
@@ -26,20 +29,48 @@ public class ProductForm {
     @NotBlank(message = "상품 설명을 입력해주세요.")
     private String content;
 
-    @NotBlank(message = "대표 이미지를 업로드해주세요.")
+    // ⭐ 수정: @NotBlank 제거 (등록할 때만 필수, 조회할 때는 선택)
     private String mainImage;
 
     // 추가 이미지 URL 리스트
     private List<String> additionalImages;
 
-    // 계좌 정보
-    @NotBlank(message = "은행명을 선택해주세요.")
+    // 계좌 정보 (⭐ 수정: @NotBlank 제거)
     private String bankName;
-
-    @NotBlank(message = "계좌번호를 입력해주세요.")
-    @Pattern(regexp = "^[0-9]+$", message = "계좌번호는 숫자만 입력 가능합니다.")
     private String accountNumber;
-
-    @NotBlank(message = "예금주명을 입력해주세요.")
     private String accountHolder;
+
+    // ==================== 화면 표시용 필드 (유효성 검사 없음) ==================== //
+
+    private Integer viewCount;
+    private LocalDateTime createdDate;
+    private String sellerNickname;
+    private String sellerAddress;
+    private String categoryName;
+
+    /**
+     * Product 엔티티 → ProductForm 변환 (화면 표시용)
+     */
+    public static ProductForm fromEntity(com.project.gugumarket.entity.Product product) {
+        if (product == null) {
+            return null;
+        }
+
+        return ProductForm.builder()
+                .productId(product.getProductId())
+                .categoryId(product.getCategory() != null ? product.getCategory().getCategoryId() : null)
+                .categoryName(product.getCategory() != null ? product.getCategory().getName() : "미분류")
+                .title(product.getTitle())
+                .price(product.getPrice())
+                .content(product.getContent())
+                .mainImage(product.getMainImage())
+                .bankName(product.getBankName())
+                .accountNumber(product.getAccountNumber())
+                .accountHolder(product.getAccountHolder())
+                .viewCount(product.getViewCount() != null ? product.getViewCount() : 0)
+                .createdDate(product.getCreatedDate())
+                .sellerNickname(product.getSeller() != null ? product.getSeller().getNickname() : "알 수 없음")
+                .sellerAddress(product.getSeller() != null ? product.getSeller().getAddress() : "위치 정보 없음")
+                .build();
+    }
 }
