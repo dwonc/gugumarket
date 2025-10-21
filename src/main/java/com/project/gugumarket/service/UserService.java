@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class UserService {
     @Autowired
     private final UserRepository userRepository;
+    @Autowired
     private final BCryptPasswordEncoder passwordEncoder;
     // 아이디 중복 체크
     public boolean isUserNameDuplicate(String userName) {
