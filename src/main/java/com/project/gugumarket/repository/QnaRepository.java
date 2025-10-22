@@ -40,4 +40,9 @@ public interface QnaRepository extends JpaRepository<QnaPost, Long> {
             @Param("keyword") String keyword,
             @Param("isAnswered") Boolean isAnswered,
             Pageable pageable);
+    /**
+     * 미답변 Q&A 개수
+     */
+    Long countByIsAnsweredFalse();
+
 }
