@@ -58,7 +58,7 @@
                     <i class="bi bi-person text-white text-5xl"></i>
                 </div>
                 <div class="flex-1">
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2" th:text="${user.nickname}">사용자 닉네임</h1>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2" th:text="${user.userName}">사용자 닉네임</h1>
                     <p class="text-gray-600" th:text="${user.email}">user@email.com</p>
                     <p class="text-gray-500 text-sm mt-1">
                         <i class="bi bi-geo-alt"></i>
@@ -139,99 +139,39 @@
                 </div>
             </div>
 
-            <!-- 판매내역 Tab 수정 -->
+            <!-- 판매내역 Tab -->
             <div id="content-sales" class="tab-content hidden">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">판매내역</h2>
                 <div class="space-y-4">
+                    <!-- Sale Item -->
                     <div th:each="transaction : ${sales}" class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all">
                         <div class="flex gap-4">
-                            <img
-                                    th:src="${transaction.product.mainImage}"
-                                    class="w-32 h-32 object-cover rounded-lg"
+                            <img 
+                                th:src="${transaction.product.mainImage}" 
+                                th:alt="${transaction.product.title}"
+                                class="w-32 h-32 object-cover rounded-lg"
+                                onerror="this.src='https://via.placeholder.com/150/6B4F4F/FFFFFF?text=No+Image'"
                             />
                             <div class="flex-1">
                                 <h3 class="text-lg font-bold text-gray-800 mb-2" th:text="${transaction.product.title}">상품명</h3>
                                 <p class="text-2xl font-bold text-primary mb-2">
                                     <span th:text="${#numbers.formatInteger(transaction.product.price, 0, 'COMMA')}">0</span>원
                                 </p>
-                                <p class="text-gray-600 text-sm">
+                                <p class="text-gray-600 text-sm mb-1">
                                     구매자: <span th:text="${transaction.buyer.nickname}">구매자</span>
                                 </p>
+                                <p class="text-gray-500 text-sm">
+                                    판매일: <span th:text="${#temporals.format(transaction.transactionDate, 'yyyy-MM-dd HH:mm')}">2025-01-01</span>
+                                </p>
                             </div>
-                            <div class="flex flex-col justify-between items-end">
-                                <!-- 🔥 상태 변경 드롭다운 -->
-                                <select
-                                        th:data-product-id="${transaction.product.productId}"
-                                        onchange="changeProductStatus(this)"
-                                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent">
-                                    <option value="SALE" th:selected="${transaction.product.status == 'SALE'}">판매중</option>
-                                    <option value="RESERVED" th:selected="${transaction.product.status == 'RESERVED'}">예약중</option>
-                                    <option value="SOLD_OUT" th:selected="${transaction.product.status == 'SOLD_OUT'}">판매완료</option>
-                                </select>
-
-                                <div class="flex gap-2 mt-2">
-                                    <button
-                                            th:onclick="|location.href='/products/${transaction.product.productId}/edit'|"
-                                            class="text-gray-600 hover:text-primary text-sm">
-                                        <i class="bi bi-pencil mr-1"></i>수정
-                                    </button>
-                                    <button class="text-gray-600 hover:text-primary text-sm">
-                                        <i class="bi bi-trash mr-1"></i>삭제
-                                    </button>
-                                </div>
+                            <div class="flex flex-col justify-between">
+                                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">판매완료</span>
+                                <button class="text-gray-600 hover:text-primary text-sm">
+                                    <i class="bi bi-chat-dots mr-1"></i>문의하기
+                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <script>
-                // 상태 변경 함수
-                async function changeProductStatus(selectElement) {
-                    const productId = selectElement.dataset.productId;
-                    const newStatus = selectElement.value;
-
-                    // 확인 메시지
-                    const statusText = selectElement.options[selectElement.selectedIndex].text;
-                    if (!confirm(`상품 상태를 "${statusText}"(으)로 변경하시겠습니까?`)) {
-                        // 취소 시 원래 값으로 되돌림
-                        selectElement.value = selectElement.dataset.originalValue;
-                        return;
-                    }
-
-                    try {
-                        const response = await fetch(`/products/${productId}/status`, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ status: newStatus })
-                        });
-
-                        const result = await response.json();
-
-                        if (result.success) {
-                            alert('상태가 변경되었습니다.');
-                            selectElement.dataset.originalValue = newStatus;
-                            location.reload(); // 페이지 새로고침
-                        } else {
-                            alert(result.message || '상태 변경에 실패했습니다.');
-                            selectElement.value = selectElement.dataset.originalValue;
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert('상태 변경 중 오류가 발생했습니다.');
-                        selectElement.value = selectElement.dataset.originalValue;
-                    }
-                }
-
-                // 페이지 로드 시 원래 값 저장
-                document.addEventListener('DOMContentLoaded', function() {
-                    document.querySelectorAll('select[data-product-id]').forEach(select => {
-                        select.dataset.originalValue = select.value;
-                    });
-                });
-            </script>
 
                     <!-- Empty State -->
                     <div th:if="${sales == null || sales.empty}" class="text-center py-16">

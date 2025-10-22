@@ -1,6 +1,4 @@
 package com.project.gugumarket.service;
-
-import com.project.gugumarket.DataNotFoundException;
 import com.project.gugumarket.dto.UserDto;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.UserRepository;
@@ -11,27 +9,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
 public class UserService {
     @Autowired
     private final UserRepository userRepository;
+    @Autowired
     private final BCryptPasswordEncoder passwordEncoder;
-
-    public User getUser(String userName) {
-        Optional<User> siteUser = this.userRepository.findByUserName(userName);
-
-        if(siteUser.isPresent()) {
-            User user = siteUser.get();
-            return user;
-        }
-        else {
-            throw new DataNotFoundException("siteuser not found");
-        }
-    }
-
     // 아이디 중복 체크
     public boolean isUserNameDuplicate(String userName) {
         return userRepository.existsByUserName(userName);

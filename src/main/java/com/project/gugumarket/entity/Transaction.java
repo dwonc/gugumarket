@@ -36,7 +36,4 @@ public class Transaction {
     @CreationTimestamp
     @Column(name = "TRANSACTION_DATE")
     private LocalDateTime transactionDate;
-
-    @Column(name = "STATUS", length = 20)
-    private String status = "COMPLETED"; // COMPLETED, CANCELLED
 }

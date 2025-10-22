@@ -21,30 +21,16 @@
     </style>
 </head>
 <body class="bg-gray-50">
-<div class="bg-primary text-white py-2">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="flex justify-end items-center space-x-6 text-sm">
-
-            <!-- ✅ 로그인 상태 -->
-            <span th:if="${#authorization.expression('isAuthenticated()')}"
-                  th:text="${#authentication.name} + '님'">사용자님</span>
-
-            <form th:if="${#authorization.expression('isAuthenticated()')}"
-                  th:action="@{/users/logout}" method="post" class="inline">
-                <button type="submit" class="hover:underline bg-transparent border-0 text-white">로그아웃</button>
-            </form>
-
-            <!-- ✅ 비로그인 상태 -->
-            <a th:if="${#authorization.expression('isAnonymous()')}"
-               href="/users/login"
-               class="hover:underline">로그인</a>
-
-            <a th:if="${#authorization.expression('isAnonymous()')}"
-               href="/users/signup"
-               class="hover:underline">회원가입</a>
+    <!-- Top Bar -->
+    <div class="bg-primary text-white py-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-end items-center space-x-6 text-sm">
+                <span th:if="${user != null}" th:text="${user.nickname}">사용자님</span>
+                <a th:if="${user == null}" href="/login" class="hover:underline">로그인</a>
+                <a th:if="${user != null}" href="/logout" class="hover:underline">로그아웃</a>
+            </div>
         </div>
     </div>
-</div>
 
     <!-- Navbar -->
     <nav class="bg-white shadow-md">
