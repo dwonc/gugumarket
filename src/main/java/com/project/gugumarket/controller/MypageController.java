@@ -29,7 +29,7 @@ public class MypageController {
         UserDto userDto=userService.getUserInfo(userName);
 
         model.addAttribute("user",userDto);
-        return "/mypage";
+        return "/users/mypage";
     }
     @PostMapping("/mypage/edit")
     public String editmypage(@ModelAttribute Principal principal, UserDto userDto) {
@@ -39,7 +39,7 @@ public class MypageController {
         String userName=principal.getName();
         userService.updateUserInfo(userName,userDto);
 
-        return "redirect:/mypage";
+        return "redirect:/users/mypage";
     }
     @PostMapping("/mypage/password")
     public String changePassword(@RequestParam String currentpassword, @RequestParam String newpassword, Principal principal,Model model) {
@@ -51,7 +51,7 @@ public class MypageController {
             model.addAttribute("error","현재 비밀번호가 일치하지 않습니다.");
         }
         model.addAttribute("user",userService.getUserInfo(userName));
-        return "/mypage";
+        return "/users/mypage";
     }
 
 }

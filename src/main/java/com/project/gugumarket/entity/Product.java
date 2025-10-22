@@ -86,4 +86,49 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<Transaction> transactions = new ArrayList<>();
+
+    // 🔥 상태 변경 메서드 추가
+    public void updateStatus(ProductStatus status) {
+        this.status = status;
+    }
+
+    // 🔥 판매중으로 변경
+    public void markAsSale() {
+        this.status = ProductStatus.SALE;
+    }
+
+    // 🔥 예약중으로 변경
+    public void markAsReserved() {
+        this.status = ProductStatus.RESERVED;
+    }
+
+    // 🔥 판매완료로 변경
+    public void markAsSoldOut() {
+        this.status = ProductStatus.SOLD_OUT;
+    }
+
+    // 🔥 조회수 증가
+    public void increaseViewCount() {
+        this.viewCount = (this.viewCount == null ? 0 : this.viewCount) + 1;
+    }
+
+    // 🔥 상품 정보 수정
+    public void update(String title, Integer price, String content, Category category, String mainImage) {
+        this.title = title;
+        this.price = price;
+        this.content = content;
+        this.category = category;
+        this.mainImage = mainImage;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdDate = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = ProductStatus.SALE;
+        }
+        if (this.viewCount == null) {
+            this.viewCount = 0;
+        }
+    }
 }
