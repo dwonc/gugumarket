@@ -63,12 +63,26 @@
 <!-- Breadcrumb -->
 <div class="bg-white border-b">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div class="flex items-center space-x-2 text-sm text-gray-500">
-            <a href="/main" class="hover:text-primary">홈</a>
+        <div class="flex items-center space-x-2 text-sm text-gray-600">
+            <!-- 홈 링크 -->
+            <a href="/" class="hover:text-primary">
+                <i class="bi bi-house-door"></i> 홈
+            </a>
             <i class="bi bi-chevron-right text-xs"></i>
-            <a href="#" class="hover:text-primary" th:text="${product.category.name}">카테고리</a>
+
+            <!-- 카테고리 링크 (⭐ 수정됨) -->
+            <a th:if="${product.category != null}"
+               th:href="@{/main(categoryId=${product.category.categoryId})}"
+               class="hover:text-primary transition-colors duration-200"
+               th:text="${product.category.name}">
+                반려동물용품
+            </a>
+            <span th:unless="${product.category != null}" class="text-gray-400">미분류</span>
+
             <i class="bi bi-chevron-right text-xs"></i>
-            <span class="text-gray-800" th:text="${product.title}">상품명</span>
+
+            <!-- 현재 상품명 -->
+            <span class="text-gray-800 font-medium" th:text="${product.title}">캠핑 텐트 4인용</span>
         </div>
     </div>
 </div>
