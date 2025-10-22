@@ -22,28 +22,6 @@
         .hover\:bg-primary:hover { background-color: var(--primary); }
         .hover\:bg-secondary:hover { background-color: var(--secondary); }
         .hover\:text-primary:hover { color: var(--primary); }
-
-        /* 이미지 로딩 중 표시 */
-        .profile-image-container {
-            position: relative;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        .profile-image-container img {
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        .profile-image-container img.loaded {
-            opacity: 1;
-        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -93,14 +71,12 @@
             </h2>
 
             <div class="flex items-center gap-6">
-                <div class="relative profile-image-container w-32 h-32 rounded-full">
+                <div class="relative">
                     <!-- 미리보기 이미지 -->
                     <img id="profilePreview"
-                         th:src="${user.profileImage != null && !user.profileImage.isEmpty() ? user.profileImage : '/images/default-profile.png'}"
+                         th:src="${user.profileImage != null ? user.profileImage : '/images/default-profile.png'}"
                          alt="프로필 이미지"
-                         class="w-32 h-32 rounded-full object-cover border-2 border-gray-300"
-                         onerror="handleImageError(this)"
-                         onload="this.classList.add('loaded')" />
+                         class="w-32 h-32 rounded-full object-cover border-2 border-gray-300"/>
 
                     <!-- 숨겨진 파일 입력 -->
                     <input type="file" id="profileImageInput" name="profileImage" accept="image/*" class="hidden" />
@@ -108,7 +84,7 @@
                     <!-- 버튼 -->
                     <button type="button"
                             onclick="document.getElementById('profileImageInput').click()"
-                            class="absolute bottom-0 right-0 bg-white border-2 border-primary text-primary p-2 rounded-full hover:bg-primary hover:text-white transition-all z-10">
+                            class="absolute bottom-0 right-0 bg-white border-2 border-primary text-primary p-2 rounded-full hover:bg-primary hover:text-white transition-all">
                         <i class="bi bi-camera"></i>
                     </button>
                 </div>
@@ -308,22 +284,6 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
 
-    // 이미지 로드 에러 처리
-    function handleImageError(img) {
-        console.error('이미지 로드 실패:', img.src);
-        img.src = '/images/default-profile.png';
-        img.onerror = function() {
-            // 기본 이미지도 실패하면 회색 원 표시
-            img.style.display = 'none';
-            const container = img.parentElement;
-            const editBtn = container.querySelector('button');
-            container.innerHTML = '<div class="w-32 h-32 rounded-full bg-gray-300 flex items-center justify-center"><i class="bi bi-person-circle text-6xl text-gray-500"></i></div>';
-            if (editBtn) {
-                container.appendChild(editBtn);
-            }
-        };
-    }
-
     // 주소 검색
     function searchAddress() {
         new daum.Postcode({
@@ -380,25 +340,12 @@
         }
     }
 
-    // 프로필 이미지 미리보기
+    /*]]>*/
+</script>
+<script>
     document.getElementById('profileImageInput').addEventListener('change', function (event) {
         const file = event.target.files[0];
         if (file) {
-            // 파일 크기 체크 (5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                alert("파일 크기는 5MB 이하여야 합니다.");
-                this.value = '';
-                return;
-            }
-
-            // 파일 형식 체크
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-            if (!allowedTypes.includes(file.type)) {
-                alert("JPG, PNG, GIF 형식의 이미지만 업로드 가능합니다.");
-                this.value = '';
-                return;
-            }
-
             const img = new Image();
             const reader = new FileReader();
 
@@ -408,16 +355,12 @@
                     if (img.width < 500 || img.height < 500) {
                         alert("이미지 권장 사이즈는 500x500px 이상입니다.");
                     }
-                    const preview = document.getElementById('profilePreview');
-                    preview.src = e.target.result;
-                    preview.classList.add('loaded');
+                    document.getElementById('profilePreview').src = e.target.result;
                 };
             };
             reader.readAsDataURL(file);
         }
     });
-
-    /*]]>*/
 </script>
 </body>
 </html>

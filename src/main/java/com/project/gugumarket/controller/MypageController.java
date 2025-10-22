@@ -3,6 +3,7 @@ package com.project.gugumarket.controller;
 import com.project.gugumarket.dto.UserDto;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.UserRepository;
+import com.project.gugumarket.service.MypageService;
 import com.project.gugumarket.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +29,7 @@ public class MypageController {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final MypageService mypageService;
 
     // 마이페이지 조회
     @GetMapping("/mypage")
@@ -37,7 +39,7 @@ public class MypageController {
         String userName = principal.getName();
         User user = userRepository.findByUserName(userName)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
+        User myuser=mypageService.getUserByUserName(userName);
         model.addAttribute("user", user);
         return "users/mypage";
     }
@@ -67,7 +69,18 @@ public class MypageController {
 
         return "users/edit";
     }
-
+    @PostMapping("/edit")
+    public String editUser(@ModelAttribute UserDto userDto,
+                           @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
+                           Model model) {
+        try {
+            mypageService.updateUserProfile(userDto, profileImage);
+            return "redirect:/mypage?updated=true"; // 최신 데이터로 이동
+        } catch (Exception e) {
+            model.addAttribute("error", "회원정보 수정 중 오류가 발생했습니다: " + e.getMessage());
+            return "edit";
+        }
+    }
     // 프로필 수정 처리
     @PostMapping("/users/edit")
     public String editProfile(
@@ -199,14 +212,14 @@ public class MypageController {
         userRepository.save(user);
 
         redirectAttributes.addFlashAttribute("successMessage", "회원정보가 수정되었습니다.");
-        return "redirect:/users/mypage";
+        return "redirect:/mypage";
     }
 
     // 프로필 이미지 저장 메서드
     private String saveProfileImage(MultipartFile file, String userName) throws IOException {
         try {
             // 업로드 디렉토리 설정 (프로젝트 루트 기준)
-            String uploadDir = "uploads/profile/";
+            String uploadDir = "uploads/";
 
             // 파일명 생성 (중복 방지)
             String originalFilename = file.getOriginalFilename();
@@ -231,7 +244,7 @@ public class MypageController {
             System.out.println("✅ 반환 URL: /uploads/profile/" + fileName);
 
             // 웹에서 접근 가능한 URL 반환
-            return "/uploads/profile/" + fileName;
+            return "/uploads/" + fileName;
 
         } catch (IOException e) {
             System.err.println("❌ 파일 저장 실패: " + e.getMessage());
