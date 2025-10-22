@@ -15,22 +15,13 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @EnableWebSecurity
 public class SecurityConfig {
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers(
-                                new AntPathRequestMatcher("/test/**"),
-                                new AntPathRequestMatcher("/users/**"),  // /users/로 시작하는 모든 경로 허용
-                                new AntPathRequestMatcher("/users/signup"),
-                                new AntPathRequestMatcher("/users/login"),
-                                new AntPathRequestMatcher("/users/check-username"),
-                                new AntPathRequestMatcher("/"),
-                                new AntPathRequestMatcher("/main"),
-                                new AntPathRequestMatcher("/h2-console/**"),
-                                new AntPathRequestMatcher("/js/**"),
-                                new AntPathRequestMatcher("/images/**"),
-                                new AntPathRequestMatcher("/css/**")
-                                ).permitAll()
-                .anyRequest().authenticated()
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/users/signup", "/users/login", "/users/check-username").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()  // ← 이 줄 추가
+                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        .anyRequest().authenticated()
                 )
                 //로그인 설정
                 .formLogin(form -> form

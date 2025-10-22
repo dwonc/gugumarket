@@ -46,6 +46,9 @@ public class User {
     @Column(name = "POSTAL_CODE", length = 10, nullable = false)
     private String postalCode;
 
+    @Column(name = "PROFILE_IMAGE", length = 500)
+    private String profileImage;
+
     @CreationTimestamp
     @Column(name = "CREATED_DATE")
     private LocalDateTime createdDate;
@@ -55,6 +58,13 @@ public class User {
 
     @Column(name = "ROLE", length = 20)
     private String role = "USER";
+
+    public String getProfileImageOrDefault() {
+        return (profileImage == null || profileImage.isEmpty())
+                ? "/images/default-profile.png"
+                : profileImage;
+    }
+
 
     // 연관관계
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL)
