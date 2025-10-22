@@ -10,7 +10,17 @@ import java.util.List;
 public interface QnaAnswerRepository extends JpaRepository<QnaAnswer, Long> {
 
     /**
-     * 특정 Q&A의 답변 목록 조회
+     * 특정 Q&A의 답변 조회
      */
-    List<QnaAnswer> findByQnaPost_QnaIdOrderByCreatedDateAsc(Long qnaId);
+    List<QnaAnswer> findByQnaPostQnaId(Long qnaId);
+
+    /**
+     * 특정 Q&A의 답변 조회 (작성일순)
+     */
+    List<QnaAnswer> findByQnaPostQnaIdOrderByCreatedDateAsc(Long qnaId);
+
+    /**
+     * 특정 관리자의 답변 조회
+     */
+    List<QnaAnswer> findByAnswerId(Long userId);
 }
