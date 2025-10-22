@@ -29,19 +29,17 @@ public class ProductForm {
     @NotBlank(message = "상품 설명을 입력해주세요.")
     private String content;
 
-    // ⭐ 수정: @NotBlank 제거 (등록할 때만 필수, 조회할 때는 선택)
     private String mainImage;
 
     // 추가 이미지 URL 리스트
     private List<String> additionalImages;
 
-    // 계좌 정보 (⭐ 수정: @NotBlank 제거)
+    // 계좌 정보
     private String bankName;
     private String accountNumber;
     private String accountHolder;
 
-    // ==================== 화면 표시용 필드 (유효성 검사 없음) ==================== //
-
+    // 화면 표시용 필드 (유효성 검사 없음)
     private Integer viewCount;
     private LocalDateTime createdDate;
     private String sellerNickname;

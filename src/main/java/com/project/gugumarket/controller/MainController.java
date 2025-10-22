@@ -29,24 +29,21 @@ public class MainController {
     private final CategoryRepository categoryRepository;
 
     /**
-     * 메인 페이지 (페이징 기능 포함)
-     *
-     * @param model 뷰에 전달할 데이터
-     * @param page 현재 페이지 번호 (0부터 시작, 기본값 0)
-     * @param size 한 페이지당 상품 개수 (기본값 12)
-     * @param categoryId 선택된 카테고리 ID (선택사항)
+     * 메인 페이지 (페이징 + 검색 + 카테고리 필터)
      */
     @GetMapping("/main")
     public String main(
             Model model,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
-            @RequestParam(required = false) Long categoryId
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String keyword
     ) {
         System.out.println("========== 메인 페이지 시작 ==========");
-        System.out.println("📄 페이지: " + page + ", 사이즈: " + size + ", 카테고리: " + categoryId);
+        System.out.println("📄 페이지: " + page + ", 사이즈: " + size);
+        System.out.println("📂 카테고리: " + categoryId);
+        System.out.println("🔍 검색어: " + keyword);
 
-        // 🔐 현재 로그인한 사용자 정보
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
@@ -62,30 +59,25 @@ public class MainController {
             System.out.println("👥 비로그인 상태");
         }
 
-        // 📦 페이징 설정
         Pageable pageable = PageRequest.of(page, size);
 
-        // 🛒 상품 목록 조회
         Page<ProductForm> products;
         if (categoryId != null) {
-            System.out.println("🔍 카테고리 " + categoryId + "번 상품 조회");
-            products = productService.getProductsByCategory(categoryId, pageable);
+            products = productService.getProductsByCategory(categoryId, keyword, pageable);
             model.addAttribute("selectedCategoryId", categoryId);
         } else {
-            System.out.println("🔍 전체 상품 조회");
-            products = productService.getProductList(pageable);
+            products = productService.getProductList(keyword, pageable);
         }
 
-        // 📂 카테고리 목록 조회
         List<Category> categories = categoryRepository.findAll();
         System.out.println("📂 카테고리 " + categories.size() + "개 로드");
 
-        // 📊 Model에 데이터 추가
         model.addAttribute("products", products);
         model.addAttribute("categories", categories);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", products.getTotalPages());
         model.addAttribute("totalElements", products.getTotalElements());
+        model.addAttribute("keyword", keyword);
 
         System.out.println("✅ 상품 " + products.getContent().size() + "개 조회 완료");
         System.out.println("📊 전체 상품: " + products.getTotalElements() + "개");
@@ -95,9 +87,6 @@ public class MainController {
         return "main";
     }
 
-    /**
-     * 홈 페이지 (기존 유지)
-     */
     @GetMapping("/")
     public String home() {
         return "redirect:/main";
