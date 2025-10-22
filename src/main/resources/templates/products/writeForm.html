@@ -19,540 +19,359 @@
         .hover\:bg-primary:hover { background-color: var(--primary); }
         .hover\:bg-secondary:hover { background-color: var(--secondary); }
         .hover\:border-primary:hover { border-color: var(--primary); }
-        .upload-progress {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
     </style>
 </head>
 <body class="bg-gray-50">
-<div class="bg-primary text-white py-2">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="flex justify-end items-center space-x-6 text-sm">
-
-            <!-- ✅ 로그인 상태 -->
-            <span th:if="${#authorization.expression('isAuthenticated()')}"
-                  th:text="${#authentication.name} + '님'">사용자님</span>
-
-            <form th:if="${#authorization.expression('isAuthenticated()')}"
-                  th:action="@{/users/logout}" method="post" class="inline">
-                <button type="submit" class="hover:underline bg-transparent border-0 text-white">로그아웃</button>
-            </form>
-
-            <!-- ✅ 비로그인 상태 -->
-            <a th:if="${#authorization.expression('isAnonymous()')}"
-               href="/users/login"
-               class="hover:underline">로그인</a>
-
-            <a th:if="${#authorization.expression('isAnonymous()')}"
-               href="/users/signup"
-               class="hover:underline">회원가입</a>
+    <!-- Top Bar -->
+    <div class="bg-primary text-white py-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-end items-center space-x-6 text-sm">
+                <span th:if="${user != null}" th:text="${user.nickname}">사용자님</span>
+                <a th:if="${user != null}" href="/logout" class="hover:underline">로그아웃</a>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Navbar -->
-<nav class="bg-white shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-20">
-            <a href="/" class="flex items-center space-x-3">
-                <i class="bi bi-shop text-4xl text-primary"></i>
-                <span class="text-3xl font-bold text-primary">GUGU Market</span>
-            </a>
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <a href="/" class="flex items-center space-x-3">
+                    <i class="bi bi-shop text-4xl text-primary"></i>
+                    <span class="text-3xl font-bold text-primary">GUGU Market</span>
+                </a>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
-<!-- Main Content -->
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="bg-white rounded-2xl shadow-xl p-8">
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                <i class="bi bi-box-seam text-primary mr-2"></i>
-                상품 등록
-            </h1>
-            <p class="text-gray-600">판매하실 상품 정보를 입력해주세요.</p>
-        </div>
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                    <i class="bi bi-box-seam text-primary mr-2"></i>
+                    상품 등록
+                </h1>
+                <p class="text-gray-600">판매하실 상품 정보를 입력해주세요.</p>
+            </div>
 
-        <!-- Form -->
-        <form th:action="@{/product/write}" th:object="${productDto}" method="post" class="space-y-6">
-            <!-- Category -->
-            <div>
-                <label for="categoryId" class="block text-sm font-semibold text-gray-700 mb-2">
-                    카테고리 <span class="text-red-500">*</span>
-                </label>
-                <select
-                        id="categoryId"
+            <!-- Form -->
+            <form th:action="@{/product/write}" th:object="${productDto}" method="post" enctype="multipart/form-data" class="space-y-6">
+                <!-- Category -->
+                <div>
+                    <label for="categoryId" class="block text-sm font-semibold text-gray-700 mb-2">
+                        카테고리 <span class="text-red-500">*</span>
+                    </label>
+                    <select 
+                        id="categoryId" 
                         th:field="*{categoryId}"
                         required
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
-                >
-                    <option value="">카테고리를 선택하세요</option>
-                    <option th:each="category : ${categories}" th:value="${category.categoryId}" th:text="${category.name}">전자기기</option>
-                </select>
-                <p th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}" class="mt-1 text-sm text-red-500"></p>
-            </div>
+                    >
+                        <option value="">카테고리를 선택하세요</option>
+                        <option th:each="category : ${categories}" th:value="${category.categoryId}" th:text="${category.name}">전자기기</option>
+                    </select>
+                    <p th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}" class="mt-1 text-sm text-red-500"></p>
+                </div>
 
-            <!-- Title -->
-            <div>
-                <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">
-                    상품명 <span class="text-red-500">*</span>
-                </label>
-                <input
-                        type="text"
-                        id="title"
+                <!-- Title -->
+                <div>
+                    <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">
+                        상품명 <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="title" 
                         th:field="*{title}"
                         required
                         maxlength="100"
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
                         placeholder="상품명을 입력하세요 (최대 100자)"
-                />
-                <p th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="mt-1 text-sm text-red-500"></p>
-            </div>
+                    />
+                    <p th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="mt-1 text-sm text-red-500"></p>
+                </div>
 
-            <!-- Price -->
-            <div>
-                <label for="price" class="block text-sm font-semibold text-gray-700 mb-2">
-                    판매가격 <span class="text-red-500">*</span>
-                </label>
-                <div class="relative">
-                    <input
-                            type="number"
-                            id="price"
+                <!-- Price -->
+                <div>
+                    <label for="price" class="block text-sm font-semibold text-gray-700 mb-2">
+                        판매가격 <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="number" 
+                            id="price" 
                             th:field="*{price}"
                             required
                             min="0"
                             step="1000"
                             class="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
                             placeholder="0"
-                    />
-                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">원</span>
+                        />
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">원</span>
+                    </div>
+                    <p th:if="${#fields.hasErrors('price')}" th:errors="*{price}" class="mt-1 text-sm text-red-500"></p>
+                    <p class="mt-1 text-sm text-gray-500">
+                        <i class="bi bi-info-circle mr-1"></i>
+                        가격은 1,000원 단위로 입력해주세요.
+                    </p>
                 </div>
-                <p th:if="${#fields.hasErrors('price')}" th:errors="*{price}" class="mt-1 text-sm text-red-500"></p>
-                <p class="mt-1 text-sm text-gray-500">
-                    <i class="bi bi-info-circle mr-1"></i>
-                    가격은 1,000원 단위로 입력해주세요.
-                </p>
-            </div>
 
-            <!-- 🔥 Main Image (수정) -->
-            <div>
-                <label for="mainImage" class="block text-sm font-semibold text-gray-700 mb-2">
-                    대표 이미지 <span class="text-red-500">*</span>
-                </label>
-                <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-primary transition-colors">
-                    <div class="text-center" id="mainImageUploadArea">
-                        <i class="bi bi-cloud-upload text-5xl text-gray-400 mb-3"></i>
-                        <p class="text-gray-600 mb-2">클릭하여 이미지를 업로드하세요</p>
-                        <p class="text-sm text-gray-500">JPG, PNG, GIF, WEBP 파일 (최대 10MB)</p>
-                        <input
-                                type="file"
-                                id="mainImage"
+                <!-- Main Image -->
+                <div>
+                    <label for="mainImage" class="block text-sm font-semibold text-gray-700 mb-2">
+                        대표 이미지 <span class="text-red-500">*</span>
+                    </label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-primary transition-colors">
+                        <div class="text-center">
+                            <i class="bi bi-cloud-upload text-5xl text-gray-400 mb-3"></i>
+                            <p class="text-gray-600 mb-2">클릭하여 이미지를 업로드하세요</p>
+                            <p class="text-sm text-gray-500">JPG, PNG 파일 (최대 5MB)</p>
+                            <input 
+                                type="file" 
+                                id="mainImage" 
+                                name="mainImageFile"
                                 accept="image/*"
                                 required
                                 class="hidden"
-                                onchange="uploadMainImage(event)"
-                        />
-                        <button
+                                onchange="previewMainImage(event)"
+                            />
+                            <button 
                                 type="button"
                                 onclick="document.getElementById('mainImage').click()"
                                 class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg transition-all"
-                        >
-                            파일 선택
-                        </button>
-                    </div>
-
-                    <!-- 업로드 진행 중 표시 -->
-                    <div id="mainImageProgress" class="upload-progress">
-                        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
-                        <p class="text-primary mt-2">업로드 중...</p>
-                    </div>
-
-                    <!-- 미리보기 -->
-                    <div id="mainImagePreview" class="mt-4 hidden">
-                        <div class="relative">
-                            <img src="" alt="미리보기" class="max-h-64 mx-auto rounded-lg">
-                            <button
-                                    type="button"
-                                    onclick="removeMainImage()"
-                                    class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition-all">
-                                <i class="bi bi-x-lg"></i>
+                            >
+                                파일 선택
                             </button>
-                            <p class="text-center text-sm text-green-600 mt-2">
-                                <i class="bi bi-check-circle-fill mr-1"></i>업로드 완료
-                            </p>
+                        </div>
+                        <div id="mainImagePreview" class="mt-4 hidden">
+                            <img src="" alt="미리보기" class="max-h-64 mx-auto rounded-lg">
                         </div>
                     </div>
                 </div>
-                <!-- 🔥 Hidden input: 서버로 전송될 이미지 URL -->
-                <input type="hidden" id="mainImageUrl" name="mainImage" required>
-            </div>
 
-            <!-- 🔥 Additional Images (수정) -->
-            <div>
-                <label for="additionalImages" class="block text-sm font-semibold text-gray-700 mb-2">
-                    추가 이미지 (선택, 최대 5장)
-                </label>
-                <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-primary transition-colors">
-                    <div class="text-center" id="additionalImagesUploadArea">
-                        <i class="bi bi-images text-5xl text-gray-400 mb-3"></i>
-                        <p class="text-gray-600 mb-2">여러 이미지를 선택하세요</p>
-                        <input
-                                type="file"
-                                id="additionalImages"
+                <!-- Additional Images -->
+                <div>
+                    <label for="additionalImages" class="block text-sm font-semibold text-gray-700 mb-2">
+                        추가 이미지 (선택, 최대 5장)
+                    </label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-primary transition-colors">
+                        <div class="text-center">
+                            <i class="bi bi-images text-5xl text-gray-400 mb-3"></i>
+                            <p class="text-gray-600 mb-2">여러 이미지를 선택하세요</p>
+                            <input 
+                                type="file" 
+                                id="additionalImages" 
+                                name="additionalImageFiles"
                                 accept="image/*"
                                 multiple
                                 class="hidden"
-                                onchange="uploadAdditionalImages(event)"
-                        />
-                        <button
+                                onchange="previewAdditionalImages(event)"
+                            />
+                            <button 
                                 type="button"
                                 onclick="document.getElementById('additionalImages').click()"
                                 class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg transition-all"
-                        >
-                            파일 선택
-                        </button>
+                            >
+                                파일 선택
+                            </button>
+                        </div>
+                        <div id="additionalImagesPreview" class="mt-4 grid grid-cols-5 gap-3 hidden"></div>
                     </div>
-
-                    <!-- 업로드 진행 중 표시 -->
-                    <div id="additionalImagesProgress" class="upload-progress">
-                        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
-                        <p class="text-primary mt-2">업로드 중...</p>
-                    </div>
-
-                    <!-- 미리보기 -->
-                    <div id="additionalImagesPreview" class="mt-4 grid grid-cols-5 gap-3 hidden"></div>
                 </div>
-                <!-- 🔥 Hidden inputs: 서버로 전송될 이미지 URL들 -->
-                <div id="additionalImagesUrls"></div>
-            </div>
 
-            <!-- Content -->
-            <div>
-                <label for="content" class="block text-sm font-semibold text-gray-700 mb-2">
-                    상품 설명 <span class="text-red-500">*</span>
-                </label>
-                <textarea
-                        id="content"
+                <!-- Content -->
+                <div>
+                    <label for="content" class="block text-sm font-semibold text-gray-700 mb-2">
+                        상품 설명 <span class="text-red-500">*</span>
+                    </label>
+                    <textarea 
+                        id="content" 
                         th:field="*{content}"
                         required
                         rows="12"
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary resize-none transition-colors"
                         placeholder="상품에 대한 상세한 설명을 입력해주세요.&#10;&#10;예시:&#10;- 구매 시기&#10;- 사용 기간&#10;- 상품 상태&#10;- 하자 유무&#10;- 직거래 가능 지역 등"
-                ></textarea>
-                <p th:if="${#fields.hasErrors('content')}" th:errors="*{content}" class="mt-1 text-sm text-red-500"></p>
-            </div>
+                    ></textarea>
+                    <p th:if="${#fields.hasErrors('content')}" th:errors="*{content}" class="mt-1 text-sm text-red-500"></p>
+                </div>
 
-            <!-- Bank Account Info -->
-            <div class="border-t-2 border-gray-200 pt-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <i class="bi bi-bank text-primary"></i>
-                    입금 계좌 정보
-                </h3>
-                <p class="text-sm text-gray-600 mb-4">
-                    구매자가 입금할 계좌 정보를 입력해주세요.
-                </p>
+                <!-- Bank Account Info -->
+                <div class="border-t-2 border-gray-200 pt-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="bi bi-bank text-primary"></i>
+                        입금 계좌 정보
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4">
+                        구매자가 입금할 계좌 정보를 입력해주세요.
+                    </p>
 
-                <div class="space-y-4">
-                    <!-- Bank Name -->
-                    <div>
-                        <label for="bankName" class="block text-sm font-semibold text-gray-700 mb-2">
-                            은행명 <span class="text-red-500">*</span>
-                        </label>
-                        <select
-                                id="bankName"
+                    <div class="space-y-4">
+                        <!-- Bank Name -->
+                        <div>
+                            <label for="bankName" class="block text-sm font-semibold text-gray-700 mb-2">
+                                은행명 <span class="text-red-500">*</span>
+                            </label>
+                            <select 
+                                id="bankName" 
                                 th:field="*{bankName}"
                                 required
                                 class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
-                        >
-                            <option value="">은행을 선택하세요</option>
-                            <option value="KB국민은행">KB국민은행</option>
-                            <option value="신한은행">신한은행</option>
-                            <option value="우리은행">우리은행</option>
-                            <option value="하나은행">하나은행</option>
-                            <option value="NH농협은행">NH농협은행</option>
-                            <option value="IBK기업은행">IBK기업은행</option>
-                            <option value="SC제일은행">SC제일은행</option>
-                            <option value="KEB하나은행">KEB하나은행</option>
-                            <option value="카카오뱅크">카카오뱅크</option>
-                            <option value="토스뱅크">토스뱅크</option>
-                            <option value="케이뱅크">케이뱅크</option>
-                            <option value="우체국">우체국</option>
-                            <option value="새마을금고">새마을금고</option>
-                            <option value="신협">신협</option>
-                        </select>
-                        <p th:if="${#fields.hasErrors('bankName')}" th:errors="*{bankName}" class="mt-1 text-sm text-red-500"></p>
-                    </div>
+                            >
+                                <option value="">은행을 선택하세요</option>
+                                <option value="KB국민은행">KB국민은행</option>
+                                <option value="신한은행">신한은행</option>
+                                <option value="우리은행">우리은행</option>
+                                <option value="하나은행">하나은행</option>
+                                <option value="NH농협은행">NH농협은행</option>
+                                <option value="IBK기업은행">IBK기업은행</option>
+                                <option value="SC제일은행">SC제일은행</option>
+                                <option value="KEB하나은행">KEB하나은행</option>
+                                <option value="카카오뱅크">카카오뱅크</option>
+                                <option value="토스뱅크">토스뱅크</option>
+                                <option value="케이뱅크">케이뱅크</option>
+                                <option value="우체국">우체국</option>
+                                <option value="새마을금고">새마을금고</option>
+                                <option value="신협">신협</option>
+                            </select>
+                            <p th:if="${#fields.hasErrors('bankName')}" th:errors="*{bankName}" class="mt-1 text-sm text-red-500"></p>
+                        </div>
 
-                    <!-- Account Number -->
-                    <div>
-                        <label for="accountNumber" class="block text-sm font-semibold text-gray-700 mb-2">
-                            계좌번호 <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                                type="text"
-                                id="accountNumber"
+                        <!-- Account Number -->
+                        <div>
+                            <label for="accountNumber" class="block text-sm font-semibold text-gray-700 mb-2">
+                                계좌번호 <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="accountNumber" 
                                 th:field="*{accountNumber}"
                                 required
                                 class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
                                 placeholder="- 없이 숫자만 입력하세요"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                        />
-                        <p th:if="${#fields.hasErrors('accountNumber')}" th:errors="*{accountNumber}" class="mt-1 text-sm text-red-500"></p>
-                    </div>
+                            />
+                            <p th:if="${#fields.hasErrors('accountNumber')}" th:errors="*{accountNumber}" class="mt-1 text-sm text-red-500"></p>
+                        </div>
 
-                    <!-- Account Holder -->
-                    <div>
-                        <label for="accountHolder" class="block text-sm font-semibold text-gray-700 mb-2">
-                            예금주 <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                                type="text"
-                                id="accountHolder"
+                        <!-- Account Holder -->
+                        <div>
+                            <label for="accountHolder" class="block text-sm font-semibold text-gray-700 mb-2">
+                                예금주 <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="accountHolder" 
                                 th:field="*{accountHolder}"
                                 th:value="${user != null ? user.nickname : ''}"
                                 required
                                 class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
                                 placeholder="예금주명을 입력하세요"
-                        />
-                        <p th:if="${#fields.hasErrors('accountHolder')}" th:errors="*{accountHolder}" class="mt-1 text-sm text-red-500"></p>
-                        <p class="mt-1 text-sm text-gray-500">
-                            <i class="bi bi-info-circle mr-1"></i>
-                            예금주명은 본인 명의 계좌여야 합니다.
-                        </p>
+                            />
+                            <p th:if="${#fields.hasErrors('accountHolder')}" th:errors="*{accountHolder}" class="mt-1 text-sm text-red-500"></p>
+                            <p class="mt-1 text-sm text-gray-500">
+                                <i class="bi bi-info-circle mr-1"></i>
+                                예금주명은 본인 명의 계좌여야 합니다.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Account Info Notice -->
+                    <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                        <div class="flex">
+                            <i class="bi bi-info-circle-fill text-blue-500 text-xl mr-3"></i>
+                            <div class="text-sm text-blue-800">
+                                <p class="font-semibold mb-1">계좌 정보 안내</p>
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>입금받을 본인 명의 계좌를 정확히 입력해주세요.</li>
+                                    <li>구매자는 이 계좌로 상품 대금을 입금합니다.</li>
+                                    <li>입금 확인 후 직접 구매자에게 연락해주세요.</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Account Info Notice -->
-                <div class="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <!-- Notice -->
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
                     <div class="flex">
-                        <i class="bi bi-info-circle-fill text-blue-500 text-xl mr-3"></i>
-                        <div class="text-sm text-blue-800">
-                            <p class="font-semibold mb-1">계좌 정보 안내</p>
-                            <ul class="list-disc list-inside space-y-1">
-                                <li>입금받을 본인 명의 계좌를 정확히 입력해주세요.</li>
-                                <li>구매자는 이 계좌로 상품 대금을 입금합니다.</li>
-                                <li>입금 확인 후 직접 구매자에게 연락해주세요.</li>
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-exclamation-triangle-fill text-yellow-500 text-xl"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-semibold text-yellow-800 mb-1">안전거래 유의사항</h3>
+                            <ul class="text-sm text-yellow-700 space-y-1 list-disc list-inside">
+                                <li>직거래 시 안전한 공공장소에서 만나주세요.</li>
+                                <li>선입금, 외부 메신저 유도 등 사기 거래에 주의하세요.</li>
+                                <li>상품 상태를 정확하게 기재해주세요.</li>
                             </ul>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Notice -->
-            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <i class="bi bi-exclamation-triangle-fill text-yellow-500 text-xl"></i>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-semibold text-yellow-800 mb-1">안전거래 유의사항</h3>
-                        <ul class="text-sm text-yellow-700 space-y-1 list-disc list-inside">
-                            <li>직거래 시 안전한 공공장소에서 만나주세요.</li>
-                            <li>선입금, 외부 메신저 유도 등 사기 거래에 주의하세요.</li>
-                            <li>상품 상태를 정확하게 기재해주세요.</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Buttons -->
-            <div class="flex gap-4 pt-6">
-                <button
+                <!-- Buttons -->
+                <div class="flex gap-4 pt-6">
+                    <button 
                         type="button"
                         onclick="history.back()"
                         class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-4 px-6 rounded-lg transition-all duration-300"
-                >
-                    <i class="bi bi-x-circle mr-2"></i>취소
-                </button>
-                <button
+                    >
+                        <i class="bi bi-x-circle mr-2"></i>취소
+                    </button>
+                    <button 
                         type="submit"
-                        id="submitBtn"
                         class="flex-1 bg-primary hover:bg-secondary text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-                >
-                    <i class="bi bi-check-circle mr-2"></i>등록하기
-                </button>
-            </div>
-        </form>
+                    >
+                        <i class="bi bi-check-circle mr-2"></i>등록하기
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- Footer -->
-<footer class="bg-primary text-white mt-20 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <p>&copy; 2025 GUGU Market. All rights reserved.</p>
-    </div>
-</footer>
+    <!-- Footer -->
+    <footer class="bg-primary text-white mt-20 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 GUGU Market. All rights reserved.</p>
+        </div>
+    </footer>
 
-<script>
-    // 🔥 메인 이미지 업로드
-    async function uploadMainImage(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // 파일 크기 체크 (10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            alert('파일 크기는 10MB를 초과할 수 없습니다.');
-            event.target.value = '';
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        // 업로드 영역 숨기고 진행 표시
-        document.getElementById('mainImageUploadArea').style.display = 'none';
-        document.getElementById('mainImageProgress').style.display = 'block';
-
-        try {
-            const response = await fetch('/api/images/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                // Hidden input에 이미지 URL 저장
-                document.getElementById('mainImageUrl').value = result.imageUrl;
-
-                // 미리보기 표시
-                const preview = document.getElementById('mainImagePreview');
-                preview.querySelector('img').src = result.imageUrl;
-                preview.classList.remove('hidden');
-
-                // 진행 표시 숨기기
-                document.getElementById('mainImageProgress').style.display = 'none';
-            } else {
-                alert('업로드 실패: ' + result.message);
-                resetMainImageUpload();
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('업로드 중 오류가 발생했습니다.');
-            resetMainImageUpload();
-        }
-    }
-
-    // 메인 이미지 제거
-    function removeMainImage() {
-        document.getElementById('mainImage').value = '';
-        document.getElementById('mainImageUrl').value = '';
-        document.getElementById('mainImagePreview').classList.add('hidden');
-        document.getElementById('mainImageUploadArea').style.display = 'block';
-    }
-
-    // 메인 이미지 업로드 영역 리셋
-    function resetMainImageUpload() {
-        document.getElementById('mainImage').value = '';
-        document.getElementById('mainImageProgress').style.display = 'none';
-        document.getElementById('mainImageUploadArea').style.display = 'block';
-    }
-
-    // 🔥 추가 이미지 업로드
-    async function uploadAdditionalImages(event) {
-        const files = Array.from(event.target.files);
-        if (files.length === 0) return;
-
-        if (files.length > 5) {
-            alert('최대 5개의 이미지만 업로드 가능합니다.');
-            event.target.value = '';
-            return;
-        }
-
-        // 파일 크기 체크
-        for (let file of files) {
-            if (file.size > 10 * 1024 * 1024) {
-                alert('파일 크기는 10MB를 초과할 수 없습니다: ' + file.name);
-                event.target.value = '';
-                return;
+    <script>
+        // Main image preview
+        function previewMainImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('mainImagePreview');
+                    preview.querySelector('img').src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
             }
         }
 
-        const formData = new FormData();
-        files.forEach(file => {
-            formData.append('files', file);
-        });
-
-        // 업로드 영역 숨기고 진행 표시
-        document.getElementById('additionalImagesUploadArea').style.display = 'none';
-        document.getElementById('additionalImagesProgress').style.display = 'block';
-
-        try {
-            const response = await fetch('/api/images/upload-multiple', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                // Hidden inputs 생성 (이미지 URL들)
-                const urlsContainer = document.getElementById('additionalImagesUrls');
-                urlsContainer.innerHTML = '';
-                result.imageUrls.forEach((url, index) => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'additionalImages';
-                    input.value = url;
-                    urlsContainer.appendChild(input);
-                });
-
-                // 미리보기 표시
-                const previewContainer = document.getElementById('additionalImagesPreview');
-                previewContainer.innerHTML = '';
+        // Additional images preview
+        function previewAdditionalImages(event) {
+            const files = event.target.files;
+            const previewContainer = document.getElementById('additionalImagesPreview');
+            previewContainer.innerHTML = '';
+            
+            if (files.length > 0) {
                 previewContainer.classList.remove('hidden');
-
-                result.imageUrls.forEach(url => {
-                    const div = document.createElement('div');
-                    div.className = 'relative';
-                    div.innerHTML = `
-                            <img src="${url}" class="w-full h-24 object-cover rounded-lg">
-                        `;
-                    previewContainer.appendChild(div);
+                
+                Array.from(files).slice(0, 5).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'w-full h-24 object-cover rounded-lg';
+                        previewContainer.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
                 });
-
-                // 성공 메시지 추가
-                const successMsg = document.createElement('p');
-                successMsg.className = 'col-span-5 text-center text-sm text-green-600 mt-2';
-                successMsg.innerHTML = '<i class="bi bi-check-circle-fill mr-1"></i>' + result.count + '개 업로드 완료';
-                previewContainer.appendChild(successMsg);
-
-                // 진행 표시 숨기기
-                document.getElementById('additionalImagesProgress').style.display = 'none';
-            } else {
-                alert('업로드 실패: ' + result.message);
-                resetAdditionalImagesUpload();
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('업로드 중 오류가 발생했습니다.');
-            resetAdditionalImagesUpload();
         }
-    }
-
-    // 추가 이미지 업로드 영역 리셋
-    function resetAdditionalImagesUpload() {
-        document.getElementById('additionalImages').value = '';
-        document.getElementById('additionalImagesProgress').style.display = 'none';
-        document.getElementById('additionalImagesUploadArea').style.display = 'block';
-        document.getElementById('additionalImagesPreview').classList.add('hidden');
-        document.getElementById('additionalImagesUrls').innerHTML = '';
-    }
-
-    // 폼 제출 전 검증
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const mainImageUrl = document.getElementById('mainImageUrl').value;
-        if (!mainImageUrl) {
-            e.preventDefault();
-            alert('대표 이미지를 업로드해주세요.');
-            return false;
-        }
-    });
-</script>
+    </script>
 </body>
 </html>

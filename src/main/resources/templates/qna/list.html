@@ -23,30 +23,15 @@
     </style>
 </head>
 <body class="bg-gray-50">
-<div class="bg-primary text-white py-2">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="flex justify-end items-center space-x-6 text-sm">
-
-            <!-- ✅ 로그인 상태 -->
-            <span th:if="${#authorization.expression('isAuthenticated()')}"
-                  th:text="${#authentication.name} + '님'">사용자님</span>
-
-            <form th:if="${#authorization.expression('isAuthenticated()')}"
-                  th:action="@{/users/logout}" method="post" class="inline">
-                <button type="submit" class="hover:underline bg-transparent border-0 text-white">로그아웃</button>
-            </form>
-
-            <!-- ✅ 비로그인 상태 -->
-            <a th:if="${#authorization.expression('isAnonymous()')}"
-               href="/users/login"
-               class="hover:underline">로그인</a>
-
-            <a th:if="${#authorization.expression('isAnonymous()')}"
-               href="/users/signup"
-               class="hover:underline">회원가입</a>
+    <!-- Top Bar -->
+    <div class="bg-primary text-white py-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-end items-center space-x-6 text-sm">
+                <a href="/login" class="hover:underline">로그인</a>
+                <a href="/signup" class="hover:underline">회원가입</a>
+            </div>
         </div>
     </div>
-</div>
 
     <!-- Navbar -->
     <nav class="bg-white shadow-md sticky top-0 z-50">
@@ -58,7 +43,7 @@
                 </a>
                 <div class="flex items-center space-x-8">
                     <a href="/" class="text-gray-700 hover:text-primary font-medium transition-colors duration-200">홈</a>
-                    <a href="/qna/list" class="text-primary font-bold">Q&A</a>
+                    <a href="/qna" class="text-primary font-bold">Q&A</a>
                 </div>
             </div>
         </div>
@@ -133,7 +118,7 @@
                             <div class="flex items-center gap-4 text-sm text-gray-500">
                                 <span>
                                     <i class="bi bi-person-circle mr-1"></i>
-                                    <span th:text="${qna.nickName}">작성자</span>
+                                    <span th:text="${qna.user.nickname}">작성자</span>
                                 </span>
                                 <span>
                                     <i class="bi bi-calendar3 mr-1"></i>
@@ -156,7 +141,7 @@
                                 <i class="bi bi-person text-white"></i>
                             </div>
                             <div class="flex-1">
-                                <p class="font-semibold text-gray-800 mb-1" th:text="${qna.nickName}">작성자</p>
+                                <p class="font-semibold text-gray-800 mb-1" th:text="${qna.user.nickname}">작성자</p>
                                 <p class="text-gray-700 whitespace-pre-line leading-relaxed" th:text="${qna.content}">
                                     질문 내용이 여기에 표시됩니다.
                                 </p>
