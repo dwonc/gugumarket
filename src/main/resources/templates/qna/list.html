@@ -26,8 +26,6 @@
 <div class="bg-primary text-white py-2">
     <div class="max-w-7xl mx-auto px-4">
         <div class="flex justify-end items-center space-x-6 text-sm">
-
-            <!-- ✅ 로그인 상태 -->
             <span th:if="${#authorization.expression('isAuthenticated()')}"
                   th:text="${#authentication.name} + '님'">사용자님</span>
 
@@ -36,7 +34,6 @@
                 <button type="submit" class="hover:underline bg-transparent border-0 text-white">로그아웃</button>
             </form>
 
-            <!-- ✅ 비로그인 상태 -->
             <a th:if="${#authorization.expression('isAnonymous()')}"
                href="/users/login"
                class="hover:underline">로그인</a>
@@ -48,222 +45,269 @@
     </div>
 </div>
 
-    <!-- Navbar -->
-    <nav class="bg-white shadow-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <a href="/" class="flex items-center space-x-3 group">
-                    <i class="bi bi-shop text-4xl text-primary group-hover:text-secondary transition-colors duration-300"></i>
-                    <span class="text-3xl font-bold text-primary group-hover:text-secondary transition-colors duration-300">GUGU Market</span>
-                </a>
-                <div class="flex items-center space-x-8">
-                    <a href="/" class="text-gray-700 hover:text-primary font-medium transition-colors duration-200">홈</a>
-                    <a href="/qna/list" class="text-primary font-bold">Q&A</a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Page Header -->
-    <div class="bg-white border-b">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-4xl font-bold text-gray-800 mb-2">Q&A 게시판</h1>
-                    <p class="text-gray-600">궁금한 점이 있으시면 언제든지 문의해주세요!</p>
-                </div>
-                <button onclick="location.href='/qna/write'" class="bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg flex items-center gap-2">
-                    <i class="bi bi-pencil-square"></i>
-                    질문 작성
-                </button>
+<!-- Navbar -->
+<nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <a href="/" class="flex items-center space-x-3 group">
+                <i class="bi bi-shop text-4xl text-primary group-hover:text-secondary transition-colors duration-300"></i>
+                <span class="text-3xl font-bold text-primary group-hover:text-secondary transition-colors duration-300">GUGU Market</span>
+            </a>
+            <div class="flex items-center space-x-8">
+                <a href="/" class="text-gray-700 hover:text-primary font-medium transition-colors duration-200">홈</a>
+                <a href="/qna/list" class="text-primary font-bold">Q&A</a>
             </div>
         </div>
     </div>
+</nav>
 
-    <!-- Main Content -->
+<!-- Page Header -->
+<div class="bg-white border-b">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Search & Filter -->
-        <div class="bg-white rounded-xl shadow-md p-6 mb-6">
-            <div class="flex flex-col md:flex-row gap-4">
-                <select class="px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary">
-                    <option>전체</option>
-                    <option>답변대기</option>
-                    <option>답변완료</option>
-                </select>
-                <div class="flex-1 flex gap-2">
-                    <input 
-                        type="text" 
-                        placeholder="검색어를 입력하세요..." 
-                        class="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary"
-                    />
-                    <button class="bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition-all">
-                        <i class="bi bi-search"></i> 검색
-                    </button>
-                </div>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">Q&A 게시판</h1>
+                <p class="text-gray-600">궁금한 점이 있으시면 언제든지 문의해주세요!</p>
             </div>
+            <button onclick="location.href='/qna/write'" class="bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg flex items-center gap-2">
+                <i class="bi bi-pencil-square"></i>
+                질문 작성
+            </button>
         </div>
+    </div>
+</div>
 
-        <!-- Q&A List -->
-        <div class="space-y-4">
-            <!-- Q&A Item -->
-            <div th:each="qna, iterStat : ${qnaPosts}" class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300">
-                <!-- Question -->
-                <div class="p-6 cursor-pointer" th:onclick="'toggleAnswer(' + ${iterStat.index} + ')'">
-                    <div class="flex items-start gap-4">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                                <i class="bi bi-question-circle text-primary text-2xl"></i>
-                            </div>
+<!-- Main Content -->
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Search Section -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <form action="/qna/list" method="get" class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1 flex gap-2">
+                <input
+                        type="text"
+                        name="keyword"
+                        th:value="${keyword}"
+                        placeholder="제목 또는 내용으로 검색하세요..."
+                        class="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary"
+                />
+                <button type="submit" class="bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition-all">
+                    <i class="bi bi-search"></i> 검색
+                </button>
+            </div>
+        </form>
+
+        <!-- 검색 결과 표시 -->
+        <div th:if="${keyword != null && !keyword.isEmpty()}" class="mt-3 text-center">
+                <span class="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm">
+                    <i class="bi bi-search"></i>
+                    '<span th:text="${keyword}">검색어</span>' 검색 결과
+                    <a th:href="@{/qna/list}"
+                       class="ml-2 hover:text-secondary" title="검색 초기화">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                </span>
+        </div>
+    </div>
+
+    <!-- Q&A List -->
+    <div class="space-y-4">
+        <!-- Q&A Item -->
+        <div th:each="qna, iterStat : ${qnaPosts.content}" class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300">
+            <!-- Question -->
+            <div class="p-6 cursor-pointer" th:onclick="'toggleAnswer(' + ${iterStat.index} + ')'">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                            <i class="bi bi-question-circle text-primary text-2xl"></i>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-3 mb-2">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-3 mb-2">
                                 <span th:if="${qna.isAnswered}" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
                                     <i class="bi bi-check-circle-fill mr-1"></i>답변완료
                                 </span>
-                                <span th:unless="${qna.isAnswered}" class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
+                            <span th:unless="${qna.isAnswered}" class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
                                     <i class="bi bi-clock-fill mr-1"></i>답변대기
                                 </span>
-                                <span class="text-sm text-gray-500">
+                            <span class="text-sm text-gray-500">
                                     Q. <span th:text="${iterStat.count}">1</span>
                                 </span>
-                            </div>
-                            <h3 class="text-lg font-bold text-gray-800 mb-2 hover:text-primary transition-colors" th:text="${qna.title}">
-                                질문 제목이 여기에 표시됩니다
-                            </h3>
-                            <div class="flex items-center gap-4 text-sm text-gray-500">
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-2 hover:text-primary transition-colors" th:text="${qna.title}">
+                            질문 제목이 여기에 표시됩니다
+                        </h3>
+                        <div class="flex items-center gap-4 text-sm text-gray-500">
                                 <span>
                                     <i class="bi bi-person-circle mr-1"></i>
-                                    <span th:text="${qna.nickName}">작성자</span>
+                                    <span th:text="${qna.user.nickname}">작성자</span>
                                 </span>
-                                <span>
+                            <span>
                                     <i class="bi bi-calendar3 mr-1"></i>
                                     <span th:text="${#temporals.format(qna.createdDate, 'yyyy-MM-dd HH:mm')}">2025-01-19</span>
                                 </span>
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <i th:id="'arrow-' + ${iterStat.index}" class="bi bi-chevron-down text-gray-400 text-xl transition-transform duration-300"></i>
                         </div>
                     </div>
-                </div>
-
-                <!-- Answer (Hidden by default) -->
-                <div th:id="'answer-' + ${iterStat.index}" class="hidden border-t border-gray-200">
-                    <!-- Question Content -->
-                    <div class="bg-gray-50 p-6">
-                        <div class="flex items-start gap-3 mb-3">
-                            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                                <i class="bi bi-person text-white"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-semibold text-gray-800 mb-1" th:text="${qna.nickName}">작성자</p>
-                                <p class="text-gray-700 whitespace-pre-line leading-relaxed" th:text="${qna.content}">
-                                    질문 내용이 여기에 표시됩니다.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Admin Answer -->
-                    <div th:if="${qna.isAnswered && qna.qnaAnswers != null && !qna.qnaAnswers.empty}" class="bg-blue-50 p-6">
-                        <div th:each="answer : ${qna.qnaAnswers}" class="flex items-start gap-3">
-                            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                <i class="bi bi-shield-check text-white"></i>
-                            </div>
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <p class="font-semibold text-blue-800">관리자</p>
-                                    <span class="text-sm text-gray-500">
-                                        <span th:text="${#temporals.format(answer.createdDate, 'yyyy-MM-dd HH:mm')}">2025-01-19</span>
-                                    </span>
-                                </div>
-                                <p class="text-gray-700 whitespace-pre-line leading-relaxed" th:text="${answer.content}">
-                                    답변 내용이 여기에 표시됩니다.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Waiting for Answer -->
-                    <div th:unless="${qna.isAnswered}" class="bg-orange-50 p-6 text-center">
-                        <i class="bi bi-hourglass-split text-orange-500 text-3xl mb-2"></i>
-                        <p class="text-orange-700 font-medium">관리자의 답변을 기다리고 있습니다.</p>
-                        <p class="text-orange-600 text-sm mt-1">빠른 시일 내에 답변드리겠습니다.</p>
+                    <div class="flex-shrink-0">
+                        <i th:id="'arrow-' + ${iterStat.index}" class="bi bi-chevron-down text-gray-400 text-xl transition-transform duration-300"></i>
                     </div>
                 </div>
             </div>
 
-            <!-- Empty State -->
-            <div th:if="${qnaPosts == null || qnaPosts.empty}" class="bg-white rounded-xl shadow-md p-16 text-center">
-                <i class="bi bi-inbox text-6xl text-gray-300 mb-4"></i>
-                <p class="text-gray-500 text-lg mb-4">등록된 Q&A가 없습니다.</p>
-                <button onclick="location.href='/qna/write'" class="bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition-all">
-                    <i class="bi bi-pencil-square mr-2"></i>첫 질문 작성하기
-                </button>
+            <!-- Answer (Hidden by default) -->
+            <div th:id="'answer-' + ${iterStat.index}" class="hidden border-t border-gray-200">
+                <!-- Question Content -->
+                <div class="bg-gray-50 p-6">
+                    <div class="flex items-start gap-3 mb-3">
+                        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="bi bi-person text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-800 mb-1" th:text="${qna.user.nickname}">작성자</p>
+                            <p class="text-gray-700 whitespace-pre-line leading-relaxed" th:text="${qna.content}">
+                                질문 내용이 여기에 표시됩니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Answer -->
+                <div th:if="${qna.isAnswered && qna.qnaAnswers != null && !qna.qnaAnswers.empty}" class="bg-blue-50 p-6">
+                    <div th:each="answer : ${qna.qnaAnswers}" class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="bi bi-shield-check text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <p class="font-semibold text-blue-800">관리자</p>
+                                <span class="text-sm text-gray-500">
+                                        <span th:text="${#temporals.format(answer.createdDate, 'yyyy-MM-dd HH:mm')}">2025-01-19</span>
+                                    </span>
+                            </div>
+                            <p class="text-gray-700 whitespace-pre-line leading-relaxed" th:text="${answer.content}">
+                                답변 내용이 여기에 표시됩니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Waiting for Answer -->
+                <div th:unless="${qna.isAnswered}" class="bg-orange-50 p-6 text-center">
+                    <i class="bi bi-hourglass-split text-orange-500 text-3xl mb-2"></i>
+                    <p class="text-orange-700 font-medium">관리자의 답변을 기다리고 있습니다.</p>
+                    <p class="text-orange-600 text-sm mt-1">빠른 시일 내에 답변드리겠습니다.</p>
+                </div>
             </div>
         </div>
 
-        <!-- Pagination -->
-        <div class="flex justify-center items-center space-x-2 mt-8">
-            <button class="px-4 py-2 bg-gray-200 text-gray-400 rounded-lg cursor-not-allowed">
-                이전
-            </button>
-            <button class="px-4 py-2 bg-primary text-white rounded-lg">1</button>
-            <button class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">2</button>
-            <button class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">3</button>
-            <button class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">4</button>
-            <button class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">5</button>
-            <button class="px-4 py-2 bg-primary text-white rounded-lg">
-                다음
+        <!-- Empty State -->
+        <div th:if="${qnaPosts.content.isEmpty()}" class="bg-white rounded-xl shadow-md p-16 text-center">
+            <i class="bi bi-inbox text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500 text-lg mb-2" th:if="${keyword != null && !keyword.isEmpty()}">
+                '<span th:text="${keyword}">검색어</span>'에 대한 검색 결과가 없습니다.
+            </p>
+            <p class="text-gray-500 text-lg mb-4" th:unless="${keyword != null && !keyword.isEmpty()}">
+                등록된 Q&A가 없습니다.
+            </p>
+            <button onclick="location.href='/qna/write'" class="bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition-all">
+                <i class="bi bi-pencil-square mr-2"></i>첫 질문 작성하기
             </button>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-primary text-white mt-20 py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div>
-                    <div class="flex items-center space-x-2 mb-4">
-                        <i class="bi bi-shop text-3xl"></i>
-                        <h3 class="text-2xl font-bold">GUGU Market</h3>
-                    </div>
-                    <p class="opacity-90">안전하고 편리한 중고거래 플랫폼</p>
+    <!-- Pagination -->
+    <div th:if="${totalPages > 1}" class="flex justify-center items-center space-x-2 mt-8">
+        <!-- 이전 버튼 -->
+        <a th:if="${currentPage > 0}"
+           th:href="@{/qna/list(page=${currentPage - 1}, keyword=${keyword})}"
+           class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
+            이전
+        </a>
+        <button th:unless="${currentPage > 0}"
+                class="px-4 py-2 bg-gray-200 text-gray-400 rounded-lg cursor-not-allowed">
+            이전
+        </button>
+
+        <!-- 페이지 번호 -->
+        <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+            <a th:if="${i >= currentPage - 2 && i <= currentPage + 2}"
+               th:href="@{/qna/list(page=${i}, keyword=${keyword})}"
+               th:classappend="${i == currentPage} ? 'bg-primary text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'"
+               class="px-4 py-2 rounded-lg"
+               th:text="${i + 1}">1</a>
+        </th:block>
+
+        <!-- 다음 버튼 -->
+        <a th:if="${currentPage < totalPages - 1}"
+           th:href="@{/qna/list(page=${currentPage + 1}, keyword=${keyword})}"
+           class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
+            다음
+        </a>
+        <button th:unless="${currentPage < totalPages - 1}"
+                class="px-4 py-2 bg-gray-200 text-gray-400 rounded-lg cursor-not-allowed">
+            다음
+        </button>
+    </div>
+
+    <!-- 페이지 정보 -->
+    <div th:if="${!qnaPosts.content.isEmpty()}" class="text-center mt-4 text-gray-600 text-sm">
+        총 <span class="font-bold text-primary" th:text="${totalElements}">0</span>개의 게시글
+        | 현재 <span class="font-bold" th:text="${currentPage + 1}">1</span> / <span th:text="${totalPages}">1</span> 페이지
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-primary text-white mt-20 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <div class="flex items-center space-x-2 mb-4">
+                    <i class="bi bi-shop text-3xl"></i>
+                    <h3 class="text-2xl font-bold">GUGU Market</h3>
                 </div>
-                <div>
-                    <h4 class="text-lg font-semibold mb-4">바로가기</h4>
-                    <ul class="space-y-2 opacity-90">
-                        <li><a href="#" class="hover:underline">이용약관</a></li>
-                        <li><a href="#" class="hover:underline">개인정보처리방침</a></li>
-                        <li><a href="/qna" class="hover:underline">고객센터</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-lg font-semibold mb-4">고객센터</h4>
-                    <p class="opacity-90">평일 09:00 - 18:00</p>
-                    <p class="opacity-90">주말 및 공휴일 휴무</p>
-                </div>
+                <p class="opacity-90">안전하고 편리한 중고거래 플랫폼</p>
             </div>
-            <div class="border-t border-white/20 mt-8 pt-8 text-center">
-                <p class="opacity-75 text-sm">&copy; 2025 GUGU Market. All rights reserved.</p>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">바로가기</h4>
+                <ul class="space-y-2 opacity-90">
+                    <li><a href="#" class="hover:underline">이용약관</a></li>
+                    <li><a href="#" class="hover:underline">개인정보처리방침</a></li>
+                    <li><a href="/qna" class="hover:underline">고객센터</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold mb-4">고객센터</h4>
+                <p class="opacity-90">평일 09:00 - 18:00</p>
+                <p class="opacity-90">주말 및 공휴일 휴무</p>
             </div>
         </div>
-    </footer>
+        <div class="border-t border-white/20 mt-8 pt-8 text-center">
+            <p class="opacity-75 text-sm">&copy; 2025 GUGU Market. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
 
-    <script>
-        // Toggle answer visibility
-        function toggleAnswer(index) {
-            const answerDiv = document.getElementById('answer-' + index);
-            const arrowIcon = document.getElementById('arrow-' + index);
-            
-            if (answerDiv.classList.contains('hidden')) {
-                answerDiv.classList.remove('hidden');
-                arrowIcon.classList.add('rotate-180');
-            } else {
-                answerDiv.classList.add('hidden');
-                arrowIcon.classList.remove('rotate-180');
-            }
+<script>
+    function toggleAnswer(index) {
+        const answerDiv = document.getElementById('answer-' + index);
+        const arrowIcon = document.getElementById('arrow-' + index);
+
+        if (answerDiv.classList.contains('hidden')) {
+            answerDiv.classList.remove('hidden');
+            arrowIcon.classList.add('rotate-180');
+        } else {
+            answerDiv.classList.add('hidden');
+            arrowIcon.classList.remove('rotate-180');
         }
-    </script>
+    }
+</script>
 </body>
 </html>
+```
+
+---
+
+## ✅ 완성!
+
+이제 서버 재시작하고 테스트하세요! 🚀
+```
+http://localhost:8080/qna/list?keyword=배송
