@@ -34,4 +34,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByUserNameContainingOrNicknameContainingOrEmailContaining(
             String userName, String nickname, String email);
     // ❌ findByUsername() 는 삭제!
+    // email로 조회
+    Optional<User> findByEmail(String email);
 }

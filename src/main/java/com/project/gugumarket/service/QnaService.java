@@ -1,60 +1,71 @@
 package com.project.gugumarket.service;
 
 import com.project.gugumarket.DataNotFoundException;
+import com.project.gugumarket.dto.QnaDto;
 import com.project.gugumarket.entity.QnaPost;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.QnaRepository;
+import com.project.gugumarket.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class QnaService {
 
     private final QnaRepository qnaRepository;
+    private final UserRepository userRepository;
 
-    // ==================== 기존 메서드들 ==================== //
-
-    public QnaPost getQnaPost(Long qnaId) {
-        Optional<QnaPost> qnaPost = qnaRepository.findById(qnaId);
-        if (qnaPost.isPresent()) {
-            return qnaPost.get();
-        } else {
-            throw new DataNotFoundException("QnA 게시글을 찾을 수 없습니다.");
-        }
-    }
-
+    /**
+     * Q&A 작성
+     */
     @Transactional
-    public QnaPost createQna(String title, String content, User user) {
-        QnaPost qnaPost = QnaPost.builder()
-                .user(user)
-                .title(title)
-                .content(content)
-                .isAnswered(false)
-                .build();
+    public QnaPost create(QnaDto dto, String loginName) {
+        log.info("Q&A 작성 - loginName: {}", loginName);
 
-        return qnaRepository.save(qnaPost);
+        // loginName으로 사용자 찾기 (email 먼저, 없으면 userName)
+        User user = userRepository.findByEmail(loginName)
+                .orElseGet(() ->
+                        userRepository.findByUserName(loginName)
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                        "사용자를 찾을 수 없습니다: " + loginName)));
+
+        // DTO → Entity 변환
+        QnaPost qnaPost = QnaDto.toEntity(dto);
+        qnaPost.setUser(user);
+        qnaPost.setIsAnswered(false);
+
+        QnaPost savedQna = qnaRepository.save(qnaPost);
+
+        log.info("Q&A 작성 완료 - ID: {}", savedQna.getQnaId());
+
+        return savedQna;
     }
 
-    @Transactional
-    public void updateQna(Long qnaId, String title, String content) {
-        QnaPost qnaPost = getQnaPost(qnaId);
-        qnaPost.setTitle(title);
-        qnaPost.setContent(content);
-        qnaRepository.save(qnaPost);
-    }
+    /**
+     * 전체 Q&A 목록 조회
+     */
+    public List<QnaDto> findAllDtos() {
+        log.info("전체 Q&A 목록 조회");
 
-    @Transactional
-    public void deleteQna(Long qnaId) {
-        QnaPost qnaPost = getQnaPost(qnaId);
-        qnaRepository.delete(qnaPost);
-    }
+        List<QnaPost> qnaList = qnaRepository.findAll();
 
+        log.info("Q&A {}개 조회 완료", qnaList.size());
+
+        return qnaList.stream()
+                .map(QnaDto::fromEntity)
+                .toList();
+    }
     // ==================== 검색 기능 ==================== //
 
     /**
@@ -76,4 +87,6 @@ public class QnaService {
     public Page<QnaPost> getQnaList(Pageable pageable) {
         return qnaRepository.findAllByOrderByCreatedDateDesc(pageable);
     }
+
+
 }
