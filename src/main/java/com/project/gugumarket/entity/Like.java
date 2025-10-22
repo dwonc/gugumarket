@@ -2,6 +2,9 @@ package com.project.gugumarket.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 
 @Entity
@@ -25,4 +28,8 @@ public class Like {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PRODUCT_ID", nullable = false)
     private Product product;
+
+    @CreationTimestamp
+    @Column(name = "CREATED_DATE")
+    private LocalDateTime createdDate;
 }

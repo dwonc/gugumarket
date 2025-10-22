@@ -35,3 +35,10 @@ out/
 
 ### VS Code ###
 .vscode/
+logs/
+*.log
+<<<<<<< HEAD
+logs/
+*.log
+=======
+>>>>>>> 91b1a94cf3aa06d138215afb7119c07b3f8154d7

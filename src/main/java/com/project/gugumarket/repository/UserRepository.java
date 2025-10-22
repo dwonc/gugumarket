@@ -3,9 +3,12 @@ package com.project.gugumarket.repository;
 import com.project.gugumarket.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import org.springframework.stereotype.Repository;
+
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User,Long> {
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
 
     // userName으로 중복 체크
     boolean existsByUserName(String userName);
@@ -13,8 +16,14 @@ public interface UserRepository extends JpaRepository<User,Long> {
     // email로 중복 체크
     boolean existsByEmail(String email);
 
-    // 로그인용 (나중에 필요)
+    // ID로 조회
+    Optional<User> findById(Long id);
+
+    // userName으로 조회 ✅
     Optional<User> findByUserName(String userName);
 
+    // email로 조회
     Optional<User> findByEmail(String email);
+
+    // ❌ findByUsername() 는 삭제!
 }
