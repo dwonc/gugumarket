@@ -13,27 +13,18 @@ import java.util.Optional;
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     /**
-     * 모든 카테고리 조회 (ID 순서대로)
+     * 카테고리 ID 오름차순 정렬
      */
     List<Category> findAllByOrderByCategoryIdAsc();
 
     /**
-     * 카테고리명으로 조회
+     * 특정 카테고리의 상품 개수 조회
+     */
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.categoryId = :categoryId AND p.isDeleted = false")
+    Long countProductsByCategoryId(@Param("categoryId") Long categoryId);
+
+    /**
+     * 카테고리 이름으로 조회
      */
     Optional<Category> findByName(String name);
-
-    /**
-     * 카테고리명 중복 체크
-     */
-    boolean existsByName(String name);
-
-    /**
-     * 카테고리별 상품 개수 조회 (삭제되지 않은 상품만)
-     */
-    @Query("SELECT COUNT(p) FROM Product p " +
-            "WHERE p.category.categoryId = :categoryId " +
-            "AND p.isDeleted = false")
-    long countProductsByCategoryId(@Param("categoryId") Long categoryId);
-
 }
-

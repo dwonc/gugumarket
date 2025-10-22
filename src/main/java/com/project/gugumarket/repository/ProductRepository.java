@@ -16,7 +16,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     /**
      * 카테고리별 상품 조회 (페이징)
-     * ⭐ Category_CategoryId로 수정 (언더스코어 추가)
      */
     Page<Product> findByCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(Long categoryId, Pageable pageable);
+
+    /**
+     * 제목으로 검색 (전체 카테고리)
+     */
+    Page<Product> findByTitleContainingAndIsDeletedFalseOrderByCreatedDateDesc(String keyword, Pageable pageable);
+
+    /**
+     * 제목 + 카테고리로 검색
+     */
+    Page<Product> findByTitleContainingAndCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(
+            String keyword, Long categoryId, Pageable pageable);
 }
