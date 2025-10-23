@@ -115,14 +115,34 @@
             </div>
 
             <!-- Thumbnail Images -->
-            <div class="grid grid-cols-4 gap-3" th:if="${product.productImages != null && !product.productImages.isEmpty()}">
-                <div th:each="image : ${product.productImages}"
-                     class="bg-white rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary transition-all">
+            <div class="grid grid-cols-4 gap-3">
+                <!-- 원본 메인 이미지 썸네일 (첫 번째) -->
+                <div
+                        class="bg-white rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary transition-all thumbnail-active"
+                        data-thumbnail="original"
+                        onmouseenter="changeMainImage(this.querySelector('img').src, this)"
+                        onclick="changeMainImage(this.querySelector('img').src, this)"
+                >
+                    <img
+                            th:src="${product.mainImage}"
+                            th:alt="'메인 이미지'"
+                            class="w-full h-24 object-cover"
+                    />
+                </div>
+
+                <!-- 추가 상품 이미지들 -->
+                <div
+                        th:if="${product.productImages != null && !product.productImages.isEmpty()}"
+                        th:each="image : ${product.productImages}"
+                        class="bg-white rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                        data-thumbnail="additional"
+                        onmouseenter="changeMainImage(this.querySelector('img').src, this)"
+                        onclick="changeMainImage(this.querySelector('img').src, this)"
+                >
                     <img
                             th:src="${image.imageUrl}"
                             th:alt="'상품 이미지 ' + ${image.imageOrder}"
                             class="w-full h-24 object-cover"
-                            onclick="changeMainImage(this.src)"
                     />
                 </div>
             </div>
@@ -658,138 +678,152 @@
 
 
 
-<script th:inline="javascript">
-    // Change main image when clicking thumbnail
-    function changeMainImage(src) {
-        document.getElementById('mainImage').src = src;
-    }
+        <script th:inline="javascript">
+            /**
+             * 메인 이미지를 변경하는 함수
+             *
+             * @param {string} src - 보여줄 이미지의 URL 주소
+             * @param {HTMLElement} thumbnail - 클릭하거나 마우스를 올린 썸네일 요소
+             */
+            function changeMainImage(src, thumbnail) {
+                // 1. 메인 이미지의 src(이미지 주소)를 변경
+                document.getElementById('mainImage').src = src;
 
-    // 🔥 찜하기 토글
-    async function toggleLike() {
-        const productId = [[${product.productId}]];
+                // 2. 모든 썸네일에서 'thumbnail-active' 클래스 제거
+                document.querySelectorAll('[data-thumbnail]').forEach(function(thumb) {
+                    thumb.classList.remove('thumbnail-active');
+                });
 
-        try {
-            const response = await fetch(`/product/${productId}/like`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+                // 3. 현재 선택된 썸네일에만 'thumbnail-active' 클래스 추가
+                thumbnail.classList.add('thumbnail-active');
+            }
+
+            // 🔥 찜하기 토글
+            async function toggleLike() {
+                const productId = [[${product.productId}]];
+
+                try {
+                    const response = await fetch(`/product/${productId}/like`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    // 로그인 필요
+                    if (result.needLogin) {
+                        if (confirm('로그인이 필요한 기능입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                            location.href = '/users/login';
+                        }
+                        return;
+                    }
+
+                    if (result.success) {
+                        const likeButton = document.getElementById('likeButton');
+                        const likeText = document.getElementById('likeText');
+                        const likeCount = document.getElementById('likeCount');
+                        const icon = likeButton.querySelector('i');
+
+                        if (result.isLiked) {
+                            // 찜하기 완료
+                            likeButton.classList.remove('bg-white', 'text-primary', 'border-primary');
+                            likeButton.classList.add('bg-red-500', 'text-white', 'border-red-500');
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                            likeText.textContent = '찜 취소';
+                        } else {
+                            // 찜하기 취소
+                            likeButton.classList.remove('bg-red-500', 'text-white', 'border-red-500');
+                            likeButton.classList.add('bg-white', 'text-primary', 'border-primary');
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                            likeText.textContent = '찜하기';
+                        }
+
+                        likeCount.textContent = result.likeCount;
+                    } else {
+                        alert(result.message);
+                    }
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('오류가 발생했습니다.');
                 }
-            });
-
-            const result = await response.json();
-
-            // 로그인 필요
-            if (result.needLogin) {
-                if (confirm('로그인이 필요한 기능입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-                    location.href = '/users/login';
-                }
-                return;
             }
 
-            if (result.success) {
-                const likeButton = document.getElementById('likeButton');
-                const likeText = document.getElementById('likeText');
-                const likeCount = document.getElementById('likeCount');
-                const icon = likeButton.querySelector('i');
+            // 🔥 상태 변경 저장
+            let originalStatus = document.getElementById('statusSelect')?.value;
 
-                if (result.isLiked) {
-                    // 찜하기 완료
-                    likeButton.classList.remove('bg-white', 'text-primary', 'border-primary');
-                    likeButton.classList.add('bg-red-500', 'text-white', 'border-red-500');
-                    icon.classList.remove('bi-heart');
-                    icon.classList.add('bi-heart-fill');
-                    likeText.textContent = '찜 취소';
-                } else {
-                    // 찜하기 취소
-                    likeButton.classList.remove('bg-red-500', 'text-white', 'border-red-500');
-                    likeButton.classList.add('bg-white', 'text-primary', 'border-primary');
-                    icon.classList.remove('bi-heart-fill');
-                    icon.classList.add('bi-heart');
-                    likeText.textContent = '찜하기';
+            async function saveStatus() {
+                const selectElement = document.getElementById('statusSelect');
+                const productId = selectElement.dataset.productId;
+                const newStatus = selectElement.value;
+
+                // 변경사항이 없으면
+                if (newStatus === originalStatus) {
+                    alert('변경된 상태가 없습니다.');
+                    return;
                 }
 
-                likeCount.textContent = result.likeCount;
-            } else {
-                alert(result.message);
+                const statusText = selectElement.options[selectElement.selectedIndex].text;
+                if (!confirm(`상품 상태를 "${statusText}"(으)로 변경하시겠습니까?`)) {
+                    selectElement.value = originalStatus;
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/product/${productId}/status`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert('✅ 상태가 변경되었습니다.');
+                        originalStatus = newStatus;
+                        location.reload();
+                    } else {
+                        alert('❌ ' + (result.message || '상태 변경에 실패했습니다.'));
+                        selectElement.value = originalStatus;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('❌ 상태 변경 중 오류가 발생했습니다.');
+                    selectElement.value = originalStatus;
+                }
             }
 
-        } catch (error) {
-            console.error('Error:', error);
-            alert('오류가 발생했습니다.');
-        }
-    }
+            // 🔥 상품 삭제
+            async function deleteProduct() {
+                if (!confirm('정말로 이 상품을 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.')) {
+                    return;
+                }
 
-    // 🔥 상태 변경 저장
-    let originalStatus = document.getElementById('statusSelect')?.value;
+                const productId = document.getElementById('statusSelect').dataset.productId;
 
-    async function saveStatus() {
-        const selectElement = document.getElementById('statusSelect');
-        const productId = selectElement.dataset.productId;
-        const newStatus = selectElement.value;
+                try {
+                    const response = await fetch(`/product/${productId}`, {
+                        method: 'DELETE'
+                    });
 
-        // 변경사항이 없으면
-        if (newStatus === originalStatus) {
-            alert('변경된 상태가 없습니다.');
-            return;
-        }
-
-        const statusText = selectElement.options[selectElement.selectedIndex].text;
-        if (!confirm(`상품 상태를 "${statusText}"(으)로 변경하시겠습니까?`)) {
-            selectElement.value = originalStatus;
-            return;
-        }
-
-        try {
-            const response = await fetch(`/product/${productId}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ status: newStatus })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                alert('✅ 상태가 변경되었습니다.');
-                originalStatus = newStatus;
-                location.reload();
-            } else {
-                alert('❌ ' + (result.message || '상태 변경에 실패했습니다.'));
-                selectElement.value = originalStatus;
+                    if (response.ok) {
+                        alert('✅ 상품이 삭제되었습니다.');
+                        location.href = '/mypage';
+                    } else {
+                        alert('❌ 상품 삭제에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('❌ 상품 삭제 중 오류가 발생했습니다.');
+                }
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('❌ 상태 변경 중 오류가 발생했습니다.');
-            selectElement.value = originalStatus;
-        }
-    }
-
-    // 🔥 상품 삭제
-    async function deleteProduct() {
-        if (!confirm('정말로 이 상품을 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.')) {
-            return;
-        }
-
-        const productId = document.getElementById('statusSelect').dataset.productId;
-
-        try {
-            const response = await fetch(`/product/${productId}`, {
-                method: 'DELETE'
-            });
-
-            if (response.ok) {
-                alert('✅ 상품이 삭제되었습니다.');
-                location.href = '/mypage';
-            } else {
-                alert('❌ 상품 삭제에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('❌ 상품 삭제 중 오류가 발생했습니다.');
-        }
-    }
-</script>
+        </script>
 
 </body>
 </html>
