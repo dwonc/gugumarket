@@ -1,6 +1,7 @@
 package com.project.gugumarket.controller;
 
 import com.project.gugumarket.dto.UserDto;
+import com.project.gugumarket.dto.UserUpdateDto;
 import com.project.gugumarket.entity.Like;
 import com.project.gugumarket.entity.Notification;
 import com.project.gugumarket.entity.Transaction;
@@ -71,7 +72,15 @@ public class MypageController {
 
         String userName = principal.getName();
         User user = mypageService.getUserByUserName(userName);
-        UserDto userDto = mypageService.getUserInfo(userName);
+
+        // ✅ UserUpdateDto 생성 (User 엔티티에서 값 복사)
+        UserUpdateDto userDto = new UserUpdateDto();
+        userDto.setNickname(user.getNickname());
+        userDto.setEmail(user.getEmail());
+        userDto.setPhone(user.getPhone());
+        userDto.setPostalCode(user.getPostalCode());
+        userDto.setAddress(user.getAddress());
+        userDto.setAddressDetail(user.getAddressDetail());
 
         model.addAttribute("user", user);
         model.addAttribute("userDto", userDto);
@@ -82,7 +91,7 @@ public class MypageController {
     // ✅ 단순화된 프로필 수정 처리
     @PostMapping("/users/edit")
     public String editProfile(
-            @Valid @ModelAttribute UserDto userDto,
+            @Valid @ModelAttribute UserUpdateDto userDto,  // ← 여기만 변경!
             BindingResult bindingResult,
             @RequestParam(required = false) String currentPassword,
             @RequestParam(required = false) String newPassword,
@@ -93,18 +102,50 @@ public class MypageController {
             Model model,
             RedirectAttributes redirectAttributes) {
 
-        if (principal == null) return "redirect:/login";
+        // 🔥 디버깅 로그 추가
+        System.out.println("\n========================================");
+        System.out.println("🚀 프로필 수정 요청 시작!");
+        System.out.println("========================================");
+
+        if (principal == null) {
+            System.out.println("❌ Principal이 null입니다!");
+            return "redirect:/login";
+        }
 
         String userName = principal.getName();
+        System.out.println("✅ 로그인 사용자: " + userName);
+
         User user = mypageService.getUserByUserName(userName);
+        System.out.println("✅ 사용자 정보 조회 완료: " + user.getNickname());
+
+        // 🔥 받은 데이터 확인
+        System.out.println("\n📥 받은 데이터:");
+        System.out.println("  - 닉네임: " + userDto.getNickname());
+        System.out.println("  - 이메일: " + userDto.getEmail());
+        System.out.println("  - 전화번호: " + userDto.getPhone());
+        System.out.println("  - 주소: " + userDto.getAddress());
+        System.out.println("  - 상세주소: " + userDto.getAddressDetail());
+        System.out.println("  - 우편번호: " + userDto.getPostalCode());
+
+        System.out.println("\n🔍 유효성 검사:");
+        System.out.println("  - 에러 있음: " + bindingResult.hasErrors());
 
         // 유효성 검증 실패 시 먼저 처리
         if (bindingResult.hasErrors()) {
+            System.out.println("❌ 유효성 검사 실패!");
+            bindingResult.getAllErrors().forEach(error -> {
+                System.out.println("    * " + error.getDefaultMessage());
+            });
             model.addAttribute("user", user);
+            model.addAttribute("userDto", userDto);
             return "users/edit";
         }
 
+        System.out.println("✅ 유효성 검사 통과!");
+
         try {
+            System.out.println("\n🔄 데이터 업데이트 시작...");
+
             // 1️⃣ 프로필 이미지 처리
             if ("true".equals(deleteProfileImage)) {
                 System.out.println("🗑️ 프로필 이미지 삭제");
@@ -179,6 +220,10 @@ public class MypageController {
             }
 
             // 3️⃣ 기본 정보 업데이트
+            System.out.println("\n📝 사용자 정보 업데이트 중...");
+            System.out.println("  - 기존 닉네임: " + user.getNickname() + " → 새 닉네임: " + userDto.getNickname());
+            System.out.println("  - 기존 이메일: " + user.getEmail() + " → 새 이메일: " + userDto.getEmail());
+
             user.setNickname(userDto.getNickname());
             user.setEmail(userDto.getEmail());
             user.setPhone(userDto.getPhone());
@@ -187,11 +232,14 @@ public class MypageController {
             user.setPostalCode(userDto.getPostalCode());
 
             // 4️⃣ 한 번에 모든 정보 저장
-            userRepository.save(user);
-            System.out.println("✅ 모든 정보 저장 완료");
-            System.out.println("   - 프로필 이미지: " + user.getProfileImage());
-            System.out.println("   - 닉네임: " + user.getNickname());
-            System.out.println("   - 이메일: " + user.getEmail());
+            System.out.println("\n💾 데이터베이스에 저장 중...");
+            User savedUser = userRepository.save(user);
+
+            System.out.println("✅ 모든 정보 저장 완료!");
+            System.out.println("   - 저장된 닉네임: " + savedUser.getNickname());
+            System.out.println("   - 저장된 이메일: " + savedUser.getEmail());
+            System.out.println("   - 저장된 프로필 이미지: " + savedUser.getProfileImage());
+            System.out.println("========================================\n");
 
             redirectAttributes.addFlashAttribute("successMessage", "회원정보가 수정되었습니다.");
             return "redirect:/mypage";
