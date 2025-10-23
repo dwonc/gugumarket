@@ -5,7 +5,8 @@ import com.project.gugumarket.entity.Product;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.LikeRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,9 +15,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j  // 🔥 로깅 추가
 public class LikeService {
 
     private final LikeRepository likeRepository;
+    @Lazy
+    private final NotificationService notificationService;  // 🔥 알림 서비스 추가
+
     /**
      * 좋아요 추가
      */
@@ -33,6 +38,17 @@ public class LikeService {
                 .build();
 
         likeRepository.save(like);
+
+        // 🔥 찜 알림 생성
+        try {
+            notificationService.createLikeNotification(like);
+            log.info("찜 알림 생성 완료 - 사용자: {}, 상품: {}",
+                    user.getNickname(), product.getTitle());
+        } catch (Exception e) {
+            log.error("찜 알림 생성 실패 - 사용자: {}, 상품: {}, 오류: {}",
+                    user.getNickname(), product.getTitle(), e.getMessage());
+            // 알림 생성 실패해도 찜 기능은 정상 동작
+        }
     }
 
     /**
@@ -44,6 +60,7 @@ public class LikeService {
                 .orElseThrow(() -> new IllegalStateException("좋아요하지 않은 상품입니다."));
 
         likeRepository.delete(like);
+        log.info("찜 취소 완료 - 사용자: {}, 상품: {}", user.getNickname(), product.getTitle());
     }
 
     /**

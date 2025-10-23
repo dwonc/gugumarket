@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>알람 - GUGU Market</title>
+    <title>알림 - GUGU Market</title>
+
+    <!-- 🔥 CSRF 토큰 메타 태그 추가 -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -24,259 +29,438 @@
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Top Bar -->
-    <div class="bg-primary text-white py-2">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-end items-center space-x-6 text-sm">
-                <a href="/notifications" class="relative hover:text-light transition-colors">
-                    <i class="bi bi-bell text-lg"></i>
-                    <span th:if="${unreadCount > 0}"
-                          th:text="${unreadCount}"
-                          class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"></span>
-                </a>
+<!-- Top Bar -->
+<div class="bg-primary text-white py-2">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-end items-center space-x-6 text-sm">
+            <a href="/notifications" class="relative hover:text-light transition-colors">
+                <i class="bi bi-bell text-lg"></i>
+                <span th:if="${unreadCount > 0}"
+                      th:text="${unreadCount}"
+                      class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"></span>
+            </a>
 
-                <span th:if="${user != null}" th:text="${user.nickname} + '님'">사용자님</span>
-                <form th:if="${user != null}" th:action="@{/users/logout}" method="post" class="inline">
-                    <button type="submit" class="hover:text-light transition-colors bg-transparent border-0">로그아웃</button>
-                </form>
+            <span th:if="${user != null}" th:text="${user.nickname} + '님'">사용자님</span>
+            <form th:if="${user != null}" th:action="@{/users/logout}" method="post" class="inline">
+                <button type="submit" class="hover:text-light transition-colors bg-transparent border-0">로그아웃</button>
+            </form>
 
-                <a th:if="${user == null}" href="/users/login" class="hover:text-light transition-colors">로그인</a>
+            <a th:if="${user == null}" href="/users/login" class="hover:text-light transition-colors">로그인</a>
+        </div>
+    </div>
+</div>
+
+<!-- Navbar -->
+<nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <a href="/" class="flex items-center space-x-3 group">
+                <i class="bi bi-shop text-4xl text-primary group-hover:text-secondary transition-colors duration-300"></i>
+                <span class="text-3xl font-bold text-primary group-hover:text-secondary transition-colors duration-300">GUGU Market</span>
+            </a>
+            <div class="flex items-center space-x-8">
+                <a href="/" class="text-gray-700 hover:text-primary font-medium transition-colors">홈</a>
+                <a href="/mypage" class="text-gray-700 hover:text-primary font-medium transition-colors">마이페이지</a>
+                <a href="/notifications" class="text-primary font-bold">알림</a>
             </div>
         </div>
     </div>
+</nav>
 
-    <!-- Navbar -->
-    <nav class="bg-white shadow-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <a href="/" class="flex items-center space-x-3 group">
-                    <i class="bi bi-shop text-4xl text-primary group-hover:text-secondary transition-colors duration-300"></i>
-                    <span class="text-3xl font-bold text-primary group-hover:text-secondary transition-colors duration-300">GUGU Market</span>
-                </a>
-                <div class="flex items-center space-x-8">
-                    <a href="/" class="text-gray-700 hover:text-primary font-medium transition-colors">홈</a>
-                    <a href="/mypage" class="text-gray-700 hover:text-primary font-medium transition-colors">마이페이지</a>
-                    <a href="/notifications" class="text-primary font-bold">알람</a>
+<!-- Main Content -->
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">
+            <i class="bi bi-bell text-primary mr-2"></i>
+            알림
+        </h1>
+        <div class="flex gap-3">
+            <button onclick="markAllAsRead()" class="text-primary hover:text-secondary font-medium transition-colors">
+                <i class="bi bi-check-all mr-1"></i>모두 읽음 처리
+            </button>
+            <button onclick="deleteAll()" class="text-red-600 hover:text-red-700 font-medium transition-colors">
+                <i class="bi bi-trash mr-1"></i>전체 삭제
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="bg-white rounded-xl shadow-md p-2 mb-6 flex gap-2">
+        <button onclick="filterNotifications('all')" id="filter-all" class="flex-1 py-3 px-4 rounded-lg font-medium transition-all bg-primary text-white">
+            전체 <span th:text="${notifications.size()}">10</span>
+        </button>
+        <button onclick="filterNotifications('unread')" id="filter-unread" class="flex-1 py-3 px-4 rounded-lg font-medium transition-all text-gray-700 hover:bg-gray-100">
+            읽지 않음 <span th:text="${unreadCount}">3</span>
+        </button>
+        <button onclick="filterNotifications('read')" id="filter-read" class="flex-1 py-3 px-4 rounded-lg font-medium transition-all text-gray-700 hover:bg-gray-100">
+            읽음
+        </button>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="space-y-3">
+        <!-- Notification Item -->
+        <div th:each="notification : ${notifications}"
+             th:data-read="${notification.isRead}"
+             th:classappend="${notification.isRead} ? 'notification-read' : 'notification-unread'"
+             class="notification-item bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden">
+
+            <div class="p-6">
+                <div class="flex items-start gap-4">
+                    <!-- Icon -->
+                    <div class="flex-shrink-0">
+                        <div th:classappend="${notification.isRead} ? 'bg-gray-100' : 'bg-primary/10'"
+                             class="w-14 h-14 rounded-full flex items-center justify-center">
+                            <!-- 타입별 아이콘 -->
+                            <i th:if="${notification.type.name() == 'COMMENT'}"
+                               class="bi bi-chat-dots text-2xl"
+                               th:classappend="${notification.isRead} ? 'text-gray-400' : 'text-primary'"></i>
+                            <i th:if="${notification.type.name() == 'LIKE'}"
+                               class="bi bi-heart-fill text-2xl"
+                               th:classappend="${notification.isRead} ? 'text-gray-400' : 'text-red-500'"></i>
+                            <i th:if="${notification.type.name() == 'PURCHASE'}"
+                               class="bi bi-cart-fill text-2xl"
+                               th:classappend="${notification.isRead} ? 'text-gray-400' : 'text-green-600'"></i>
+                            <i th:if="${notification.type.name() == 'QNA_ANSWER'}"
+                               class="bi bi-question-circle-fill text-2xl"
+                               th:classappend="${notification.isRead} ? 'text-gray-400' : 'text-blue-600'"></i>
+                            <i th:if="${notification.type.name() == 'TRANSACTION'}"
+                               class="bi bi-check-circle-fill text-2xl"
+                               th:classappend="${notification.isRead} ? 'text-gray-400' : 'text-primary'"></i>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-4 mb-2">
+                            <p th:text="${notification.message}"
+                               th:classappend="${notification.isRead} ? 'text-gray-600' : 'text-gray-800 font-semibold'"
+                               class="text-base">
+                                알림 메시지
+                            </p>
+                            <!-- 읽지 않음 뱃지 -->
+                            <span th:if="${!notification.isRead}"
+                                  class="flex-shrink-0 w-3 h-3 bg-red-500 rounded-full"></span>
+                        </div>
+
+                        <!-- 🔥 구매 알림 - 상품 정보 상세 표시 -->
+                        <div th:if="${notification.type.name() == 'PURCHASE' && notification.transaction != null}"
+                             class="mt-4 bg-green-50 rounded-lg p-4 border-2 border-green-200">
+
+                            <!-- 구매자 정보 -->
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center">
+                                    <i class="bi bi-person-fill text-green-700 text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-800">
+                                        <span th:text="${notification.sender.nickname}">구매자명</span>
+                                        <span class="text-sm text-gray-500">님이 구매했습니다</span>
+                                    </p>
+                                    <p class="text-xs text-gray-500" th:if="${notification.transaction.depositorName != null}">
+                                        입금자명: <span class="font-medium" th:text="${notification.transaction.depositorName}">홍길동</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 구매한 상품 정보 -->
+                            <div class="border-t border-green-200 pt-3">
+                                <div class="flex items-center gap-3 p-3 bg-white rounded-lg">
+                                    <!-- 상품 이미지 -->
+                                    <img th:if="${notification.product.mainImage != null}"
+                                         th:src="${notification.product.mainImage}"
+                                         th:alt="${notification.product.title}"
+                                         class="w-20 h-20 object-cover rounded">
+                                    <div th:if="${notification.product.mainImage == null}"
+                                         class="w-20 h-20 bg-gray-200 rounded flex items-center justify-center">
+                                        <i class="bi bi-image text-gray-400 text-2xl"></i>
+                                    </div>
+
+                                    <!-- 상품 정보 -->
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-bold text-gray-800 text-lg truncate"
+                                           th:text="${notification.product.title}">상품명</p>
+                                        <p class="text-green-600 font-bold text-xl">
+                                            <span th:text="${#numbers.formatInteger(notification.product.price, 0, 'COMMA')}">50,000</span>원
+                                        </p>
+                                        <p class="text-sm text-gray-500">
+                                            <i class="bi bi-calendar-check mr-1"></i>
+                                            <span th:text="${#temporals.format(notification.transaction.createdDate, 'yyyy-MM-dd HH:mm')}">2025-01-19 14:30</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 거래 보기 버튼 -->
+                            <a th:href="${notification.url}"
+                               class="mt-3 block text-center bg-green-600 text-white py-2.5 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                                <i class="bi bi-box-arrow-up-right mr-1"></i>거래 상세보기
+                            </a>
+                        </div>
+
+                        <!-- 🔥 찜 알림 - 찜한 사람 정보 상세 표시 -->
+                        <div th:if="${notification.type.name() == 'LIKE' && notification.sender != null}"
+                             class="mt-4 bg-pink-50 rounded-lg p-4 border-2 border-pink-200">
+
+                            <!-- 찜한 사람 정보 -->
+                            <div class="flex items-center gap-4 mb-3">
+                                <div class="w-12 h-12 rounded-full bg-pink-200 flex items-center justify-center overflow-hidden">
+                                    <img th:if="${notification.sender.profileImage != null}"
+                                         th:src="${notification.sender.profileImage}"
+                                         th:alt="${notification.sender.nickname}"
+                                         class="w-full h-full object-cover">
+                                    <i th:if="${notification.sender.profileImage == null}"
+                                       class="bi bi-person-fill text-2xl text-pink-600"></i>
+                                </div>
+
+                                <div class="flex-1">
+                                    <p class="font-bold text-gray-800 text-lg">
+                                        <span th:text="${notification.sender.nickname}">사용자명</span>
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        <i class="bi bi-heart-fill text-red-500 mr-1"></i>
+                                        이 상품을 찜했습니다
+                                    </p>
+                                    <p class="text-xs text-gray-500" th:if="${notification.sender.email != null}">
+                                        <i class="bi bi-envelope mr-1"></i>
+                                        <span th:text="${notification.sender.email}">email@example.com</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 찜한 상품 정보 -->
+                            <div th:if="${notification.product != null}"
+                                 class="border-t border-pink-200 pt-3">
+                                <div class="flex items-center gap-3 p-3 bg-white rounded-lg">
+                                    <img th:if="${notification.product.mainImage != null}"
+                                         th:src="${notification.product.mainImage}"
+                                         th:alt="${notification.product.title}"
+                                         class="w-20 h-20 object-cover rounded">
+                                    <div th:if="${notification.product.mainImage == null}"
+                                         class="w-20 h-20 bg-gray-200 rounded flex items-center justify-center">
+                                        <i class="bi bi-image text-gray-400 text-2xl"></i>
+                                    </div>
+
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-bold text-gray-800 truncate"
+                                           th:text="${notification.product.title}">상품명</p>
+                                        <p class="text-pink-600 font-bold text-lg">
+                                            <span th:text="${#numbers.formatInteger(notification.product.price, 0, 'COMMA')}">50,000</span>원
+                                        </p>
+                                        <p class="text-xs text-gray-500">
+                                            <i class="bi bi-eye mr-1"></i>조회 <span th:text="${notification.product.viewCount}">15</span>
+                                            <span class="mx-2">|</span>
+                                            <i class="bi bi-heart-fill text-red-500 mr-1"></i>찜 <span th:text="${notification.product.likes.size()}">5</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 상품 보기 버튼 -->
+                            <a th:if="${notification.product != null}"
+                               th:href="${notification.url}"
+                               class="mt-3 block text-center bg-pink-500 text-white py-2.5 rounded-lg hover:bg-pink-600 transition-colors font-medium">
+                                <i class="bi bi-box-arrow-up-right mr-1"></i>상품 보기
+                            </a>
+                        </div>
+
+                        <!-- 🔥 댓글 알림 -->
+                        <div th:if="${notification.type.name() == 'COMMENT' && notification.sender != null}"
+                             class="mt-4 bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center">
+                                    <i class="bi bi-person-fill text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-800" th:text="${notification.sender.nickname}">댓글 작성자</p>
+                                    <p class="text-sm text-gray-600">님이 댓글을 남겼습니다</p>
+                                </div>
+                            </div>
+
+                            <a th:href="${notification.url}"
+                               class="mt-3 block text-center bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                <i class="bi bi-box-arrow-up-right mr-1"></i>댓글 보기
+                            </a>
+                        </div>
+
+                        <!-- 🔥 거래 완료 알림 -->
+                        <div th:if="${notification.type.name() == 'TRANSACTION' && notification.transaction != null}"
+                             class="mt-4 bg-emerald-50 rounded-lg p-4 border-2 border-emerald-200">
+                            <div class="text-center py-2">
+                                <i class="bi bi-check-circle-fill text-5xl text-emerald-500 mb-2"></i>
+                                <p class="font-bold text-gray-800 text-lg">거래가 성공적으로 완료되었습니다!</p>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    구매자: <span class="font-semibold" th:text="${notification.sender.nickname}">구매자명</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 타임스탬프 -->
+                        <p class="text-sm text-gray-500 mt-3">
+                            <i class="bi bi-clock mr-1"></i>
+                            <span th:text="${#temporals.format(notification.createdDate, 'yyyy-MM-dd HH:mm')}">2025-01-19 14:30</span>
+                        </p>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex-shrink-0 flex flex-col gap-2">
+                        <button th:if="${!notification.isRead}"
+                                th:onclick="'markAsRead(' + ${notification.notificationId} + ')'"
+                                class="text-primary hover:text-secondary text-sm p-2 rounded hover:bg-gray-100"
+                                title="읽음 처리">
+                            <i class="bi bi-check2"></i>
+                        </button>
+                        <button th:onclick="'deleteNotification(' + ${notification.notificationId} + ', event)'"
+                                class="text-gray-400 hover:text-red-600 text-sm p-2 rounded hover:bg-gray-100"
+                                title="삭제">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </nav>
 
-    <!-- Main Content -->
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">
-                <i class="bi bi-bell text-primary mr-2"></i>
-                알람
-            </h1>
-            <div class="flex gap-3">
-                <button onclick="markAllAsRead()" class="text-primary hover:text-secondary font-medium transition-colors">
-                    <i class="bi bi-check-all mr-1"></i>모두 읽음 처리
-                </button>
-                <button onclick="deleteAll()" class="text-red-600 hover:text-red-700 font-medium transition-colors">
-                    <i class="bi bi-trash mr-1"></i>전체 삭제
-                </button>
-            </div>
-        </div>
-
-        <!-- Filter Tabs -->
-        <div class="bg-white rounded-xl shadow-md p-2 mb-6 flex gap-2">
-            <button onclick="filterNotifications('all')" id="filter-all" class="flex-1 py-3 px-4 rounded-lg font-medium transition-all bg-primary text-white">
-                전체 <span th:text="${notifications.size()}">10</span>
-            </button>
-            <button onclick="filterNotifications('unread')" id="filter-unread" class="flex-1 py-3 px-4 rounded-lg font-medium transition-all text-gray-700 hover:bg-gray-100">
-                읽지 않음 <span th:text="${unreadCount}">3</span>
-            </button>
-            <button onclick="filterNotifications('read')" id="filter-read" class="flex-1 py-3 px-4 rounded-lg font-medium transition-all text-gray-700 hover:bg-gray-100">
-                읽음
-            </button>
-        </div>
-
-        <!-- Notifications List -->
-        <div class="space-y-3">
-            <!-- Notification Item -->
-            <div th:each="notification : ${notifications}" 
-                 th:data-read="${notification.isRead}"
-                 th:classappend="${notification.isRead} ? 'notification-read' : 'notification-unread'"
-                 class="notification-item bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden">
-                
-                <a th:href="${notification.url}" class="block p-6">
-                    <div class="flex items-start gap-4">
-                        <!-- Icon -->
-                        <div class="flex-shrink-0">
-                            <div th:classappend="${notification.isRead} ? 'bg-gray-100' : 'bg-primary/10'"
-                                 class="w-14 h-14 rounded-full flex items-center justify-center">
-                                <!-- 타입별 아이콘 -->
-                                <i th:if="${notification.type == 'COMMENT'}" 
-                                   class="bi bi-chat-dots text-2xl"
-                                   th:classappend="${notification.isRead} ? 'text-gray-400' : 'text-primary'"></i>
-                                <i th:if="${notification.type == 'LIKE'}" 
-                                   class="bi bi-heart-fill text-2xl"
-                                   th:classappend="${notification.isRead} ? 'text-gray-400' : 'text-red-500'"></i>
-                                <i th:if="${notification.type == 'PURCHASE'}" 
-                                   class="bi bi-cart-fill text-2xl"
-                                   th:classappend="${notification.isRead} ? 'text-gray-400' : 'text-green-600'"></i>
-                                <i th:if="${notification.type == 'QNA_ANSWER'}" 
-                                   class="bi bi-question-circle-fill text-2xl"
-                                   th:classappend="${notification.isRead} ? 'text-gray-400' : 'text-blue-600'"></i>
-                                <i th:if="${notification.type == 'TRANSACTION'}" 
-                                   class="bi bi-check-circle-fill text-2xl"
-                                   th:classappend="${notification.isRead} ? 'text-gray-400' : 'text-primary'"></i>
-                            </div>
-                        </div>
-
-                        <!-- Content -->
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-start justify-between gap-4 mb-2">
-                                <p th:text="${notification.message}" 
-                                   th:classappend="${notification.isRead} ? 'text-gray-600' : 'text-gray-800 font-semibold'"
-                                   class="text-base">
-                                    알람 메시지
-                                </p>
-                                <!-- 읽지 않음 뱃지 -->
-                                <span th:if="${!notification.isRead}" 
-                                      class="flex-shrink-0 w-3 h-3 bg-red-500 rounded-full"></span>
-                            </div>
-                            
-                            <!-- 타임스탬프 -->
-                            <p class="text-sm text-gray-500">
-                                <i class="bi bi-clock mr-1"></i>
-                                <span th:text="${#temporals.format(notification.createdDate, 'yyyy-MM-dd HH:mm')}">2025-01-19 14:30</span>
-                            </p>
-                        </div>
-
-                        <!-- Actions -->
-                        <div class="flex-shrink-0 flex flex-col gap-2">
-                            <button th:if="${!notification.isRead}"
-                                    th:onclick="'markAsRead(' + ${notification.notificationId} + ')'"
-                                    class="text-primary hover:text-secondary text-sm"
-                                    title="읽음 처리">
-                                <i class="bi bi-check2"></i>
-                            </button>
-                            <button th:onclick="'deleteNotification(' + ${notification.notificationId} + ', event)'"
-                                    class="text-gray-400 hover:text-red-600 text-sm"
-                                    title="삭제">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Empty State -->
-            <div th:if="${notifications == null || notifications.empty}" 
-                 class="bg-white rounded-xl shadow-md p-16 text-center">
-                <i class="bi bi-bell-slash text-6xl text-gray-300 mb-4"></i>
-                <p class="text-gray-500 text-lg">알람이 없습니다</p>
-            </div>
-        </div>
-
-        <!-- Load More Button -->
-        <div th:if="${hasMore}" class="text-center mt-8">
-            <button onclick="loadMore()" class="bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white font-medium px-8 py-3 rounded-lg transition-all">
-                더 보기
-            </button>
+        <!-- Empty State -->
+        <div th:if="${notifications == null || notifications.empty}"
+             class="bg-white rounded-xl shadow-md p-16 text-center">
+            <i class="bi bi-bell-slash text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500 text-lg">알림이 없습니다</p>
+            <p class="text-gray-400 text-sm mt-2">새로운 알림이 오면 여기에 표시됩니다</p>
         </div>
     </div>
+</div>
 
-    <!-- Footer -->
-    <footer class="bg-primary text-white mt-20 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p>&copy; 2025 GUGU Market. All rights reserved.</p>
-        </div>
-    </footer>
+<!-- Footer -->
+<footer class="bg-primary text-white mt-20 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p>&copy; 2025 GUGU Market. All rights reserved.</p>
+    </div>
+</footer>
 
-    <script>
-        // Filter notifications
-        function filterNotifications(filter) {
-            const items = document.querySelectorAll('.notification-item');
-            const buttons = document.querySelectorAll('[id^="filter-"]');
-            
-            // Update button styles
-            buttons.forEach(btn => {
-                btn.classList.remove('bg-primary', 'text-white');
-                btn.classList.add('text-gray-700', 'hover:bg-gray-100');
-            });
-            document.getElementById('filter-' + filter).classList.add('bg-primary', 'text-white');
-            document.getElementById('filter-' + filter).classList.remove('text-gray-700', 'hover:bg-gray-100');
-            
-            // Filter items
-            items.forEach(item => {
-                const isRead = item.dataset.read === 'true';
-                
-                if (filter === 'all') {
-                    item.style.display = 'block';
-                } else if (filter === 'unread') {
-                    item.style.display = isRead ? 'none' : 'block';
-                } else if (filter === 'read') {
-                    item.style.display = isRead ? 'block' : 'none';
+<script>
+    // 🔥 CSRF 토큰 가져오기
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+    // 🔥 fetch 요청에 CSRF 토큰 포함하는 헬퍼 함수
+    function fetchWithCsrf(url, options = {}) {
+        options.headers = options.headers || {};
+        options.headers[csrfHeader] = csrfToken;
+        return fetch(url, options);
+    }
+
+    // Filter notifications
+    function filterNotifications(filter) {
+        const items = document.querySelectorAll('.notification-item');
+        const buttons = document.querySelectorAll('[id^="filter-"]');
+
+        // Update button styles
+        buttons.forEach(btn => {
+            btn.classList.remove('bg-primary', 'text-white');
+            btn.classList.add('text-gray-700', 'hover:bg-gray-100');
+        });
+        document.getElementById('filter-' + filter).classList.add('bg-primary', 'text-white');
+        document.getElementById('filter-' + filter).classList.remove('text-gray-700', 'hover:bg-gray-100');
+
+        // Filter items
+        items.forEach(item => {
+            const isRead = item.dataset.read === 'true';
+
+            if (filter === 'all') {
+                item.style.display = 'block';
+            } else if (filter === 'unread') {
+                item.style.display = isRead ? 'none' : 'block';
+            } else if (filter === 'read') {
+                item.style.display = isRead ? 'block' : 'none';
+            }
+        });
+    }
+
+    // Mark as read (🔥 CSRF 토큰 포함)
+    function markAsRead(notificationId) {
+        fetchWithCsrf(`/notifications/${notificationId}/read`, {
+            method: 'PUT'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('오류가 발생했습니다: ' + (data.message || '알 수 없는 오류'));
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('알림 읽음 처리 중 오류가 발생했습니다.');
             });
-        }
+    }
 
-        // Mark as read
-        function markAsRead(notificationId) {
-            fetch(`/notifications/${notificationId}/read`, {
+    // Mark all as read (🔥 CSRF 토큰 포함)
+    function markAllAsRead() {
+        if (confirm('모든 알림을 읽음 처리하시겠습니까?')) {
+            fetchWithCsrf('/notifications/read-all', {
                 method: 'PUT'
             })
-            .then(response => {
-                if (response.ok) {
-                    location.reload();
-                }
-            });
-        }
-
-        // Mark all as read
-        function markAllAsRead() {
-            if (confirm('모든 알람을 읽음 처리하시겠습니까?')) {
-                fetch('/notifications/read-all', {
-                    method: 'PUT'
-                })
-                .then(response => {
-                    if (response.ok) {
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
                         location.reload();
+                    } else {
+                        alert('오류가 발생했습니다: ' + (data.message || '알 수 없는 오류'));
                     }
-                });
-            }
-        }
-
-        // Delete notification
-        function deleteNotification(notificationId, event) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            if (confirm('이 알람을 삭제하시겠습니까?')) {
-                fetch(`/notifications/${notificationId}`, {
-                    method: 'DELETE'
                 })
-                .then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    }
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('모든 알림 읽음 처리 중 오류가 발생했습니다.');
                 });
-            }
         }
+    }
 
-        // Delete all
-        function deleteAll() {
-            if (confirm('모든 알람을 삭제하시겠습니까?')) {
-                fetch('/notifications/delete-all', {
-                    method: 'DELETE'
+    // Delete notification (🔥 CSRF 토큰 포함)
+    function deleteNotification(notificationId, event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (confirm('이 알림을 삭제하시겠습니까?')) {
+            fetchWithCsrf(`/notifications/${notificationId}`, {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('오류가 발생했습니다: ' + (data.message || '알 수 없는 오류'));
+                    }
                 })
-                .then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    }
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('알림 삭제 중 오류가 발생했습니다.');
                 });
-            }
         }
+    }
 
-        // Load more
-        function loadMore() {
-            // Implement pagination logic
-            console.log('Load more notifications');
+    // Delete all (🔥 CSRF 토큰 포함)
+    function deleteAll() {
+        if (confirm('모든 알림을 삭제하시겠습니까?')) {
+            fetchWithCsrf('/notifications/delete-all', {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('오류가 발생했습니다: ' + (data.message || '알 수 없는 오류'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('모든 알림 삭제 중 오류가 발생했습니다.');
+                });
         }
-    </script>
+    }
+</script>
 </body>
 </html>
