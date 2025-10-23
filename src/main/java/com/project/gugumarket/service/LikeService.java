@@ -107,4 +107,11 @@ public class LikeService {
                 .map(Like::getUser)
                 .collect(Collectors.toList());
     }
+
+    public List<Long> getLikedProductIds(User user) {
+        return likeRepository.findByUserOrderByCreatedDateDesc(user)
+                .stream()
+                .map(like -> like.getProduct().getProductId())
+                .collect(Collectors.toList());
+    }
 }

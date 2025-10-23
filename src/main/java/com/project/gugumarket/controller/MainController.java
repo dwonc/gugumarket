@@ -3,6 +3,12 @@ package com.project.gugumarket.controller;
 import com.project.gugumarket.dto.ProductForm;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.UserRepository;
+<<<<<<< HEAD
+=======
+import com.project.gugumarket.service.LikeService;
+import com.project.gugumarket.service.ProductService;
+import lombok.RequiredArgsConstructor;
+>>>>>>> 9b8c76477af207ef0a169f0af00a0a3be54e39b0
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +25,7 @@ import java.util.Optional;
 public class MainController {
 
     private final UserRepository userRepository;
+<<<<<<< HEAD
 
     public MainController(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -28,6 +35,11 @@ public class MainController {
     @GetMapping("/main")
     public String main(Model model) {
         // 현재 로그인한 사용자 정보 가져오기
+=======
+    private final ProductService productService;
+    private final CategoryRepository categoryRepository;
+    private final LikeService likeService;  // 🔥 LikeService 추가
+>>>>>>> 9b8c76477af207ef0a169f0af00a0a3be54e39b0
 
     /**
      * 메인 페이지 (페이징 + 검색 + 카테고리 필터)
@@ -49,7 +61,23 @@ public class MainController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
+<<<<<<< HEAD
         System.out.println("로그인 성공 - 사용자: " + username);
+=======
+        User currentUser = null;
+
+        if (!"anonymousUser".equals(username)) {
+            System.out.println("👤 로그인 사용자: " + username);
+            Optional<User> userOpt = userRepository.findByUserName(username);
+            if (userOpt.isPresent()) {
+                currentUser = userOpt.get();
+                model.addAttribute("user", currentUser);
+                System.out.println("✅ 사용자 정보 로드: " + currentUser.getNickname());
+            }
+        } else {
+            System.out.println("👥 비로그인 상태");
+        }
+>>>>>>> 9b8c76477af207ef0a169f0af00a0a3be54e39b0
 
         model.addAttribute("username", username);
         // 사용자 정보를 DB에서 가져오기
@@ -68,6 +96,25 @@ public class MainController {
             model.addAttribute("selectedCategoryId", categoryId);
         } else {
             products = productService.getProductList(keyword, pageable);
+        }
+
+        // 🔥 로그인한 사용자가 찜한 상품 ID 목록 조회 (final로 선언)
+        final List<Long> likedProductIds;
+        if (currentUser != null) {
+            likedProductIds = likeService.getLikedProductIds(currentUser);
+            System.out.println("❤️ 찜한 상품: " + likedProductIds.size() + "개");
+        } else {
+            likedProductIds = List.of();  // 빈 리스트
+        }
+
+        // 🔥 각 상품에 찜 여부 설정
+        if (!likedProductIds.isEmpty()) {
+            products.getContent().forEach(product -> {
+                if (likedProductIds.contains(product.getProductId())) {
+                    product.setIsLiked(true);
+                    System.out.println("❤️ 상품 ID " + product.getProductId() + " 찜됨 표시");
+                }
+            });
         }
 
         List<Category> categories = categoryRepository.findAll();

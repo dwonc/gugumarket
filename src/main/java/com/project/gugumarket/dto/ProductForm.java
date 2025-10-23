@@ -46,6 +46,9 @@ public class ProductForm {
     private String sellerAddress;
     private String categoryName;
 
+    private Boolean isLiked = false;  // 현재 사용자의 찜 여부
+
+
     /**
      * Product 엔티티 → ProductForm 변환 (화면 표시용)
      */
