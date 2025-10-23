@@ -159,17 +159,17 @@
 
         <div th:if="${products == null || products.content.isEmpty()}"
              class="col-span-full text-center py-20">
-            <i class="bi bi-inbox text-6xl text-gray-300 mb-4 block"></i>
-            <p class="text-gray-500 text-lg mb-2">등록된 상품이 없습니다.</p>
-            <p class="text-gray-400 text-sm" th:if="${keyword != null && !keyword.isEmpty()}">
-                '<span th:text="${keyword}">검색어</span>'에 대한 검색 결과가 없습니다.
-            </p>
-            <p class="text-gray-400 text-sm" th:unless="${keyword != null && !keyword.isEmpty()}">
-                첫 번째 상품을 등록해보세요!
-            </p>
+            <i class="bi bi-inbox text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500 text-xl">등록된 상품이 없습니다</p>
+            <p class="text-gray-400 text-sm mt-2">첫 상품을 등록해보세요!</p>
+            <button onclick="location.href='/product/new'"
+                    class="mt-6 bg-primary hover:bg-secondary text-white px-8 py-3 rounded-full font-medium transition-all duration-300 shadow-md hover:shadow-lg">
+                상품 등록하기
+            </button>
         </div>
 
-        <div th:each="product : ${products.content}" class="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
+        <div th:each="product : ${products.content}"
+             class="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group">
             <div class="relative overflow-hidden">
                 <a th:href="@{/product/{id}(id=${product.productId})}">
                     <img th:src="${product.mainImage}"
@@ -177,9 +177,13 @@
                          class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                          onerror="this.src='https://via.placeholder.com/400x300/6B4F4F/FFFFFF?text=No+Image'">
                 </a>
-                <button th:data-product-id="${product.productId}"
+                <!-- 🔥 수정된 하트 버튼 - 찜 상태에 따라 하트 채워짐 -->
+                <button
+                        th:data-product-id="${product.productId}"
+                        th:onclick="'toggleLike(' + ${product.productId} + ', event)'"
                         class="like-button absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg hover:bg-white transition-all duration-300 transform hover:scale-110">
-                    <i class="bi bi-heart text-red-500 text-xl"></i>
+                    <!-- 찜한 상품이면 채워진 하트, 아니면 빈 하트 -->
+                    <i th:class="${product.isLiked != null && product.isLiked} ? 'bi bi-heart-fill text-red-500 text-xl' : 'bi bi-heart text-red-500 text-xl'"></i>
                 </button>
                 <div th:if="${product.viewCount > 200}"
                      class="absolute bottom-4 left-4 bg-primary/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
@@ -315,19 +319,51 @@
         });
     }
 
-    document.querySelectorAll('.bi-heart, .bi-heart-fill').forEach(heart => {
-        heart.closest('button').addEventListener('click', function(e) {
-            e.preventDefault();
-            const icon = this.querySelector('i');
-            if (icon.classList.contains('bi-heart')) {
-                icon.classList.remove('bi-heart');
-                icon.classList.add('bi-heart-fill');
-            } else {
-                icon.classList.remove('bi-heart-fill');
-                icon.classList.add('bi-heart');
+    // 🔥 찜하기 기능 추가
+    async function toggleLike(productId, event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        try {
+            const response = await fetch(`/product/${productId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            // 로그인 필요
+            if (result.needLogin) {
+                if (confirm('로그인이 필요한 기능입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+                    location.href = '/login';
+                }
+                return;
             }
-        });
-    });
+
+            if (result.success) {
+                // 하트 아이콘 찾기
+                const button = document.querySelector(`button[data-product-id="${productId}"]`);
+                const icon = button.querySelector('i');
+
+                if (result.isLiked) {
+                    // 찜하기 완료
+                    icon.classList.remove('bi-heart');
+                    icon.classList.add('bi-heart-fill');
+                } else {
+                    // 찜하기 취소
+                    icon.classList.remove('bi-heart-fill');
+                    icon.classList.add('bi-heart');
+                }
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('오류가 발생했습니다.');
+        }
+    }
 </script>
 </body>
 </html>
