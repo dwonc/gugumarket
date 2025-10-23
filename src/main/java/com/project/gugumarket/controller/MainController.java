@@ -1,7 +1,11 @@
 package com.project.gugumarket.controller;
 
+import com.project.gugumarket.dto.ProductForm;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -16,7 +20,6 @@ public class MainController {
 
     private final UserRepository userRepository;
 
-<<<<<<< HEAD
     public MainController(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
@@ -25,7 +28,7 @@ public class MainController {
     @GetMapping("/main")
     public String main(Model model) {
         // 현재 로그인한 사용자 정보 가져오기
-=======
+
     /**
      * 메인 페이지 (페이징 + 검색 + 카테고리 필터)
      */
@@ -42,7 +45,7 @@ public class MainController {
         System.out.println("📂 카테고리: " + categoryId);
         System.out.println("🔍 검색어: " + keyword);
 
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
@@ -57,9 +60,6 @@ public class MainController {
             model.addAttribute("username", user.getUserName());
             System.out.println("✅ 사용자 정보 로드 완료: " + user.getNickname());
         }
-
-<<<<<<< HEAD
-=======
         Pageable pageable = PageRequest.of(page, size);
 
         Page<ProductForm> products;
@@ -84,15 +84,10 @@ public class MainController {
         System.out.println("📊 전체 상품: " + products.getTotalElements() + "개");
         System.out.println("📄 현재 페이지: " + (page + 1) + " / " + products.getTotalPages());
         System.out.println("========================================");
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
-
         return "main";
     }
 
-<<<<<<< HEAD
     // 홈 페이지 (로그인 전)
-=======
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
     @GetMapping("/")
     public String home() {
         return "index";

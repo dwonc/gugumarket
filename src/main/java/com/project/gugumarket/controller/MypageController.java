@@ -5,11 +5,8 @@ import com.project.gugumarket.entity.Like;
 import com.project.gugumarket.entity.Transaction;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.UserRepository;
-<<<<<<< HEAD
 import com.project.gugumarket.service.LikeService;
 import com.project.gugumarket.service.TransactionService;
-=======
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
 import com.project.gugumarket.service.UserService;
 import com.project.gugumarket.service.MypageService;
 import lombok.RequiredArgsConstructor;
@@ -37,17 +34,14 @@ public class MypageController {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final MypageService mypageService;
-<<<<<<< HEAD
     private final LikeService likeService;
     private final TransactionService transactionService;
-=======
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
+
 
     // 마이페이지 조회
     @GetMapping("/mypage")
     public String mypage(Principal principal, Model model) {
         if (principal == null) return "redirect:/login";
-<<<<<<< HEAD
 
         String userName = principal.getName();
         User user = userRepository.findByUserName(userName)
@@ -64,7 +58,6 @@ public class MypageController {
         model.addAttribute("user", user);
         return "users/mypage";
 
-=======
 
         String userName = principal.getName();
         User user = userRepository.findByUserName(userName)
@@ -72,7 +65,6 @@ public class MypageController {
 
         model.addAttribute("user", user);
         return "users/mypage";
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
     }
 
     // 프로필 수정 페이지
@@ -103,10 +95,8 @@ public class MypageController {
             @RequestParam(required = false) String confirmPassword,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
             @RequestParam(value = "deleteProfileImage", required = false) String deleteProfileImage,
-<<<<<<< HEAD
             @RequestParam(value = "currentProfileImage", required = false) String currentProfileImage,
-=======
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
+
             Principal principal,
             Model model,
             RedirectAttributes redirectAttributes) {
@@ -117,15 +107,11 @@ public class MypageController {
         User user = userRepository.findByUserName(userName)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-<<<<<<< HEAD
-=======
         // 프로필 이미지 삭제 처리
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
         if ("true".equals(deleteProfileImage)) {
             System.out.println("프로필 이미지 삭제 요청");
             user.setProfileImage(null);
         }
-<<<<<<< HEAD
         else if (profileImage != null && !profileImage.isEmpty()) {
             System.out.println("프로필 이미지 업로드 시작");
 
@@ -136,8 +122,6 @@ public class MypageController {
                     model.addAttribute("userDto", userDto);
                     return "users/edit";
                 }
-
-=======
         // 프로필 이미지 업로드 처리
         else if (profileImage != null && !profileImage.isEmpty()) {
             System.out.println("프로필 이미지 업로드 시작");
@@ -152,11 +136,10 @@ public class MypageController {
                     model.addAttribute("error", "파일 크기는 5MB 이하여야 합니다.");
                     model.addAttribute("user", user);
                     model.addAttribute("userDto", userDto);
-                    return "edit";
+                    return "users/edit";
                 }
 
                 // 파일 형식 체크
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
                 String contentType = profileImage.getContentType();
                 if (contentType == null ||
                         (!contentType.equals("image/jpeg") &&
@@ -167,22 +150,15 @@ public class MypageController {
                     model.addAttribute("error", "JPG, PNG, GIF 형식의 이미지만 업로드 가능합니다.");
                     model.addAttribute("user", user);
                     model.addAttribute("userDto", userDto);
-<<<<<<< HEAD
                     return "users/edit";
                 }
 
-=======
-                    return "edit";
-                }
-
                 // 파일 저장
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
                 String fileName = saveProfileImage(profileImage, userName);
                 user.setProfileImage(fileName);
                 System.out.println("프로필 이미지 업로드 완료: " + fileName);
 
             } catch (Exception e) {
-<<<<<<< HEAD
                 model.addAttribute("error", "프로필 이미지 업로드 중 오류가 발생했습니다.");
                 model.addAttribute("user", user);
                 model.addAttribute("userDto", userDto);
@@ -193,17 +169,15 @@ public class MypageController {
                 user.setProfileImage(currentProfileImage);
                 System.out.println("기존 프로필 유지: " + currentProfileImage);
             }
-=======
                 System.err.println("프로필 이미지 업로드 중 오류: " + e.getMessage());
                 e.printStackTrace();
                 model.addAttribute("error", "프로필 이미지 업로드 중 오류가 발생했습니다: " + e.getMessage());
                 model.addAttribute("user", user);
                 model.addAttribute("userDto", userDto);
-                return "edit";
+                return "users/edit";
             }
         } else {
             System.out.println("프로필 이미지 변경 없음");
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
         }
 
         // 비밀번호 변경 요청이 있는 경우
@@ -213,51 +187,34 @@ public class MypageController {
                         (confirmPassword != null && !confirmPassword.isEmpty());
 
         if (passwordChangeRequested) {
-<<<<<<< HEAD
-=======
             // 현재 비밀번호 확인
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
             if (currentPassword == null || currentPassword.isEmpty()) {
                 model.addAttribute("error", "현재 비밀번호를 입력해주세요.");
                 model.addAttribute("user", user);
                 model.addAttribute("userDto", userDto);
-<<<<<<< HEAD
                 return "users/edit";
-=======
-                return "edit";
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
             }
 
             if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
                 model.addAttribute("error", "현재 비밀번호가 일치하지 않습니다.");
                 model.addAttribute("user", user);
                 model.addAttribute("userDto", userDto);
-<<<<<<< HEAD
                 return "users/edit";
             }
 
-=======
-                return "edit";
-            }
-
             // 새 비밀번호 확인
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
             if (newPassword == null || newPassword.isEmpty()) {
                 model.addAttribute("error", "새 비밀번호를 입력해주세요.");
                 model.addAttribute("user", user);
                 model.addAttribute("userDto", userDto);
-<<<<<<< HEAD
                 return "users/edit";
-=======
                 return "edit";
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
             }
 
             if (!newPassword.equals(confirmPassword)) {
                 model.addAttribute("error", "새 비밀번호가 일치하지 않습니다.");
                 model.addAttribute("user", user);
                 model.addAttribute("userDto", userDto);
-<<<<<<< HEAD
                 return "users/edit";
             }
 
@@ -268,11 +225,6 @@ public class MypageController {
             model.addAttribute("user", user);
             return "users/edit";
         }
-
-=======
-                return "edit";
-            }
-
             // 비밀번호 변경
             user.setPassword(passwordEncoder.encode(newPassword));
         }
@@ -284,7 +236,6 @@ public class MypageController {
         }
 
         // 기본 정보 업데이트
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
         user.setNickname(userDto.getNickname());
         user.setEmail(userDto.getEmail());
         user.setPhone(userDto.getPhone());
@@ -299,13 +250,11 @@ public class MypageController {
     }
 
     // 프로필 이미지 저장 메서드
-<<<<<<< HEAD
     private String saveProfileImage(MultipartFile profileImage, String userName) throws IOException {
         try {
             String uploadDir = "uploads/";
-
             String originalFilename = profileImage.getOriginalFilename();
-=======
+
     private String saveProfileImage(MultipartFile file, String userName) throws IOException {
         try {
             // 업로드 디렉토리 설정 (프로젝트 루트 기준)
@@ -313,14 +262,11 @@ public class MypageController {
 
             // 파일명 생성 (중복 방지)
             String originalFilename = file.getOriginalFilename();
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
             String extension = "";
             if (originalFilename != null && originalFilename.contains(".")) {
                 extension = originalFilename.substring(originalFilename.lastIndexOf("."));
             }
             String fileName = userName + "_" + System.currentTimeMillis() + extension;
-
-<<<<<<< HEAD
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
@@ -353,10 +299,8 @@ public class MypageController {
 
         // LikeService를 통해 사용자의 찜 목록 조회
         List<Like> likeList = likeService.getUserLikes(user);
-
         model.addAttribute("likeList", likeList);
         model.addAttribute("user", user);
-
         // users/mypage_likes.html로 이동
         return "users/mypage_likes";
     }
@@ -364,7 +308,7 @@ public class MypageController {
      * 🛒 구매 내역 보기
      */
     @GetMapping("/mypage/purchases")
-    public String purchaseList(Principal principal, Model model) {
+    public String purchaseList(Principal principal,Model model) {
         if (principal == null) {
             return "redirect:/login";
         }
@@ -381,8 +325,7 @@ public class MypageController {
 
         return "users/mypage";
     }
-=======
-            // 디렉토리 생성
+        // 디렉토리 생성
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
@@ -405,5 +348,4 @@ public class MypageController {
             throw e;
         }
     }
->>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
 }
