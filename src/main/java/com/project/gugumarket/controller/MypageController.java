@@ -3,7 +3,6 @@ package com.project.gugumarket.controller;
 import com.project.gugumarket.dto.UserDto;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.UserRepository;
-import com.project.gugumarket.service.MypageService;
 import com.project.gugumarket.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,7 +28,6 @@ public class MypageController {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
-    private final MypageService mypageService;
 
     // 마이페이지 조회
     @GetMapping("/mypage")
@@ -39,7 +37,7 @@ public class MypageController {
         String userName = principal.getName();
         User user = userRepository.findByUserName(userName)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-        User myuser=mypageService.getUserByUserName(userName);
+
         model.addAttribute("user", user);
         return "users/mypage";
     }
@@ -66,21 +64,12 @@ public class MypageController {
         model.addAttribute("user", user);
         model.addAttribute("userDto", userDto);
 
+        // edit.html의 실제 위치에 따라 수정
+        // users 폴더 안에 있으면: "users/edit"
+        // templates 바로 아래 있으면: "edit"
+        return "edit";  // 또는 "users/edit"
+    }
 
-        return "users/edit";
-    }
-    @PostMapping("/edit")
-    public String editUser(@ModelAttribute UserDto userDto,
-                           @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
-                           Model model) {
-        try {
-            mypageService.updateUserProfile(userDto, profileImage);
-            return "redirect:/mypage?updated=true"; // 최신 데이터로 이동
-        } catch (Exception e) {
-            model.addAttribute("error", "회원정보 수정 중 오류가 발생했습니다: " + e.getMessage());
-            return "edit";
-        }
-    }
     // 프로필 수정 처리
     @PostMapping("/users/edit")
     public String editProfile(
@@ -120,7 +109,7 @@ public class MypageController {
                     model.addAttribute("error", "파일 크기는 5MB 이하여야 합니다.");
                     model.addAttribute("user", user);
                     model.addAttribute("userDto", userDto);
-                    return "users/edit";
+                    return "edit";
                 }
 
                 // 파일 형식 체크
@@ -134,7 +123,7 @@ public class MypageController {
                     model.addAttribute("error", "JPG, PNG, GIF 형식의 이미지만 업로드 가능합니다.");
                     model.addAttribute("user", user);
                     model.addAttribute("userDto", userDto);
-                    return "users/edit";
+                    return "edit";
                 }
 
                 // 파일 저장
@@ -148,7 +137,7 @@ public class MypageController {
                 model.addAttribute("error", "프로필 이미지 업로드 중 오류가 발생했습니다: " + e.getMessage());
                 model.addAttribute("user", user);
                 model.addAttribute("userDto", userDto);
-                return "users/edit";
+                return "edit";
             }
         } else {
             System.out.println("ℹ️ 프로필 이미지 변경 없음");
@@ -166,14 +155,14 @@ public class MypageController {
                 model.addAttribute("error", "현재 비밀번호를 입력해주세요.");
                 model.addAttribute("user", user);
                 model.addAttribute("userDto", userDto);
-                return "users/edit";
+                return "edit";
             }
 
             if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
                 model.addAttribute("error", "현재 비밀번호가 일치하지 않습니다.");
                 model.addAttribute("user", user);
                 model.addAttribute("userDto", userDto);
-                return "users/edit";
+                return "edit";
             }
 
             // 새 비밀번호 확인
@@ -181,14 +170,14 @@ public class MypageController {
                 model.addAttribute("error", "새 비밀번호를 입력해주세요.");
                 model.addAttribute("user", user);
                 model.addAttribute("userDto", userDto);
-                return "users/edit";
+                return "edit";
             }
 
             if (!newPassword.equals(confirmPassword)) {
                 model.addAttribute("error", "새 비밀번호가 일치하지 않습니다.");
                 model.addAttribute("user", user);
                 model.addAttribute("userDto", userDto);
-                return "users/edit";
+                return "edit";
             }
 
             // 비밀번호 변경
@@ -198,7 +187,7 @@ public class MypageController {
         // 유효성 검증 실패 시
         if (bindingResult.hasErrors()) {
             model.addAttribute("user", user);
-            return "users/edit";
+            return "edit";
         }
 
         // 기본 정보 업데이트
@@ -219,7 +208,7 @@ public class MypageController {
     private String saveProfileImage(MultipartFile file, String userName) throws IOException {
         try {
             // 업로드 디렉토리 설정 (프로젝트 루트 기준)
-            String uploadDir = "uploads/";
+            String uploadDir = "uploads/profile/";
 
             // 파일명 생성 (중복 방지)
             String originalFilename = file.getOriginalFilename();
@@ -244,7 +233,7 @@ public class MypageController {
             System.out.println("✅ 반환 URL: /uploads/profile/" + fileName);
 
             // 웹에서 접근 가능한 URL 반환
-            return "/uploads/" + fileName;
+            return "/uploads/profile/" + fileName;
 
         } catch (IOException e) {
             System.err.println("❌ 파일 저장 실패: " + e.getMessage());

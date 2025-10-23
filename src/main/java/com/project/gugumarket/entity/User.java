@@ -59,17 +59,17 @@ public class User {
     @Column(name = "ROLE", length = 20)
     private String role = "USER";
 
-    public String getProfileImageOrDefault() {
-        return (profileImage == null || profileImage.isEmpty())
-                ? "/images/default-profile.png"
-                : profileImage;
-    }
 //    public String getProfileImageOrDefault() {
-//    if (profileImage != null && !profileImage.isEmpty()) {
-//        return profileImage;
-//        }
-//    return "https://via.placeholder.com/500x500/6B4F4F/FFFFFF?text=Profile";
+//        return (profileImage == null || profileImage.isEmpty())
+//                ? "/images/default-profile.png"
+//                : profileImage;
 //    }
+        public String getProfileImageOrDefault() {
+        if (profileImage != null && !profileImage.isEmpty()) {
+            return profileImage;
+        }
+        return "/images/default-profile.png";
+    }
 
 
     // 연관관계
