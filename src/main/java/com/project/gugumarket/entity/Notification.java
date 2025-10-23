@@ -1,5 +1,6 @@
 package com.project.gugumarket.entity;
 
+import com.project.gugumarket.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -27,8 +28,25 @@ public class Notification {
     @JoinColumn(name = "RECEIVER_ID", nullable = false)
     private User receiver;
 
-    @Column(name = "TYPE", length = 20, nullable = false)
-    private String type;  // COMMENT, LIKE, PURCHASE, QNA_ANSWER 등
+    // 알림을 발생시킨 사용자 (구매자, 찜한 사람 등)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "SENDER_ID")
+    private User sender;
+
+    // 관련 상품
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "PRODUCT_ID")
+    private Product product;
+
+    // 관련 거래 (구매 알림인 경우)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "TRANSACTION_ID")
+    private Transaction transaction;
+
+    // 알림 타입
+    @Enumerated(EnumType.STRING)
+    @Column(name = "TYPE", nullable = false, length = 50)
+    private NotificationType type;
 
     @Column(name = "MESSAGE", length = 255, nullable = false)
     private String message;
@@ -42,4 +60,16 @@ public class Notification {
     @CreationTimestamp
     @Column(name = "CREATED_DATE")
     private LocalDateTime createdDate;
+
+    // 읽은 일시
+    @Column(name = "READ_DATE")
+    private LocalDateTime readDate;
+
+    /**
+     * 알림을 읽음 처리
+     */
+    public void markAsRead() {
+        this.isRead = true;
+        this.readDate = LocalDateTime.now();
+    }
 }

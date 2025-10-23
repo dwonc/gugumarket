@@ -86,7 +86,11 @@ public class MypageService {
         }
 
         // 업로드 디렉토리 설정
+<<<<<<< HEAD
         String uploadDir = uploadPath;
+=======
+        String uploadDir = uploadPath + "profile/";
+>>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
 
         // 파일명 생성 (중복 방지)
         String originalFilename = profileImage.getOriginalFilename();
@@ -110,7 +114,11 @@ public class MypageService {
         System.out.println("파일 저장 성공: " + filePath.toAbsolutePath());
 
         // 웹에서 접근 가능한 URL 반환
+<<<<<<< HEAD
         return "/uploads/" + fileName;
+=======
+        return "/uploads/profile/" + fileName;
+>>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
     }
 
     // 프로필 이미지 삭제

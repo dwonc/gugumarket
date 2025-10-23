@@ -16,6 +16,7 @@ public class MainController {
 
     private final UserRepository userRepository;
 
+<<<<<<< HEAD
     public MainController(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
@@ -24,6 +25,24 @@ public class MainController {
     @GetMapping("/main")
     public String main(Model model) {
         // 현재 로그인한 사용자 정보 가져오기
+=======
+    /**
+     * 메인 페이지 (페이징 + 검색 + 카테고리 필터)
+     */
+    @GetMapping("/main")
+    public String main(
+            Model model,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String keyword
+    ) {
+        System.out.println("========== 메인 페이지 시작 ==========");
+        System.out.println("📄 페이지: " + page + ", 사이즈: " + size);
+        System.out.println("📂 카테고리: " + categoryId);
+        System.out.println("🔍 검색어: " + keyword);
+
+>>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
@@ -39,11 +58,41 @@ public class MainController {
             System.out.println("✅ 사용자 정보 로드 완료: " + user.getNickname());
         }
 
+<<<<<<< HEAD
+=======
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<ProductForm> products;
+        if (categoryId != null) {
+            products = productService.getProductsByCategory(categoryId, keyword, pageable);
+            model.addAttribute("selectedCategoryId", categoryId);
+        } else {
+            products = productService.getProductList(keyword, pageable);
+        }
+
+        List<Category> categories = categoryRepository.findAll();
+        System.out.println("📂 카테고리 " + categories.size() + "개 로드");
+
+        model.addAttribute("products", products);
+        model.addAttribute("categories", categories);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", products.getTotalPages());
+        model.addAttribute("totalElements", products.getTotalElements());
+        model.addAttribute("keyword", keyword);
+
+        System.out.println("✅ 상품 " + products.getContent().size() + "개 조회 완료");
+        System.out.println("📊 전체 상품: " + products.getTotalElements() + "개");
+        System.out.println("📄 현재 페이지: " + (page + 1) + " / " + products.getTotalPages());
+        System.out.println("========================================");
+>>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
 
         return "main";
     }
 
+<<<<<<< HEAD
     // 홈 페이지 (로그인 전)
+=======
+>>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
     @GetMapping("/")
     public String home() {
         return "index";

@@ -60,6 +60,7 @@ public class User {
     @Column(name = "ROLE", length = 20)
     private String role = "USER";
 
+<<<<<<< HEAD
 
     public String getProfileImageOrDefault() {
         if (profileImage == null || profileImage.isEmpty()) {
@@ -73,6 +74,13 @@ public class User {
 
         // 내부 경로인 경우 그대로 반환
         return profileImage;
+=======
+    public String getProfileImageOrDefault() {
+        if (profileImage != null && !profileImage.isEmpty()) {
+            return profileImage;
+        }
+        return "/images/default-profile.png";
+>>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
     }
 
     // 연관관계

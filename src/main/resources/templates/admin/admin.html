@@ -127,8 +127,8 @@
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">회원 관리</h2>
                     <div class="flex gap-2">
-                        <input type="text" placeholder="회원 검색..." class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
-                        <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                        <input type="text" id="userSearch" placeholder="회원 검색..." class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                        <button onclick="searchUsers()" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
                             <i class="bi bi-search"></i>
                         </button>
                     </div>
@@ -158,8 +158,16 @@
                                     <span th:unless="${user.isActive}" class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">정지</span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <button class="text-blue-600 hover:text-blue-800 mr-3">상세</button>
-                                    <button class="text-red-600 hover:text-red-800">정지</button>
+                                    <a th:href="@{/admin/users/{id}(id=${user.userId})}" class="text-blue-600 hover:text-blue-800 mr-3">상세</a>
+                                    <form th:action="@{/admin/users/{id}/toggle-status(id=${user.userId})}" method="post" class="inline" onsubmit="return confirm('회원 상태를 변경하시겠습니까?');">
+                                        <button type="submit" class="text-yellow-600 hover:text-yellow-800 mr-3">
+                                            <span th:if="${user.isActive}">정지</span>
+                                            <span th:unless="${user.isActive}">활성화</span>
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/admin/users/{id}/delete(id=${user.userId})}" method="post" class="inline" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                                        <button type="submit" class="text-red-600 hover:text-red-800">삭제</button>
+                                    </form>
                                 </td>
                             </tr>
                         </tbody>
@@ -172,14 +180,13 @@
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">제품 관리</h2>
                     <div class="flex gap-2">
-                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
-                            <option>전체</option>
-                            <option>판매중</option>
-                            <option>거래완료</option>
-                            <option>삭제됨</option>
+                        <select id="productStatus" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                            <option value="">전체</option>
+                            <option value="false">판매중</option>
+                            <option value="true">삭제됨</option>
                         </select>
-                        <input type="text" placeholder="상품 검색..." class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
-                        <button class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                        <input type="text" id="productSearch" placeholder="상품 검색..." class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary">
+                        <button onclick="searchProducts()" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
                             <i class="bi bi-search"></i>
                         </button>
                     </div>
@@ -211,8 +218,10 @@
                                 <span th:if="${!product.isDeleted}" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">판매중</span>
                                 <span th:if="${product.isDeleted}" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">삭제됨</span>
                                 <div class="flex gap-2">
-                                    <button class="text-blue-600 hover:text-blue-800 text-sm">상세</button>
-                                    <button class="text-red-600 hover:text-red-800 text-sm">삭제</button>
+                                    <a th:href="@{/product/{id}(id=${product.productId})}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">상세</a>
+                                    <form th:action="@{/admin/products/{id}/delete(id=${product.productId})}" method="post" class="inline" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                                        <button type="submit" class="text-red-600 hover:text-red-800 text-sm" th:disabled="${product.isDeleted}">삭제</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -224,6 +233,18 @@
             <div id="content-qna" class="tab-content hidden">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Q&A 답변</h2>
                 
+                <!-- Success Message -->
+                <div th:if="${message}" class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                    <i class="bi bi-check-circle-fill mr-2"></i>
+                    <span th:text="${message}"></span>
+                </div>
+
+                <!-- Error Message -->
+                <div th:if="${error}" class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                    <i class="bi bi-exclamation-circle-fill mr-2"></i>
+                    <span th:text="${error}"></span>
+                </div>
+                
                 <!-- QNA List -->
                 <div class="space-y-4">
                     <div th:each="qna : ${qnaPosts}" class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all">
@@ -231,8 +252,8 @@
                             <div class="flex-1">
                                 <div class="flex items-center gap-3 mb-2">
                                     <h3 class="text-lg font-bold text-gray-800" th:text="${qna.title}">질문 제목</h3>
-                                    <span th:if="${!qna.isAnswered}" class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">미답변</span>
-                                    <span th:if="${qna.isAnswered}" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">답변완료</span>
+                                    <span th:if="${qna.isAnswered == null || qna.isAnswered == false}" class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">미답변</span>
+                                    <span th:if="${qna.isAnswered != null && qna.isAnswered == true}" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">답변완료</span>
                                 </div>
                                 <p class="text-gray-600 text-sm mb-2">
                                     작성자: <span th:text="${qna.user.nickname}">사용자</span>
@@ -243,8 +264,8 @@
                         </div>
 
                         <!-- Answer Form -->
-                        <div th:if="${!qna.isAnswered}" class="mt-4 pt-4 border-t border-gray-200">
-                            <form th:action="@{/admin/qna/answer}" method="post">
+                        <div th:if="${qna.isAnswered == null || qna.isAnswered == false}" class="mt-4 pt-4 border-t border-gray-200">
+                            <form th:action="@{/admin/qna/answer}" method="post" onsubmit="return validateAnswer(this);">
                                 <input type="hidden" name="qnaId" th:value="${qna.qnaId}" />
                                 <textarea 
                                     name="content"
@@ -255,14 +276,14 @@
                                 ></textarea>
                                 <div class="flex justify-end">
                                     <button type="submit" class="bg-primary hover:bg-secondary text-white px-6 py-2 rounded-lg font-medium transition-all">
-                                        답변 등록
+                                        <i class="bi bi-send mr-1"></i>답변 등록
                                     </button>
                                 </div>
                             </form>
                         </div>
 
                         <!-- Existing Answer -->
-                        <div th:if="${qna.isAnswered && qna.qnaAnswers != null && !qna.qnaAnswers.empty}" class="mt-4 pt-4 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
+                        <div th:if="${qna.isAnswered != null && qna.isAnswered == true && qna.qnaAnswers != null && !qna.qnaAnswers.empty}" class="mt-4 pt-4 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
                             <div th:each="answer : ${qna.qnaAnswers}">
                                 <p class="text-sm text-gray-600 mb-2">
                                     <i class="bi bi-reply-fill mr-1"></i>
@@ -307,6 +328,44 @@
             
             // Activate selected tab
             document.getElementById('tab-' + tabName).classList.add('active-tab');
+        }
+
+        function searchUsers() {
+            const keyword = document.getElementById('userSearch').value;
+            if (keyword.trim()) {
+                window.location.href = '/admin?userSearch=' + encodeURIComponent(keyword);
+            }
+        }
+
+        function searchProducts() {
+            const keyword = document.getElementById('productSearch').value;
+            const status = document.getElementById('productStatus').value;
+            let url = '/admin?tab=products';
+            if (keyword.trim()) {
+                url += '&productSearch=' + encodeURIComponent(keyword);
+            }
+            if (status) {
+                url += '&isDeleted=' + status;
+            }
+            window.location.href = url;
+        }
+
+        function validateAnswer(form) {
+            const content = form.querySelector('textarea[name="content"]').value.trim();
+            if (!content) {
+                alert('답변 내용을 입력해주세요.');
+                return false;
+            }
+            return true;
+        }
+
+        // URL parameter에서 탭 정보 읽기
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get('tab');
+            if (tab) {
+                showTab(tab);
+            }
         }
     </script>
 </body>

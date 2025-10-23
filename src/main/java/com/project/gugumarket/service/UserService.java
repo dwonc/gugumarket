@@ -4,10 +4,12 @@ import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
@@ -104,5 +106,16 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newpassword));
         userRepository.save(user);
         return true;
+    }
+
+    // 🔥 Principal에서 현재 사용자 가져오기
+    public User getCurrentUser(Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+
+        String username = principal.getName();
+        return userRepository.findByUserName(username)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
     }
 }

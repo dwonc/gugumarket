@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>거래 상세 - GUGU Market</title>
+
+    <!-- CSRF 토큰 -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #6B4F4F;
+            --secondary: #8B7070;
+            --accent: #A89080;
+            --light: #E8D5D5;
+        }
+        .bg-primary { background-color: var(--primary); }
+        .bg-secondary { background-color: var(--secondary); }
+        .text-primary { color: var(--primary); }
+        .border-primary { border-color: var(--primary); }
+        .hover\:bg-primary:hover { background-color: var(--primary); }
+        .hover\:bg-secondary:hover { background-color: var(--secondary); }
+        .hover\:text-primary:hover { color: var(--primary); }
+        .hover\:text-light:hover { color: var(--light); }
+    </style>
+</head>
+<body class="bg-gray-50">
+<!-- Top Bar -->
+<div class="bg-primary text-white py-2">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-end items-center space-x-6 text-sm">
+            <a href="/notifications" class="relative hover:text-light transition-colors">
+                <i class="bi bi-bell text-lg"></i>
+            </a>
+            <span th:if="${user != null}" th:text="${user.nickname} + '님'">사용자님</span>
+            <form th:if="${user != null}" th:action="@{/users/logout}" method="post" class="inline">
+                <button type="submit" class="hover:text-light transition-colors bg-transparent border-0">로그아웃</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Navbar -->
+<nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <a href="/" class="flex items-center space-x-3 group">
+                <i class="bi bi-shop text-4xl text-primary group-hover:text-secondary transition-colors duration-300"></i>
+                <span class="text-3xl font-bold text-primary group-hover:text-secondary transition-colors duration-300">GUGU Market</span>
+            </a>
+            <div class="flex items-center space-x-8">
+                <a href="/" class="text-gray-700 hover:text-primary font-medium transition-colors">홈</a>
+                <a href="/mypage" class="text-gray-700 hover:text-primary font-medium transition-colors">마이페이지</a>
+                <a href="/notifications" class="text-gray-700 hover:text-primary font-medium transition-colors">알림</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+            <a href="javascript:history.back()" class="text-gray-600 hover:text-primary transition-colors">
+                <i class="bi bi-arrow-left text-2xl"></i>
+            </a>
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="bi bi-receipt text-primary mr-2"></i>
+                거래 상세
+            </h1>
+        </div>
+
+        <!-- 거래 상태 배지 -->
+        <div class="flex items-center gap-3">
+                <span th:if="${transaction.status.name() == 'PENDING'}"
+                      class="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full font-bold">
+                    <i class="bi bi-clock-history mr-1"></i>거래 진행중
+                </span>
+            <span th:if="${transaction.status.name() == 'COMPLETED'}"
+                  class="px-4 py-2 bg-green-100 text-green-800 rounded-full font-bold">
+                    <i class="bi bi-check-circle-fill mr-1"></i>거래 완료
+                </span>
+            <span th:if="${transaction.status.name() == 'CANCELLED'}"
+                  class="px-4 py-2 bg-red-100 text-red-800 rounded-full font-bold">
+                    <i class="bi bi-x-circle-fill mr-1"></i>거래 취소
+                </span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column - 거래 정보 -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- 상품 정보 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="bi bi-box-seam text-primary mr-2"></i>
+                    상품 정보
+                </h2>
+
+                <div class="flex gap-4">
+                    <!-- 상품 이미지 -->
+                    <div class="flex-shrink-0">
+                        <img th:if="${transaction.product.mainImage != null}"
+                             th:src="${transaction.product.mainImage}"
+                             th:alt="${transaction.product.title}"
+                             class="w-32 h-32 object-cover rounded-lg">
+                        <div th:if="${transaction.product.mainImage == null}"
+                             class="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <i class="bi bi-image text-gray-400 text-4xl"></i>
+                        </div>
+                    </div>
+
+                    <!-- 상품 상세 -->
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-lg font-bold text-gray-800 mb-2" th:text="${transaction.product.title}">상품명</h3>
+                        <p class="text-2xl font-bold text-primary mb-2">
+                            <span th:text="${#numbers.formatInteger(transaction.product.price, 0, 'COMMA')}">50,000</span>원
+                        </p>
+                        <a th:href="@{/product/{id}(id=${transaction.product.productId})}"
+                           class="text-sm text-blue-600 hover:text-blue-700 inline-flex items-center">
+                            <i class="bi bi-box-arrow-up-right mr-1"></i>상품 페이지 보기
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 거래 정보 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="bi bi-info-circle text-primary mr-2"></i>
+                    거래 정보
+                </h2>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center py-2 border-b">
+                        <span class="text-gray-600">거래 번호</span>
+                        <span class="font-mono text-sm" th:text="${transaction.transactionId}">12345</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b">
+                        <span class="text-gray-600">거래 일시</span>
+                        <span th:text="${#temporals.format(transaction.transactionDate, 'yyyy-MM-dd HH:mm')}">2025-01-19 14:30</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b">
+                        <span class="text-gray-600">입금자명</span>
+                        <div class="flex items-center gap-2">
+                            <span id="depositor-display" class="font-semibold" th:text="${transaction.depositorName ?: '미입력'}">홍길동</span>
+                            <!-- 입금자명 수정 버튼 (구매자만) -->
+                            <button th:if="${isBuyer && transaction.status.name() == 'PENDING'}"
+                                    onclick="showDepositorEdit()"
+                                    class="text-blue-600 hover:text-blue-700 text-sm">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 입금자명 수정 폼 (숨김) -->
+                    <div id="depositor-edit" class="hidden py-2 border-b">
+                        <div class="flex gap-2">
+                            <input type="text"
+                                   id="depositor-input"
+                                   th:value="${transaction.depositorName}"
+                                   placeholder="입금자명 입력"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                            <button onclick="updateDepositor()"
+                                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-colors">
+                                저장
+                            </button>
+                            <button onclick="hideDepositorEdit()"
+                                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                취소
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-600">거래 상태</span>
+                        <span th:if="${transaction.status.name() == 'PENDING'}"
+                              class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-bold">
+                                진행중
+                            </span>
+                        <span th:if="${transaction.status.name() == 'COMPLETED'}"
+                              class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold">
+                                완료
+                            </span>
+                        <span th:if="${transaction.status.name() == 'CANCELLED'}"
+                              class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-bold">
+                                취소
+                            </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 거래 당사자 정보 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="bi bi-people text-primary mr-2"></i>
+                    거래 당사자
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 판매자 -->
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-2">판매자</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center">
+                                <i class="bi bi-person-fill text-blue-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-800" th:text="${transaction.seller.nickname}">판매자명</p>
+                                <p class="text-sm text-gray-600" th:if="${isSeller}">
+                                    <i class="bi bi-check-circle-fill text-blue-600 mr-1"></i>나
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 구매자 -->
+                    <div class="p-4 bg-green-50 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-2">구매자</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-green-200 flex items-center justify-center">
+                                <i class="bi bi-person-fill text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-800" th:text="${transaction.buyer.nickname}">구매자명</p>
+                                <p class="text-sm text-gray-600" th:if="${isBuyer}">
+                                    <i class="bi bi-check-circle-fill text-green-600 mr-1"></i>나
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - 액션 버튼 -->
+        <div class="space-y-6">
+            <!-- 결제 정보 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">결제 정보</h2>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">상품 금액</span>
+                        <span class="font-semibold">
+                                <span th:text="${#numbers.formatInteger(transaction.product.price, 0, 'COMMA')}">50,000</span>원
+                            </span>
+                    </div>
+                    <div class="border-t pt-3 flex justify-between items-center">
+                        <span class="text-lg font-bold text-gray-800">총 금액</span>
+                        <span class="text-2xl font-bold text-primary">
+                                <span th:text="${#numbers.formatInteger(transaction.product.price, 0, 'COMMA')}">50,000</span>원
+                            </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 무통장입금 정보 (판매자가 설정한 경우) -->
+            <div th:if="${transaction.product.bankName != null}"
+                 class="bg-amber-50 rounded-xl shadow-md p-6 border-2 border-amber-200">
+                <h2 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="bi bi-credit-card text-amber-600 mr-2"></i>
+                    입금 계좌
+                </h2>
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">은행</span>
+                        <span class="font-semibold" th:text="${transaction.product.bankName}">국민은행</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">계좌번호</span>
+                        <span class="font-mono text-sm font-semibold" th:text="${transaction.product.accountNumber}">123-456-789012</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">예금주</span>
+                        <span class="font-semibold" th:text="${transaction.product.accountHolder}">홍길동</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 액션 버튼들 -->
+            <div class="space-y-3">
+                <!-- 판매자: 거래 완료 버튼 -->
+                <button th:if="${isSeller && transaction.status.name() == 'PENDING'}"
+                        onclick="completeTransaction()"
+                        class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-bold">
+                    <i class="bi bi-check-circle-fill mr-2"></i>거래 완료 처리
+                </button>
+
+                <!-- 구매자: 거래 취소 버튼 -->
+                <button th:if="${isBuyer && transaction.status.name() == 'PENDING'}"
+                        onclick="cancelTransaction()"
+                        class="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors font-bold">
+                    <i class="bi bi-x-circle-fill mr-2"></i>거래 취소
+                </button>
+
+                <!-- 목록으로 버튼 -->
+                <a href="/mypage"
+                   class="block w-full text-center bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-bold">
+                    <i class="bi bi-list mr-2"></i>목록으로
+                </a>
+            </div>
+
+            <!-- 안내 메시지 -->
+            <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <p class="text-sm text-gray-700">
+                    <i class="bi bi-info-circle text-blue-600 mr-1"></i>
+                    <span th:if="${isSeller}">
+                            입금 확인 후 거래 완료 버튼을 눌러주세요.
+                        </span>
+                    <span th:if="${isBuyer}">
+                            입금 후 입금자명을 정확히 입력해주세요.
+                        </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-primary text-white mt-20 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p>&copy; 2025 GUGU Market. All rights reserved.</p>
+    </div>
+</footer>
+
+<script th:inline="javascript">
+    // CSRF 토큰
+    const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+    const transactionId = /*[[${transaction.transactionId}]]*/ 0;
+
+    function fetchWithCsrf(url, options = {}) {
+        options.headers = options.headers || {};
+        options.headers[csrfHeader] = csrfToken;
+        return fetch(url, options);
+    }
+
+    // 입금자명 수정 폼 표시
+    function showDepositorEdit() {
+        document.getElementById('depositor-display').parentElement.classList.add('hidden');
+        document.getElementById('depositor-edit').classList.remove('hidden');
+    }
+
+    // 입금자명 수정 폼 숨김
+    function hideDepositorEdit() {
+        document.getElementById('depositor-display').parentElement.classList.remove('hidden');
+        document.getElementById('depositor-edit').classList.add('hidden');
+    }
+
+    // 입금자명 수정
+    function updateDepositor() {
+        const depositorName = document.getElementById('depositor-input').value.trim();
+
+        if (!depositorName) {
+            alert('입금자명을 입력해주세요.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('depositorName', depositorName);
+
+        fetchWithCsrf(`/transaction/${transactionId}/depositor`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('입금자명이 수정되었습니다.');
+                    location.reload();
+                } else {
+                    alert('오류: ' + (data.message || '알 수 없는 오류'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('입금자명 수정 중 오류가 발생했습니다.');
+            });
+    }
+
+    // 거래 완료 (판매자)
+    function completeTransaction() {
+        if (!confirm('거래를 완료 처리하시겠습니까?\n완료 후에는 취소할 수 없습니다.')) {
+            return;
+        }
+
+        fetchWithCsrf(`/transaction/${transactionId}/complete`, {
+            method: 'POST'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('거래가 완료되었습니다!');
+                    location.reload();
+                } else {
+                    alert('오류: ' + (data.message || '알 수 없는 오류'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('거래 완료 처리 중 오류가 발생했습니다.');
+            });
+    }
+
+    // 거래 취소 (구매자)
+    function cancelTransaction() {
+        if (!confirm('거래를 취소하시겠습니까?')) {
+            return;
+        }
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/transaction/${transactionId}/cancel`;
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_csrf';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
+</body>
+</html>
