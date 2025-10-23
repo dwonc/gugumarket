@@ -61,8 +61,8 @@
         </div>
     </div>
 
-    <form th:action="@{/users/edit}" method="post" th:object="${userDto}" modelAttribute="userDto">
-
+    <form th:action="@{/users/edit}" method="post" enctype="multipart/form-data" th:object="${userDto}" modelAttribute="userDto">
+        <input type="hidden" id="currentProfileImage" name="currentProfileImage" th:value="${user.profileImage}">
         <!-- 프로필 이미지 -->
         <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -71,16 +71,39 @@
             </h2>
             <div class="flex items-center gap-6">
                 <div class="relative">
-                    <div class="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-4xl font-bold">
-                        <span th:text="${user.nickname != null ? user.nickname.substring(0,1) : 'U'}">U</span>
+                    <!-- edit.html - 프로필 이미지 부분만 수정 -->
+                    <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-primary shadow-lg bg-gray-100">
+                        <img id="profilePreview"
+                             th:src="${user.profileImage != null && !user.profileImage.isEmpty() ? user.profileImage : '/images/default-profile.png'}"
+                             alt="프로필 이미지"
+                             class="w-full h-full object-cover"
+                             onerror="this.onerror=null; this.src='/images/default-profile.png';">
                     </div>
-                    <button type="button" class="absolute bottom-0 right-0 bg-white border-2 border-primary text-primary p-2 rounded-full hover:bg-primary hover:text-white transition-all">
+
+                    <!-- 카메라 버튼 -->
+                    <button type="button"
+                            onclick="document.getElementById('profileImageInput').click()"
+                            class="absolute bottom-0 right-0 bg-white border-2 border-primary text-primary p-2 rounded-full hover:bg-primary hover:text-white transition-all">
                         <i class="bi bi-camera"></i>
                     </button>
+
+                    <!-- 숨겨진 파일 입력 -->
+                    <input type="file"
+                           id="profileImageInput"
+                           name="profileImage"
+                           accept="image/*"
+                           style="display: none;">
                 </div>
                 <div>
                     <p class="text-gray-600 text-sm mb-1">프로필 사진을 변경할 수 있습니다</p>
-                    <p class="text-gray-400 text-xs">권장: 500x500px 이상</p>
+                    <p class="text-gray-400 text-xs mb-1">권장: 500x500px 이상, 최대 5MB</p>
+                    <p class="text-gray-400 text-xs">지원 형식: JPG, PNG, GIF</p>
+                    <button type="button"
+                            onclick="resetProfileImage()"
+                            class="mt-2 text-sm text-red-500 hover:text-red-700 flex items-center gap-1">
+                        <i class="bi bi-x-circle"></i>
+                        기본 이미지로 변경
+                    </button>
                 </div>
             </div>
         </div>
@@ -329,6 +352,47 @@
     }
 
     /*]]>*/
+</script>
+<script>
+    // 프로필 사진 미리보기 기능
+    document.getElementById('profileImageInput').addEventListener('change', function (event) {
+        const file = event.target.files[0];
+        if (file) {
+            // 파일 크기 체크 (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert("파일 크기는 5MB 이하여야 합니다.");
+                this.value = '';
+                return;
+            }
+
+            // 파일 형식 체크
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert("JPG, PNG, GIF 형식의 이미지만 업로드 가능합니다.");
+                this.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function () {
+                    // 이미지 크기 확인
+                    if (img.width < 500 || img.height < 500) {
+                        if (!confirm("이미지 권장 사이즈는 500x500px 이상입니다. 계속하시겠습니까?")) {
+                            document.getElementById('profileImageInput').value = '';
+                            return;
+                        }
+                    }
+                    // 미리보기 표시
+                    const preview = document.getElementById('profilePreview');
+                    preview.src = e.target.result;
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 </script>
 </body>
 </html>

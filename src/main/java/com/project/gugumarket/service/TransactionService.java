@@ -172,4 +172,21 @@ public class TransactionService {
     public List<Transaction> getProductTransactions(Long productId) {
         return transactionRepository.findByProduct_ProductId(productId);
     }
+    // ✅ 특정 사용자의 구매 내역 조회
+    public List<Transaction> getPurchasesByBuyer(User buyer) {
+        return transactionRepository.findByBuyerOrderByTransactionDateDesc(buyer);
+    }
+    // ✅ 판매자 기준 거래내역 조회
+    public List<Transaction> getSalesBySeller(User seller) {
+        return transactionRepository.findBySellerOrderByTransactionDateDesc(seller);
+    }
+    // ✅ 구매자 기준 거래 내역 조회
+    public List<Transaction> findByBuyer(User buyer) {
+        return transactionRepository.findByBuyer(buyer);
+    }
+
+    // ✅ 판매자 기준 거래 내역 조회
+    public List<Transaction> findBySeller(User seller) {
+        return transactionRepository.findBySeller(seller);
+    }
 }
