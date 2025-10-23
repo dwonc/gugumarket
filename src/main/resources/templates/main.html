@@ -88,7 +88,12 @@
             <div class="hidden md:flex items-center space-x-4">
                 <a href="/" class="text-gray-700 hover:text-primary font-medium transition-colors duration-200 px-3">홈</a>
                 <a href="/mypage" class="text-gray-700 hover:text-primary font-medium transition-colors duration-200 px-3">마이페이지</a>
-                <a href="/admin" class="text-gray-700 hover:text-primary font-medium transition-colors duration-200 px-3">관리자</a>
+                <!-- ✅ 관리자 전용 메뉴 -->
+                <a href="/admin"
+                   th:if="${#authorization.expression('hasRole(''ADMIN'')')}"
+                   class="text-gray-700 hover:text-primary font-medium transition-colors duration-200 px-3">
+                    관리자
+                </a>
                 <button onclick="location.href='/product/new'" class="bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg flex items-center gap-2">
                     <i class="bi bi-plus-circle"></i>
                     상품 등록
