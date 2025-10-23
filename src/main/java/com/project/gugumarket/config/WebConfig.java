@@ -5,22 +5,45 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.nio.file.Paths;
+import java.io.File;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+
+    @Value("${file.upload-dir:uploads/products}")
+    private String uploadDir;
+
     @Value("${file.upload.path:uploads/}")
     private String uploadPath;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 업로드된 파일 제공 - 절대 경로로 변경
-        String absolutePath = Paths.get(uploadPath).toAbsolutePath().toString();
+        // 제품 이미지 경로
+        String absolutePath = new File(uploadDir).getAbsolutePath() + File.separator;
+        File directory = new File(uploadDir);
+        if (!directory.exists()) {
+            boolean created = directory.mkdirs();
+            System.out.println("📁 업로드 디렉토리 생성: " + absolutePath + " (성공: " + created + ")");
+        }
+        System.out.println("📂 제품 리소스 경로: " + absolutePath);
+
+        registry.addResourceHandler("/uploads/products/**")
+                .addResourceLocations("file:" + absolutePath);
+
+        // 프로필 이미지 경로 (실제 파일이 저장된 위치)
+        String profilePath = uploadPath.endsWith("/") ? uploadPath : uploadPath + "/";
+        File profileDir = new File(profilePath);
+        if (!profileDir.exists()) {
+            profileDir.mkdirs();
+            System.out.println("📁 프로필 디렉토리 생성: " + profilePath);
+        }
+
+        String profileAbsolutePath = profileDir.getAbsolutePath() + File.separator;
 
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + absolutePath + "/")
-                .setCachePeriod(3600); // 1시간 캐싱
+                .addResourceLocations("file:" + profileAbsolutePath);
 
-        System.out.println("✅ Static resource path configured: /uploads/** -> " + absolutePath);
+        System.out.println("✅ 프로필 리소스 경로: /uploads/** -> " + profileAbsolutePath);
+        System.out.println("✅ 파일 확인: " + new File(profileAbsolutePath + "jlan1234_1761185348206.jpg").exists());
     }
 }

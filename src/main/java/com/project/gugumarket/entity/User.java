@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
 @Entity
 @Table(name = "USERS")
 @Getter
@@ -59,18 +60,20 @@ public class User {
     @Column(name = "ROLE", length = 20)
     private String role = "USER";
 
-//    public String getProfileImageOrDefault() {
-//        return (profileImage == null || profileImage.isEmpty())
-//                ? "/images/default-profile.png"
-//                : profileImage;
-//    }
-        public String getProfileImageOrDefault() {
-        if (profileImage != null && !profileImage.isEmpty()) {
+
+    public String getProfileImageOrDefault() {
+        if (profileImage == null || profileImage.isEmpty()) {
+            return "/images/default-profile.png";
+        }
+
+        // 외부 URL (http:// 또는 https://로 시작)인 경우 그대로 반환
+        if (profileImage.startsWith("http://") || profileImage.startsWith("https://")) {
             return profileImage;
         }
-        return "/images/default-profile.png";
-    }
 
+        // 내부 경로인 경우 그대로 반환
+        return profileImage;
+    }
 
     // 연관관계
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL)
