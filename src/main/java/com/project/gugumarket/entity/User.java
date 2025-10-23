@@ -60,11 +60,19 @@ public class User {
     @Column(name = "ROLE", length = 20)
     private String role = "USER";
 
+
     public String getProfileImageOrDefault() {
-        if (profileImage != null && !profileImage.isEmpty()) {
+        if (profileImage == null || profileImage.isEmpty()) {
+            return "/images/default-profile.png";
+        }
+
+        // 외부 URL (http:// 또는 https://로 시작)인 경우 그대로 반환
+        if (profileImage.startsWith("http://") || profileImage.startsWith("https://")) {
             return profileImage;
         }
-        return "/images/default-profile.png";
+
+        // 내부 경로인 경우 그대로 반환
+        return profileImage;
     }
 
     // 연관관계

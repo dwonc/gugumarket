@@ -13,22 +13,37 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${file.upload-dir:uploads/products}")
     private String uploadDir;
 
+    @Value("${file.upload.path:uploads/}")
+    private String uploadPath;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 🔥 절대 경로로 변환
+        // 제품 이미지 경로
         String absolutePath = new File(uploadDir).getAbsolutePath() + File.separator;
-
-        // 🔥 디렉토리가 없으면 생성
         File directory = new File(uploadDir);
         if (!directory.exists()) {
             boolean created = directory.mkdirs();
             System.out.println("📁 업로드 디렉토리 생성: " + absolutePath + " (성공: " + created + ")");
         }
+        System.out.println("📂 제품 리소스 경로: " + absolutePath);
 
-        System.out.println("📂 정적 리소스 경로 설정: " + absolutePath);
-
-        // 업로드된 이미지를 /uploads/products/** URL로 접근 가능하게 설정
         registry.addResourceHandler("/uploads/products/**")
                 .addResourceLocations("file:" + absolutePath);
+
+        // 프로필 이미지 경로 (실제 파일이 저장된 위치)
+        String profilePath = uploadPath.endsWith("/") ? uploadPath : uploadPath + "/";
+        File profileDir = new File(profilePath);
+        if (!profileDir.exists()) {
+            profileDir.mkdirs();
+            System.out.println("📁 프로필 디렉토리 생성: " + profilePath);
+        }
+
+        String profileAbsolutePath = profileDir.getAbsolutePath() + File.separator;
+
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + profileAbsolutePath);
+
+        System.out.println("✅ 프로필 리소스 경로: /uploads/** -> " + profileAbsolutePath);
+        System.out.println("✅ 파일 확인: " + new File(profileAbsolutePath + "jlan1234_1761185348206.jpg").exists());
     }
 }

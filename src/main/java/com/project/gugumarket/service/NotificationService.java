@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -217,5 +218,17 @@ public class NotificationService {
     public void deleteAllNotifications(User user) {
         notificationRepository.deleteByReceiver(user);
         log.info("모든 알림 삭제 완료 - 사용자: {}", user.getNickname());
+    }
+    public List<Notification> getNotifications(User user) {
+        return notificationRepository.findByReceiverOrderByCreatedDateDesc(user);
+    }
+    @Transactional(readOnly = true)
+    public List<Notification> getRecentNotifications(User user, int limit) {
+        List<Notification> allNotifications = notificationRepository
+                .findByReceiverOrderByCreatedDateDesc(user);
+
+        return allNotifications.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
     }
 }
