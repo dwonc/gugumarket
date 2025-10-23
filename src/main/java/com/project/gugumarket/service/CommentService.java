@@ -1,3 +1,4 @@
+// src/main/java/com/project/gugumarket/service/CommentService.java
 package com.project.gugumarket.service;
 
 import com.project.gugumarket.dto.CommentDto;
@@ -28,15 +29,31 @@ public class CommentService {
                 .toList();
     }
 
-    public CommentDto create(Product product, User user, String content) {
+    /** ✅ parentId 지원 버전 */
+    public CommentDto create(Product product, User user, String content, Long parentId) {
+        Comment parent = null;
+        if (parentId != null) {
+            parent = commentRepository.findById(parentId)
+                    .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없습니다."));
+            // 같은 상품의 댓글인지 안전 체크(옵션)
+            if (!parent.getProduct().getProductId().equals(product.getProductId())) {
+                throw new IllegalStateException("부모 댓글과 상품이 다릅니다.");
+            }
+        }
+
         Comment c = Comment.builder()
                 .product(product)
                 .user(user)
                 .content(content)
                 .isDeleted(false)
+                .parent(parent)   // ✅ 대댓글 연결
                 .build();
         commentRepository.save(c);
         return CommentDto.from(c, user.getUserId());
+    }
+
+    public CommentDto create(Product product, User user, String content) {
+        return create(product, user, content, null);
     }
 
     public CommentDto update(Long commentId, User user, String content) {

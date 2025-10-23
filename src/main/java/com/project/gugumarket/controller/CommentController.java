@@ -1,3 +1,4 @@
+// src/main/java/com/project/gugumarket/controller/CommentController.java
 package com.project.gugumarket.controller;
 
 import com.project.gugumarket.dto.CommentDto;
@@ -23,7 +24,6 @@ public class CommentController {
     private final CommentService commentService;
     private final EntityManager em;
 
-    /** 현재 로그인한 도메인 User 로드 (Security UserDetails → username 기반 조회) */
     private User currentUser(Authentication auth) {
         if (auth == null) return null;
         String username = auth.getName();
@@ -36,7 +36,6 @@ public class CommentController {
         }
     }
 
-    /** 댓글 목록 */
     @GetMapping("/products/{id}/comments")
     public ResponseEntity<?> list(@PathVariable("id") Long productId, Authentication auth) {
         Product product = em.getReference(Product.class, productId);
@@ -51,7 +50,7 @@ public class CommentController {
         return ResponseEntity.ok(body);
     }
 
-    /** 댓글 작성 */
+    /** ✅ parentId(Optional) 받도록 확장 */
     @PostMapping("/products/{id}/comments")
     public ResponseEntity<?> create(@PathVariable("id") Long productId,
                                     @RequestBody Map<String, String> payload,
@@ -64,9 +63,14 @@ public class CommentController {
         if (content.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "내용을 입력하세요."));
         }
-        Product product = em.getReference(Product.class, productId);
+        Long parentId = null;
+        try {
+            String pid = payload.get("parentId");
+            if (pid != null && !pid.isBlank()) parentId = Long.valueOf(pid);
+        } catch (NumberFormatException ignore) {}
 
-        CommentDto saved = commentService.create(product, me, content);
+        Product product = em.getReference(Product.class, productId);
+        CommentDto saved = commentService.create(product, me, content, parentId);
         long count = commentService.countByProductId(productId);
 
         return ResponseEntity.ok(Map.of(
@@ -76,7 +80,6 @@ public class CommentController {
         ));
     }
 
-    /** 댓글 수정 */
     @PutMapping("/comments/{id}")
     public ResponseEntity<?> update(@PathVariable("id") Long commentId,
                                     @RequestBody Map<String, String> payload,
@@ -93,7 +96,6 @@ public class CommentController {
         return ResponseEntity.ok(Map.of("success", true, "comment", dto));
     }
 
-    /** 댓글 삭제 */
     @DeleteMapping("/comments/{id}")
     public ResponseEntity<?> delete(@PathVariable("id") Long commentId, Authentication auth) {
         User me = currentUser(auth);
