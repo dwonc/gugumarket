@@ -486,26 +486,13 @@
     }
 </script>
 <script>
-    // CSRF 토큰 가져오기
-    function getCsrfToken() {
-        return document.querySelector('meta[name="_csrf"]').getAttribute('content');
-    }
-
-    function getCsrfHeader() {
-        return document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
-    }
-
     // 입금 확인 처리 함수
     function confirmPayment(transactionId) {
         if (confirm('입금을 확인하셨습니까?')) {
-            const csrfToken = getCsrfToken();
-            const csrfHeader = getCsrfHeader();
-
             fetch(`/transaction/${transactionId}/complete`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    [csrfHeader]: csrfToken  // CSRF 토큰 헤더 추가
                 }
             })
                 .then(response => {

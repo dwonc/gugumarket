@@ -62,7 +62,8 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/api/**"),  // 🔥 이 줄 추가!
                                 new AntPathRequestMatcher("/product/*/status"),
                                 new AntPathRequestMatcher("/product/*/like"),
-                                new AntPathRequestMatcher("/product/*")
+                                new AntPathRequestMatcher("/product/*"),
+                                new AntPathRequestMatcher("/transaction/*/complete")
                         ))
                 .headers((headers)->headers.addHeaderWriter(
                         new XFrameOptionsHeaderWriter(
