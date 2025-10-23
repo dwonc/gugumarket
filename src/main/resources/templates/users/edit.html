@@ -63,9 +63,12 @@
         </div>
     </div>
 
-    <form th:action="@{/users/edit}" method="post" enctype="multipart/form-data" th:object="${userDto}" modelAttribute="userDto">
-        <input type="hidden" id="currentProfileImage" name="currentProfileImage" th:value="${user.profileImage}">
-        <!-- 프로필 이미지 -->
+    <!-- 📝 폼 시작 -->
+    <form th:action="@{/users/edit}"
+          method="post"
+          enctype="multipart/form-data">
+
+        <!-- 프로필 이미지 섹션 -->
         <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <i class="bi bi-person-circle text-primary"></i>
@@ -73,13 +76,12 @@
             </h2>
             <div class="flex items-center gap-6">
                 <div class="relative">
-                    <!-- edit.html - 프로필 이미지 부분만 수정 -->
+                    <!-- 프로필 이미지 미리보기 -->
                     <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-primary shadow-lg bg-gray-100">
                         <img id="profilePreview"
-                             th:src="${user.profileImage != null && !user.profileImage.isEmpty() ? user.profileImage : '/images/default-profile.png'}"
+                             th:src="${user.profileImage != null && !user.profileImage.isEmpty() ? user.profileImage : 'https://via.placeholder.com/200/6B4F4F/FFFFFF?text=Profile'}"
                              alt="프로필 이미지"
-                             class="w-full h-full object-cover"
-                             onerror="this.onerror=null; this.src='/images/default-profile.png';">
+                             class="w-full h-full object-cover">
                     </div>
 
                     <!-- 카메라 버튼 -->
@@ -94,6 +96,13 @@
                            id="profileImageInput"
                            name="profileImage"
                            accept="image/*"
+                           style="display: none;">
+
+                    <!-- 프로필 이미지 삭제 체크박스 (숨김) -->
+                    <input type="checkbox"
+                           id="deleteProfileImageCheckbox"
+                           name="deleteProfileImage"
+                           value="true"
                            style="display: none;">
                 </div>
                 <div>
@@ -110,7 +119,7 @@
             </div>
         </div>
 
-        <!-- 기본 정보 -->
+        <!-- 기본 정보 섹션 -->
         <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <i class="bi bi-info-circle text-primary"></i>
@@ -137,11 +146,11 @@
                     닉네임 <span class="text-red-500">*</span>
                 </label>
                 <input type="text"
-                       th:field="*{nickname}"
+                       name="nickname"
+                       th:value="${user.nickname}"
                        placeholder="닉네임을 입력하세요"
                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary transition-colors"
                        required>
-                <p class="text-red-500 text-sm mt-1" th:if="${#fields.hasErrors('nickname')}" th:errors="*{nickname}"></p>
             </div>
 
             <!-- 이메일 -->
@@ -150,11 +159,11 @@
                     이메일 <span class="text-red-500">*</span>
                 </label>
                 <input type="email"
-                       th:field="*{email}"
+                       name="email"
+                       th:value="${user.email}"
                        placeholder="example@email.com"
                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary transition-colors"
                        required>
-                <p class="text-red-500 text-sm mt-1" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
             </div>
 
             <!-- 전화번호 -->
@@ -163,20 +172,22 @@
                     전화번호
                 </label>
                 <input type="tel"
-                       th:field="*{phone}"
+                       name="phone"
+                       th:value="${user.phone}"
                        placeholder="010-0000-0000"
                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary transition-colors">
-                <p class="text-red-500 text-sm mt-1" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></p>
             </div>
 
-            <!-- 주소 -->
+            <!-- 우편번호 -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     우편번호 <span class="text-red-500">*</span>
                 </label>
                 <div class="flex gap-2">
                     <input type="text"
-                           th:field="*{postalCode}"
+                           id="postalCode"
+                           name="postalCode"
+                           th:value="${user.postalCode}"
                            readonly
                            class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-50"
                            placeholder="우편번호">
@@ -188,17 +199,22 @@
                 </div>
             </div>
 
+            <!-- 주소 -->
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     주소 <span class="text-red-500">*</span>
                 </label>
                 <input type="text"
-                       th:field="*{address}"
+                       id="address"
+                       name="address"
+                       th:value="${user.address}"
                        readonly
                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-50 mb-2"
                        placeholder="기본 주소">
                 <input type="text"
-                       th:field="*{addressDetail}"
+                       id="addressDetail"
+                       name="addressDetail"
+                       th:value="${user.addressDetail}"
                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-primary transition-colors"
                        placeholder="상세 주소">
                 <p class="text-sm text-gray-500 mt-1">
@@ -207,7 +223,7 @@
             </div>
         </div>
 
-        <!-- 비밀번호 변경 -->
+        <!-- 비밀번호 변경 섹션 -->
         <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <i class="bi bi-shield-lock text-primary"></i>
@@ -294,13 +310,18 @@
 
 <!-- 주소 검색 API -->
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-<script th:inline="javascript">
-    /*<![CDATA[*/
 
-    // 주소 검색
+<script>
+    /**
+     * 주소 검색 함수
+     *
+     * 사용하는 곳: "주소 검색" 버튼 클릭 시
+     * 용도: 다음 우편번호 API를 사용해서 주소를 쉽게 입력할 수 있게 함
+     */
     function searchAddress() {
         new daum.Postcode({
             oncomplete: function(data) {
+                // 도로명 주소 또는 지번 주소 선택
                 var addr = '';
                 var extraAddr = '';
 
@@ -310,6 +331,7 @@
                     addr = data.jibunAddress;
                 }
 
+                // 도로명 주소일 경우 추가 정보 처리
                 if(data.userSelectedType === 'R'){
                     if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
                         extraAddr += data.bname;
@@ -322,6 +344,7 @@
                     }
                 }
 
+                // 폼 필드에 값 설정
                 document.getElementById('postalCode').value = data.zonecode;
                 document.getElementById('address').value = addr + extraAddr;
                 document.getElementById('addressDetail').focus();
@@ -329,7 +352,84 @@
         }).open();
     }
 
-    // 회원탈퇴
+    /**
+     * 프로필 이미지 초기화 함수
+     *
+     * 사용하는 곳: "기본 이미지로 변경" 버튼 클릭 시
+     * 용도: 프로필 이미지를 기본 이미지로 되돌림
+     */
+    function resetProfileImage() {
+        // 미리보기를 기본 이미지로 변경
+        const preview = document.getElementById('profilePreview');
+        preview.src = 'https://via.placeholder.com/200/6B4F4F/FFFFFF?text=Profile';
+
+        // 파일 입력 초기화
+        document.getElementById('profileImageInput').value = '';
+
+        // 삭제 플래그 체크
+        document.getElementById('deleteProfileImageCheckbox').checked = true;
+
+        alert('프로필 이미지가 기본 이미지로 변경됩니다.\n저장 버튼을 눌러야 적용됩니다.');
+    }
+
+    /**
+     * 프로필 이미지 미리보기 함수
+     *
+     * 사용하는 곳: 프로필 이미지 파일 선택 시 자동 실행
+     * 용도: 업로드할 이미지를 미리 볼 수 있게 함
+     */
+    document.getElementById('profileImageInput').addEventListener('change', function (event) {
+        const file = event.target.files[0];
+
+        if (file) {
+            // 파일 크기 체크 (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert("파일 크기는 5MB 이하여야 합니다.");
+                this.value = '';
+                return;
+            }
+
+            // 파일 형식 체크
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert("JPG, PNG, GIF 형식의 이미지만 업로드 가능합니다.");
+                this.value = '';
+                return;
+            }
+
+            // 파일 읽기 및 미리보기 표시
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.src = e.target.result;
+
+                img.onload = function () {
+                    // 이미지 크기 확인
+                    if (img.width < 500 || img.height < 500) {
+                        if (!confirm("이미지 권장 사이즈는 500x500px 이상입니다. 계속하시겠습니까?")) {
+                            document.getElementById('profileImageInput').value = '';
+                            return;
+                        }
+                    }
+
+                    // 미리보기 표시
+                    const preview = document.getElementById('profilePreview');
+                    preview.src = e.target.result;
+
+                    // 삭제 플래그 해제 (새 이미지 업로드 시)
+                    document.getElementById('deleteProfileImageCheckbox').checked = false;
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    /**
+     * 회원탈퇴 함수
+     *
+     * 사용하는 곳: "회원탈퇴" 버튼 클릭 시
+     * 용도: 회원 정보를 완전히 삭제함 (복구 불가)
+     */
     function confirmDelete() {
         if (confirm('정말로 탈퇴하시겠습니까?\n탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.')) {
             if (confirm('마지막 확인입니다. 정말 탈퇴하시겠습니까?')) {
@@ -352,49 +452,7 @@
             }
         }
     }
-
-    /*]]>*/
 </script>
-<script>
-    // 프로필 사진 미리보기 기능
-    document.getElementById('profileImageInput').addEventListener('change', function (event) {
-        const file = event.target.files[0];
-        if (file) {
-            // 파일 크기 체크 (5MB)
-            if (file.size > 5 * 1024 * 1024) {
-                alert("파일 크기는 5MB 이하여야 합니다.");
-                this.value = '';
-                return;
-            }
 
-            // 파일 형식 체크
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-            if (!allowedTypes.includes(file.type)) {
-                alert("JPG, PNG, GIF 형식의 이미지만 업로드 가능합니다.");
-                this.value = '';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = function () {
-                    // 이미지 크기 확인
-                    if (img.width < 500 || img.height < 500) {
-                        if (!confirm("이미지 권장 사이즈는 500x500px 이상입니다. 계속하시겠습니까?")) {
-                            document.getElementById('profileImageInput').value = '';
-                            return;
-                        }
-                    }
-                    // 미리보기 표시
-                    const preview = document.getElementById('profilePreview');
-                    preview.src = e.target.result;
-                };
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-</script>
 </body>
 </html>
