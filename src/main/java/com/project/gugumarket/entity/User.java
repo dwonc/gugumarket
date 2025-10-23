@@ -47,6 +47,9 @@ public class User {
     @Column(name = "POSTAL_CODE", length = 10, nullable = false)
     private String postalCode;
 
+    @Column(name = "PROFILE_IMAGE", length = 500)
+    private String profileImage;
+
     @CreationTimestamp
     @Column(name = "CREATED_DATE")
     private LocalDateTime createdDate;
@@ -56,6 +59,13 @@ public class User {
 
     @Column(name = "ROLE", length = 20)
     private String role = "USER";
+
+    public String getProfileImageOrDefault() {
+        if (profileImage != null && !profileImage.isEmpty()) {
+            return profileImage;
+        }
+        return "/images/default-profile.png";
+    }
 
     // 연관관계
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL)
@@ -69,4 +79,7 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<QnaPost> qnaPosts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL)
+    private List<Notification> notifications = new ArrayList<>();
 }
