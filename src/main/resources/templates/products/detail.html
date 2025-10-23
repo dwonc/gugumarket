@@ -6,6 +6,17 @@
     <title th:text="${product.title} + ' - GUGU Market'">상품 상세 - GUGU Market</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <style>
+        /* 상세 페이지 전용 푸터 보정 */
+        footer.bg-primary {
+            grid-column: 1 / -1;
+            margin-left: 0;
+            margin-right: 0;
+        }
+    </style>
+
+
     <style>
         :root {
             --primary: #6B4F4F;
@@ -305,73 +316,277 @@
         </div>
     </div>
 
-    <!-- Comments Section -->
-    <div class="mt-8 bg-white rounded-2xl shadow-lg p-8" th:if="${product.comments != null}">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">
-            댓글 <span class="text-primary" th:text="${product.comments.size()}">0</span>
-        </h2>
 
-        <!-- Comment Form -->
-        <form th:action="@{/comment}" method="post" class="mb-8">
-            <input type="hidden" name="productId" th:value="${product.productId}" />
-            <textarea
-                    name="content"
-                    rows="3"
-                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary resize-none"
-                    placeholder="댓글을 입력하세요..."
-                    required
-            ></textarea>
-            <div class="flex justify-end mt-3">
-                <button
-                        type="submit"
-                        class="bg-primary hover:bg-secondary text-white font-medium px-6 py-2 rounded-lg transition-all"
-                >
-                    댓글 작성
-                </button>
-            </div>
-        </form>
+     <!-- 댓글 시작-->
 
-        <!-- Comments List -->
-        <div class="space-y-4">
-            <!-- Comment Item -->
-            <div th:each="comment : ${product.comments}" class="border-b border-gray-200 pb-4 last:border-b-0">
-                <div class="flex items-start justify-between mb-2">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                            <i class="bi bi-person text-gray-600 text-xl"></i>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-800" th:text="${comment.user.nickname}">사용자명</p>
-                            <p class="text-sm text-gray-500" th:text="${#temporals.format(comment.createdDate, 'yyyy-MM-dd HH:mm')}">2025-01-01 12:00</p>
-                        </div>
-                    </div>
-                    <button class="text-gray-400 hover:text-gray-600">
-                        <i class="bi bi-three-dots-vertical"></i>
-                    </button>
-                </div>
-                <p class="text-gray-700 ml-13 whitespace-pre-line" th:text="${comment.content}">댓글 내용</p>
+        <!-- GUGU Market 댓글 — 섹션 자동생성 + CSRF + 목록/작성/수정/삭제 (완전체) -->
+        <script th:inline="javascript">
+            /* 0) CSRF 메타 자동 주입 */
+            (function(){
+                var token  = /*[[${_csrf.token}]]*/ '';
+                var header = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+                if (token && !document.querySelector('meta[name="_csrf"]')) {
+                    var m1=document.createElement('meta'); m1.name='_csrf'; m1.content=token; document.head.appendChild(m1);
+                    var m2=document.createElement('meta'); m2.name='_csrf_header'; m2.content=header; document.head.appendChild(m2);
+                }
+            })();
 
-                <!-- Reply Button -->
-                <button class="ml-13 mt-2 text-sm text-gray-500 hover:text-primary">
-                    <i class="bi bi-reply mr-1"></i>답글
-                </button>
-            </div>
+            /* 1) 댓글 섹션이 없으면 동적으로 만들어 붙인다 */
+            (function ensureCommentSection(){
+                const hasForm = document.querySelector('form[action$="/comment"], form[th\\:action="@{/comment}"]');
+                if (hasForm) return;
 
-            <!-- Empty State -->
-            <div th:if="${product.comments.empty}" class="text-center py-8 text-gray-500">
-                <i class="bi bi-chat-dots text-4xl mb-2"></i>
-                <p>첫 댓글을 작성해보세요!</p>
-            </div>
-        </div>
+                const productId = /*[[${product.productId}]]*/ 0;
+                // 상품 설명 블록 바로 뒤에 붙이기 (없으면 본문 끝에)
+                const descBlock = Array.from(document.querySelectorAll('div.mt-8.bg-white.rounded-2xl.shadow-lg.p-8'))
+                    .find(box => box.querySelector('h2') && box.querySelector('h2').textContent.includes('상품 설명'));
+                const mountPoint = descBlock?.parentElement || document.querySelector('.max-w-7xl.mx-auto') || document.body;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'mt-8 bg-white rounded-2xl shadow-lg p-8';
+                wrapper.innerHTML = `
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">댓글 <span class="text-primary">0</span></h2>
+    <form action="/comment" method="post" class="mb-8">
+      <input type="hidden" name="productId" value="${productId}" />
+      <textarea name="content" rows="3"
+        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary resize-none"
+        placeholder="댓글을 입력하세요..." required></textarea>
+      <div class="flex justify-end mt-3">
+        <button type="submit"
+          class="bg-primary hover:bg-secondary text-white font-medium px-6 py-2 rounded-lg transition-all">
+          댓글 작성
+        </button>
+      </div>
+    </form>
+    <div class="space-y-4">
+      <div class="text-center py-8 text-gray-500">
+        <i class="bi bi-chat-dots text-4xl mb-2"></i>
+        <p>첫 댓글을 작성해보세요!</p>
+      </div>
     </div>
-</div>
+  `;
+                if (descBlock) {
+                    descBlock.insertAdjacentElement('afterend', wrapper);
+                } else {
+                    mountPoint.appendChild(wrapper);
+                }
+            })();
 
-<!-- Footer -->
+            /* 2) 댓글 기능 본체: 목록/작성/수정/삭제 (실패 시 기존 UI 유지) */
+            (function () {
+                const getMeta = (n)=>document.querySelector(`meta[name="${n}"]`)?.getAttribute('content')||'';
+                const CSRF_TOKEN  = getMeta('_csrf');
+                const CSRF_HEADER = getMeta('_csrf_header')||'X-CSRF-TOKEN';
+
+                const $  = (s,r=document)=>r.querySelector(s);
+                const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+
+                // 어떤 submit이라도 action이 '/comment'로 끝나면 가로채기
+                document.addEventListener('submit',(e)=>{
+                    const f=e.target;
+                    const action=(f.getAttribute('action')||f.getAttribute('th:action')||'')+'';
+                    if(action.endsWith('/comment')){ e.preventDefault(); handleSubmit(f); }
+                },true);
+
+                const commentForm = document.querySelector('form[action$="/comment"]') ||
+                    document.querySelector('form[th\\:action="@{/comment}"]');
+                if(!commentForm) return;
+
+                const productId  = (commentForm.querySelector('input[name="productId"]')||{}).value;
+                const textarea   = commentForm.querySelector('textarea[name="content"]');
+                const section    = commentForm.closest('div.mt-8.bg-white.rounded-2xl.shadow-lg.p-8');
+                const listBox    = section ? $('.space-y-4', section) : null;
+                const countEl    = section ? $('h2 span.text-primary', section) : null;
+
+                // 팝업/수정 스타일
+                const style=document.createElement('style');
+                style.textContent=`
+    .gugu-pop{position:absolute;right:0;top:28px;background:#fff;border:1px solid rgba(0,0,0,.1);
+      border-radius:.5rem;box-shadow:0 10px 25px rgba(0,0,0,.08);overflow:hidden;z-index:60}
+    .gugu-pop button{display:block;width:120px;padding:10px 12px;text-align:left;font-size:14px}
+    .gugu-pop button:hover{background:rgba(0,0,0,.04)}
+    .gugu-item:hover .gugu-dots{color:#111827}
+    .gugu-edit{border:2px solid #e5e7eb;border-radius:.75rem;padding:.5rem;margin-top:.5rem;display:none}
+    .gugu-edit.show{display:block}
+  `;
+                document.head.appendChild(style);
+
+                // 공통 fetch (CSRF 자동)
+                function jfetch(url,opt={}){
+                    opt.headers=Object.assign({'Accept':'application/json','X-Requested-With':'XMLHttpRequest'},opt.headers||{});
+                    const m=(opt.method||'GET').toUpperCase();
+                    if(['POST','PUT','DELETE','PATCH'].includes(m)){
+                        if(CSRF_TOKEN) opt.headers[CSRF_HEADER]=CSRF_TOKEN;
+                        if(!opt.headers['Content-Type'] && !(opt.body instanceof FormData)){
+                            opt.headers['Content-Type']='application/json';
+                        }
+                    }
+                    return fetch(url,opt);
+                }
+
+                // 목록 불러오기 (성공시에만 교체)
+                async function fetchListSafe(){
+                    try{
+                        const res = await jfetch(`/api/products/${productId}/comments`);
+                        if(!res.ok) return; // 실패면 기존 유지
+                        const data = await res.json().catch(()=>null);
+                        if(!data || data.success===false || !Array.isArray(data.comments)) return;
+                        renderList(data.comments);
+                        if(countEl) countEl.textContent = (data.count ?? data.comments.length);
+                    }catch(err){
+                        console.error('[댓글] 목록 로드 실패:',err); // 기존 유지
+                    }
+                }
+
+                // 폼 제출 처리
+                async function handleSubmit(){
+                    const content = textarea.value.trim();
+                    if(!content) return alert('내용을 입력하세요.');
+                    try{
+                        const res = await jfetch(`/api/products/${productId}/comments`,{
+                            method:'POST', body:JSON.stringify({content})
+                        });
+                        const data = await res.json();
+                        if(data.needLogin){
+                            if(confirm('로그인이 필요한 기능입니다. 로그인 페이지로 이동할까요?')) location.href='/users/login';
+                            return;
+                        }
+                        if(!data.success) return alert(data.message||'등록 실패');
+
+                        textarea.value='';
+                        if(listBox){
+                            const empty=listBox.querySelector('.text-center'); if(empty) empty.remove();
+                            listBox.appendChild(createItem(data.comment));
+                        }
+                        if(countEl) countEl.textContent = (data.count ?? (parseInt(countEl.textContent||'0',10)+1));
+                    }catch(err){
+                        console.error('[댓글] 등록 실패:',err);
+                        alert('등록 중 오류가 발생했습니다.');
+                    }
+                }
+
+                function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+                function createItem(c){
+                    const wrap=document.createElement('div');
+                    wrap.className="border-b border-gray-200 pb-4 last:border-b-0 gugu-item";
+                    wrap.dataset.id=c.id;
+                    wrap.innerHTML=`
+      <div class="flex items-start justify-between mb-2 relative">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+            <i class="bi bi-person text-gray-600 text-xl"></i>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-800">${escapeHtml(c.userNickname??'사용자')}</p>
+            <p class="text-sm text-gray-500">${c.createdAt??''}</p>
+          </div>
+        </div>
+        <button class="text-gray-400 hover:text-gray-600 gugu-dots"><i class="bi bi-three-dots-vertical"></i></button>
+        <div class="gugu-pop hidden">
+          ${c.mine?`
+            <button data-act="edit"><i class="bi bi-pencil"></i> 수정</button>
+            <button data-act="del" class="text-red-600"><i class="bi bi-trash"></i> 삭제</button>
+          `:`<div class="px-3 py-2 text-sm text-gray-500 select-none">내 댓글 아님</div>`}
+        </div>
+      </div>
+      <p class="text-gray-700 ml-13 whitespace-pre-line gugu-content">${escapeHtml(c.content??'')}</p>
+      <div class="gugu-edit">
+        <textarea class="w-full px-3 py-2 rounded-lg border-2 border-gray-200 focus:outline-none focus:border-primary resize-none" rows="3">${escapeHtml(c.content??'')}</textarea>
+        <div class="flex justify-end gap-2 mt-2">
+          <button class="px-4 py-2 rounded-lg border-2 border-gray-300" data-edit-cancel>취소</button>
+          <button class="px-4 py-2 rounded-lg bg-primary text-white" data-edit-save>수정</button>
+        </div>
+      </div>
+    `;
+
+                    const dots=$('.gugu-dots',wrap), pop=$('.gugu-pop',wrap);
+                    dots?.addEventListener('click',(e)=>{e.stopPropagation(); pop.classList.toggle('hidden');});
+                    document.addEventListener('click',()=>pop.classList.add('hidden'));
+
+                    // 삭제
+                    $('[data-act="del"]',wrap)?.addEventListener('click',async()=>{
+                        if(!confirm('이 댓글을 삭제할까요?')) return;
+                        try{
+                            const res=await jfetch(`/api/comments/${c.id}`,{method:'DELETE'});
+                            const data=await res.json();
+                            if(data.success){
+                                wrap.remove();
+                                if(countEl) countEl.textContent=data.count;
+                            }else if(data.needLogin){
+                                alert('로그인이 필요합니다.'); location.href='/users/login';
+                            }else{
+                                alert(data.message||'삭제 실패');
+                            }
+                        }catch(err){
+                            console.error('[댓글] 삭제 실패:',err); alert('삭제 중 오류가 발생했습니다.');
+                        }
+                    });
+
+                    // 수정
+                    $('[data-act="edit"]',wrap)?.addEventListener('click',()=>$('.gugu-edit',wrap).classList.add('show'));
+                    $('[data-edit-cancel]',wrap)?.addEventListener('click',()=>{
+                        const box=$('.gugu-edit',wrap), ta=$('textarea',box);
+                        ta.value=c.content??''; box.classList.remove('show');
+                    });
+                    $('[data-edit-save]',wrap)?.addEventListener('click',async()=>{
+                        const box=$('.gugu-edit',wrap), ta=$('textarea',box);
+                        const content=ta.value.trim(); if(!content) return alert('내용을 입력하세요.');
+                        try{
+                            const res=await jfetch(`/api/comments/${c.id}`,{method:'PUT',body:JSON.stringify({content})});
+                            const data=await res.json();
+                            if(data.success){
+                                c.content=data.comment.content;
+                                $('.gugu-content',wrap).textContent=c.content;
+                                ta.value=c.content; box.classList.remove('show');
+                            }else if(data.needLogin){
+                                alert('로그인이 필요합니다.'); location.href='/users/login';
+                            }else{
+                                alert(data.message||'수정 실패');
+                            }
+                        }catch(err){
+                            console.error('[댓글] 수정 실패:',err); alert('수정 중 오류가 발생했습니다.');
+                        }
+                    });
+
+                    return wrap;
+                }
+
+                function renderList(items){
+                    if(!listBox) return;
+                    listBox.innerHTML='';
+                    if(!items.length){
+                        const empty=document.createElement('div');
+                        empty.className='text-center py-8 text-gray-500';
+                        empty.innerHTML=`<i class="bi bi-chat-dots text-4xl mb-2"></i><p>첫 댓글을 작성해보세요!</p>`;
+                        listBox.appendChild(empty);
+                        return;
+                    }
+                    items.forEach(c=>listBox.appendChild(createItem(c)));
+                }
+
+                // 초기 동기화 (성공 시에만 교체)
+                fetchListSafe();
+            })();
+
+
+
+
+        </script>
+
+        <!-- 댓글 끝 -->
+
+
+
+        <!-- Footer -->
+
 <footer class="bg-primary text-white mt-20 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <p>&copy; 2025 GUGU Market. All rights reserved.</p>
     </div>
 </footer>
+
+
 
 <script th:inline="javascript">
     // Change main image when clicking thumbnail
