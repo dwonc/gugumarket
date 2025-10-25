@@ -76,30 +76,12 @@ public class MainController {
         Pageable pageable = PageRequest.of(page, size);
 
         Page<ProductForm> products;
+
         if (categoryId != null) {
             products = productService.getProductsByCategory(categoryId, keyword, pageable);
             model.addAttribute("selectedCategoryId", categoryId);
         } else {
             products = productService.getProductList(keyword, pageable);
-        }
-
-        // 🔥 로그인한 사용자가 찜한 상품 ID 목록 조회 (final로 선언)
-        final List<Long> likedProductIds;
-        if (currentUser != null) {
-            likedProductIds = likeService.getLikedProductIds(currentUser);
-            System.out.println("❤️ 찜한 상품: " + likedProductIds.size() + "개");
-        } else {
-            likedProductIds = List.of();  // 빈 리스트
-        }
-
-        // 🔥 각 상품에 찜 여부 설정
-        if (!likedProductIds.isEmpty()) {
-            products.getContent().forEach(product -> {
-                if (likedProductIds.contains(product.getProductId())) {
-                    product.setIsLiked(true);
-                    System.out.println("❤️ 상품 ID " + product.getProductId() + " 찜됨 표시");
-                }
-            });
         }
 
         List<Category> categories = categoryRepository.findAll();
