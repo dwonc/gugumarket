@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -100,6 +101,133 @@ public class UserController {
         }
 
         return "redirect:/";
+    }
+
+    /**
+     * 아이디 찾기 페이지
+     */
+    @GetMapping("/find-id")
+    public String findIdForm() {
+        return "users/findid";
+    }
+
+    /**
+     * 이메일로 아이디 찾기
+     */
+
+    @PostMapping("/find-id/email")
+    public String findIdByEmail(
+            @RequestParam String email,
+            @RequestParam String name,
+            Model model
+    ) {
+        try {
+            String maskedUserName = userService.findUserNameByEmail(email, name);
+            LocalDateTime joinDate = userService.getJoinDate(email, name);
+
+            model.addAttribute("foundId", maskedUserName);
+            model.addAttribute("joinDate", joinDate);
+            model.addAttribute("success", true);
+
+            return "users/findid";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            return "users/findid";
+        }
+    }
+
+    /**
+     * 전화번호로 아이디 찾기
+     */
+    @PostMapping("/find-id/phone")
+    public String findIdByPhone(
+            @RequestParam String phone,
+            @RequestParam String name,
+            Model model
+    ) {
+        try {
+            String maskedUserName = userService.findUserNameByPhone(phone, name);
+            LocalDateTime joinDate = userService.getJoinDate(phone, name);
+
+            model.addAttribute("foundId", maskedUserName);
+            model.addAttribute("joinDate", joinDate);
+            model.addAttribute("success", true);
+
+            return "users/findid";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            return "users/findid";
+        }
+    }
+
+    /**
+     * 비밀번호 찾기 페이지
+     */
+    @GetMapping("/find-password")
+    public String findPasswordForm() {
+        return "users/findpassword";
+    }
+
+    /**
+     * 비밀번호 재설정 링크 발송
+     */
+    @PostMapping("/find-password")
+    public String findPassword(
+            @RequestParam String username,
+            @RequestParam String email,
+            Model model
+    ) {
+        try {
+            userService.requestPasswordReset(username, email);
+            model.addAttribute("success", true);
+            model.addAttribute("email", email);
+            return "users/findpassword";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            return "users/findpassword";
+        }
+    }
+
+    /**
+     * 비밀번호 재설정 페이지
+     */
+    @GetMapping("/reset-password")
+    public String resetPasswordForm(@RequestParam String token, Model model) {
+        if (!userService.isTokenValid(token)) {
+            model.addAttribute("error", "유효하지 않거나 만료된 링크입니다.");
+            return "users/resetpassword";
+        }
+
+        model.addAttribute("token", token);
+        return "users/resetpassword";
+    }
+
+    /**
+     * 비밀번호 재설정 처리
+     */
+    @PostMapping("/reset-password")
+    public String resetPassword(
+            @RequestParam String token,
+            @RequestParam String password,
+            @RequestParam String passwordConfirm,
+            Model model
+    ) {
+        // 비밀번호 일치 확인
+        if (!password.equals(passwordConfirm)) {
+            model.addAttribute("error", "비밀번호가 일치하지 않습니다.");
+            model.addAttribute("token", token);
+            return "users/resetpassword";
+        }
+
+        try {
+            userService.resetPassword(token, password);
+            model.addAttribute("success", true);
+            return "users/resetpassword";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("token", token);
+            return "users/resetpassword";
+        }
     }
 
 }

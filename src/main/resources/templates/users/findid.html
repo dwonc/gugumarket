@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아이디 찾기 - GUGU Market</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #6B4F4F;
+            --secondary: #8B7070;
+            --accent: #A89080;
+            --light: #E8D5D5;
+        }
+        .bg-primary { background-color: var(--primary); }
+        .bg-secondary { background-color: var(--secondary); }
+        .text-primary { color: var(--primary); }
+        .border-primary { border-color: var(--primary); }
+        .hover\:bg-primary:hover { background-color: var(--primary); }
+        .hover\:bg-secondary:hover { background-color: var(--secondary); }
+        .hover\:text-primary:hover { color: var(--primary); }
+        .active-tab {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+<!-- Navbar -->
+<nav class="bg-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <a href="/" class="flex items-center space-x-3 group">
+                <i class="bi bi-shop text-4xl text-primary group-hover:text-secondary transition-colors duration-300"></i>
+                <span class="text-3xl font-bold text-primary group-hover:text-secondary transition-colors duration-300">GUGU Market</span>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Container -->
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+        <!-- Tabs -->
+        <div class="bg-white rounded-t-2xl shadow-2xl overflow-hidden">
+            <div class="flex">
+                <button onclick="location.href='/users/find-id'" class="flex-1 py-4 px-6 font-semibold text-center active-tab transition-all">
+                    <i class="bi bi-person-circle mr-2"></i>아이디 찾기
+                </button>
+                <button onclick="location.href='/users/find-password'" class="flex-1 py-4 px-6 font-semibold text-gray-600 bg-white hover:bg-gray-50 transition-all">
+                    <i class="bi bi-key mr-2"></i>비밀번호 찾기
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Box -->
+        <div class="bg-white rounded-b-2xl shadow-2xl p-8 space-y-8">
+
+            <!-- 🔥 성공 메시지 (Thymeleaf 조건문) -->
+            <div th:if="${success}" class="space-y-6">
+                <div class="bg-green-50 border-2 border-green-200 rounded-lg p-6 text-center">
+                    <i class="bi bi-check-circle-fill text-green-600 text-4xl mb-3"></i>
+                    <p class="text-gray-700 mb-2">회원님의 아이디는</p>
+                    <p class="text-2xl font-bold text-primary mb-4" th:text="${foundId}">user****</p>
+                    <p class="text-sm text-gray-600">가입일: <span th:text="${#temporals.format(joinDate, 'yyyy-MM-dd')}">2024-01-01</span></p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="location.href='/users/login'" class="flex-1 bg-primary hover:bg-secondary text-white font-bold py-3 rounded-lg transition-all">
+                        로그인
+                    </button>
+                    <button onclick="location.href='/users/find-password'" class="flex-1 bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold py-3 rounded-lg transition-all">
+                        비밀번호 찾기
+                    </button>
+                </div>
+            </div>
+
+            <!-- 🔥 에러 메시지 -->
+            <div th:if="${error}" class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+                <i class="bi bi-exclamation-circle mr-2"></i>
+                <span th:text="${error}">입력하신 정보와 일치하는 회원을 찾을 수 없습니다.</span>
+            </div>
+
+            <!-- 폼은 success가 아닐 때만 표시 -->
+            <div th:unless="${success}">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="bi bi-person-circle text-primary text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">아이디 찾기</h2>
+                    <p class="text-gray-500">가입 시 등록한 이메일 또는 전화번호로 아이디를 찾을 수 있습니다.</p>
+                </div>
+
+                <!-- Method Selection -->
+                <div class="flex gap-3 mb-6">
+                    <button id="email-tab" onclick="showMethod('email')" class="flex-1 py-3 px-4 border-2 border-primary bg-primary text-white rounded-lg font-medium transition-all">
+                        <i class="bi bi-envelope mr-2"></i>이메일로 찾기
+                    </button>
+                    <button id="phone-tab" onclick="showMethod('phone')" class="flex-1 py-3 px-4 border-2 border-gray-300 text-gray-700 hover:border-primary rounded-lg font-medium transition-all">
+                        <i class="bi bi-phone mr-2"></i>전화번호로 찾기
+                    </button>
+                </div>
+
+                <!-- Email Form -->
+                <form id="email-form" th:action="@{/users/find-id/email}" method="post" class="space-y-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">이메일 주소</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="bi bi-envelope text-gray-400"></i>
+                            </div>
+                            <input type="email" id="email" name="email" required
+                                   class="pl-10 w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                                   placeholder="example@email.com"/>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="name-email" class="block text-sm font-medium text-gray-700 mb-2">닉네임</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="bi bi-person text-gray-400"></i>
+                            </div>
+                            <input type="text" id="name-email" name="name" required
+                                   class="pl-10 w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                                   placeholder="닉네임을 입력하세요"/>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
+                        <i class="bi bi-search mr-2"></i>아이디 찾기
+                    </button>
+                </form>
+
+                <!-- Phone Form -->
+                <form id="phone-form" th:action="@{/users/find-id/phone}" method="post" class="space-y-6 hidden">
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">전화번호</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="bi bi-phone text-gray-400"></i>
+                            </div>
+                            <input type="tel" id="phone" name="phone" required
+                                   class="pl-10 w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                                   placeholder="010-0000-0000"/>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="name-phone" class="block text-sm font-medium text-gray-700 mb-2">이름</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="bi bi-person text-gray-400"></i>
+                            </div>
+                            <input type="text" id="name-phone" name="name" required
+                                   class="pl-10 w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                                   placeholder="이름을 입력하세요"/>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
+                        <i class="bi bi-search mr-2"></i>아이디 찾기
+                    </button>
+                </form>
+
+                <!-- Divider -->
+                <div class="relative mt-8">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                </div>
+
+                <!-- Links -->
+                <div class="text-center space-y-3 mt-6">
+                    <p class="text-gray-600">
+                        아이디가 기억나셨나요?
+                        <a href="/users/login" class="text-primary hover:text-secondary font-semibold transition-colors">로그인하기</a>
+                    </p>
+                    <p class="text-gray-600">
+                        아직 회원이 아니신가요?
+                        <a href="/users/signup" class="text-primary hover:text-secondary font-semibold transition-colors">회원가입</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showMethod(method) {
+        const emailForm = document.getElementById('email-form');
+        const phoneForm = document.getElementById('phone-form');
+        const emailTab = document.getElementById('email-tab');
+        const phoneTab = document.getElementById('phone-tab');
+
+        if (method === 'email') {
+            emailForm.classList.remove('hidden');
+            phoneForm.classList.add('hidden');
+            emailTab.classList.add('border-primary', 'bg-primary', 'text-white');
+            emailTab.classList.remove('border-gray-300', 'text-gray-700');
+            phoneTab.classList.remove('border-primary', 'bg-primary', 'text-white');
+            phoneTab.classList.add('border-gray-300', 'text-gray-700');
+        } else {
+            emailForm.classList.add('hidden');
+            phoneForm.classList.remove('hidden');
+            phoneTab.classList.add('border-primary', 'bg-primary', 'text-white');
+            phoneTab.classList.remove('border-gray-300', 'text-gray-700');
+            emailTab.classList.remove('border-primary', 'bg-primary', 'text-white');
+            emailTab.classList.add('border-gray-300', 'text-gray-700');
+        }
+    }
+</script>
+</body>
+</html>

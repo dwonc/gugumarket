@@ -59,7 +59,10 @@ public class SecurityConfig {
                 .csrf((csrf) -> csrf
                         .ignoringRequestMatchers(
                                 new AntPathRequestMatcher("/h2-console/**"),
-                                new AntPathRequestMatcher("/api/**"),  // 🔥 이 줄 추가!
+                                new AntPathRequestMatcher("/api/**"),
+                                new AntPathRequestMatcher("/users/find-id/**"),
+                                new AntPathRequestMatcher("/users/find-password"),
+                                new AntPathRequestMatcher("/users/reset-password"),
                                 new AntPathRequestMatcher("/product/*/status"),
                                 new AntPathRequestMatcher("/product/*/like"),
                                 new AntPathRequestMatcher("/product/*")

@@ -36,4 +36,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // ❌ findByUsername() 는 삭제!
     // email로 조회
     Optional<User> findByEmail(String email);
+
+    // 이메일과 닉네임으로 조회 (아이디 찾기용)
+    Optional<User> findByEmailAndNickname(String email, String nickname);
+
+    // 전화번호와 닉네임으로 조회 (아이디 찾기용)
+    Optional<User> findByPhoneAndNickname(String phone, String nickname);
+
+    // 아이디와 이메일로 조회 (비밀번호 찾기용)
+    Optional<User> findByUserNameAndEmail(String userName, String email);
+
 }

@@ -2,10 +2,11 @@ package com.project.gugumarket.service;
 
 import com.project.gugumarket.DataNotFoundException;
 import com.project.gugumarket.dto.UserDto;
+import com.project.gugumarket.entity.PasswordResetToken;
 import com.project.gugumarket.entity.User;
+import com.project.gugumarket.repository.PasswordResetTokenRepository;
 import com.project.gugumarket.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,9 +19,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Service
 public class UserService {
-    @Autowired
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordResetTokenRepository tokenRepository;
+    private final EmailService emailService;
 
     public User getUser(String userName) {
         Optional<User> siteUser = this.userRepository.findByUserName(userName);
@@ -92,6 +94,7 @@ public class UserService {
             throw new IllegalArgumentException("비밀번호는 영문과 숫자를 포함해야 합니다.");
         }
     }
+
     //내 정보 조회
     public UserDto getUserInfo(String userName) {
         User user=userRepository.findByUserName(userName)
@@ -102,6 +105,7 @@ public class UserService {
         dto.setPhone(user.getPhone());
         return dto;
     }
+
     //내 정보 수정
     public void updateUserInfo(String userName,UserDto userDto) {
         User user=userRepository.findByUserName(userName)
@@ -111,6 +115,7 @@ public class UserService {
         user.setPhone(userDto.getPhone());
         userRepository.save(user);
     }
+
     //비밀번호 변경
     public boolean changePassword(String userName, String currentpassword,String newpassword) {
         User user=userRepository.findByUserName(userName)
@@ -133,8 +138,160 @@ public class UserService {
         return userRepository.findByUserName(username)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
     }
+
     public User getUserByUserName(String username) {
         return userRepository.findByUserName(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + username));
+    }
+
+    /**
+     * 이메일로 아이디 찾기
+     */
+    public String findUserNameByEmail(String email, String nickname) {
+        User user = userRepository.findByEmailAndNickname(email, nickname)
+                .orElseThrow(() -> new IllegalArgumentException("입력하신 정보와 일치하는 회원을 찾을 수 없습니다."));
+
+        // 아이디 마스킹 처리 (예: user1234 -> user****)
+        return maskUserName(user.getUserName());
+    }
+
+    /**
+     * 전화번호로 아이디 찾기
+     */
+    public String findUserNameByPhone(String phone, String nickname) {
+        User user = userRepository.findByPhoneAndNickname(phone, nickname)
+                .orElseThrow(() -> new IllegalArgumentException("입력하신 정보와 일치하는 회원을 찾을 수 없습니다."));
+
+        return maskUserName(user.getUserName());
+    }
+
+    /**
+     * 가입일 조회
+     */
+    public LocalDateTime getJoinDate(String email, String nickname) {
+        User user = userRepository.findByEmailAndNickname(email, nickname)
+                .orElse(null);
+
+        return user != null ? user.getCreatedDate() : null;
+    }
+
+    /**
+     * 아이디 마스킹 처리
+     */
+    private String maskUserName(String userName) {
+        if (userName.length() <= 4) {
+            return userName.charAt(0) + "***";
+        }
+
+        int visibleChars = userName.length() / 3;
+        String visible = userName.substring(0, visibleChars);
+        return visible + "****";
+    }
+
+    /**
+     * 비밀번호 재설정 토큰 생성 및 이메일 발송
+     */
+    @Transactional
+    public void requestPasswordReset(String userName, String email) {
+        System.out.println("========================================");
+        System.out.println("=== requestPasswordReset 시작 ===");
+        System.out.println("userName: " + userName);
+        System.out.println("email: " + email);
+        System.out.println("========================================");
+
+        try {
+            // 사용자 확인
+            User user = userRepository.findByUserNameAndEmail(userName, email)
+                    .orElseThrow(() -> new IllegalArgumentException("입력하신 정보와 일치하는 회원을 찾을 수 없습니다."));
+
+            System.out.println("✅ 사용자 찾기 성공: " + user.getUserName());
+
+            // 기존 토큰 무효화
+            tokenRepository.findByUserAndUsedFalseAndExpiryDateAfter(user, LocalDateTime.now())
+                    .ifPresent(token -> {
+                        token.setUsed(true);
+                        tokenRepository.save(token);
+                        System.out.println("기존 토큰 무효화 완료");
+                    });
+
+            // 새 토큰 생성
+            String token = generateToken();
+            LocalDateTime expiryDate = LocalDateTime.now().plusHours(24);
+
+            System.out.println("✅ 토큰 생성 완료: " + token);
+
+            PasswordResetToken resetToken = PasswordResetToken.builder()
+                    .token(token)
+                    .user(user)
+                    .expiryDate(expiryDate)
+                    .createdDate(LocalDateTime.now())
+                    .used(false)
+                    .build();
+
+            tokenRepository.save(resetToken);
+            System.out.println("✅ 토큰 DB 저장 완료");
+
+            // 이메일 발송
+            String resetLink = "http://localhost:8080/users/reset-password?token=" + token;
+            System.out.println("이메일 발송 시도 중...");
+            System.out.println("수신자: " + email);
+            System.out.println("링크: " + resetLink);
+
+            emailService.sendPasswordResetEmail(email, resetLink);
+
+            System.out.println("✅✅✅ 이메일 발송 성공! ✅✅✅");
+            System.out.println("========================================");
+
+        } catch (Exception e) {
+            System.out.println("❌❌❌ 오류 발생! ❌❌❌");
+            System.out.println("오류 메시지: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    /**
+     * 토큰 검증 및 비밀번호 재설정
+     */
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        // 토큰 조회
+        PasswordResetToken resetToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 토큰입니다."));
+
+        // 토큰 검증
+        if (resetToken.isUsed()) {
+            throw new IllegalArgumentException("이미 사용된 토큰입니다.");
+        }
+
+        if (resetToken.isExpired()) {
+            throw new IllegalArgumentException("만료된 토큰입니다.");
+        }
+
+        // 비밀번호 변경
+        User user = resetToken.getUser();
+        validatePassword(newPassword);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // 토큰 사용 처리
+        resetToken.setUsed(true);
+        tokenRepository.save(resetToken);
+    }
+
+    /**
+     * 토큰 생성 (UUID 사용)
+     */
+    private String generateToken() {
+        return java.util.UUID.randomUUID().toString();
+    }
+
+    /**
+     * 토큰 유효성 검증
+     */
+    public boolean isTokenValid(String token) {
+        return tokenRepository.findByToken(token)
+                .map(t -> !t.isUsed() && !t.isExpired())
+                .orElse(false);
     }
 }
