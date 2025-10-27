@@ -6,7 +6,9 @@ import com.project.gugumarket.repository.UserRepository;
 <<<<<<< HEAD
 =======
 import com.project.gugumarket.service.LikeService;
+import com.project.gugumarket.service.NotificationService;
 import com.project.gugumarket.service.ProductService;
+import com.project.gugumarket.service.UserService;
 import lombok.RequiredArgsConstructor;
 >>>>>>> 9b8c76477af207ef0a169f0af00a0a3be54e39b0
 import org.springframework.data.domain.Page;
@@ -19,6 +21,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+<<<<<<< HEAD
+=======
+import java.security.Principal;
+import java.util.List;
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
 import java.util.Optional;
 
 @Controller
@@ -38,8 +45,13 @@ public class MainController {
 =======
     private final ProductService productService;
     private final CategoryRepository categoryRepository;
+    private final NotificationService notificationService;
     private final LikeService likeService;  // 🔥 LikeService 추가
+<<<<<<< HEAD
 >>>>>>> 9b8c76477af207ef0a169f0af00a0a3be54e39b0
+=======
+    private final UserService userService;
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
 
     /**
      * 메인 페이지 (페이징 + 검색 + 카테고리 필터)
@@ -50,7 +62,8 @@ public class MainController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String keyword
+            @RequestParam(required = false) String keyword,
+            Principal principal
     ) {
         System.out.println("========== 메인 페이지 시작 ==========");
         System.out.println("📄 페이지: " + page + ", 사이즈: " + size);
@@ -62,8 +75,15 @@ public class MainController {
         String username = authentication.getName();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         System.out.println("로그인 성공 - 사용자: " + username);
 =======
+=======
+        User user = userService.getUser(principal.getName());
+
+        long unreadCount = notificationService.getUnreadCount(user);
+
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
         User currentUser = null;
 
         if (!"anonymousUser".equals(username)) {
@@ -91,6 +111,7 @@ public class MainController {
         Pageable pageable = PageRequest.of(page, size);
 
         Page<ProductForm> products;
+
         if (categoryId != null) {
             products = productService.getProductsByCategory(categoryId, keyword, pageable);
             model.addAttribute("selectedCategoryId", categoryId);
@@ -126,6 +147,7 @@ public class MainController {
         model.addAttribute("totalPages", products.getTotalPages());
         model.addAttribute("totalElements", products.getTotalElements());
         model.addAttribute("keyword", keyword);
+        model.addAttribute("unreadCount", unreadCount);
 
         System.out.println("✅ 상품 " + products.getContent().size() + "개 조회 완료");
         System.out.println("📊 전체 상품: " + products.getTotalElements() + "개");

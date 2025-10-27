@@ -70,12 +70,12 @@ public class ProductController {
             Principal principal,
             Model model) {
 
-        // 로그인 확인
+        // 로그인 확인 -- 1.로그인 여부
         if (principal == null) {
             return "redirect:/login";
         }
 
-        // 유효성 검증 실패 시
+        // 유효성 검증 실패 시 -- 2.유효성 체크
         if (bindingResult.hasErrors()) {
             List<CategoryDto> categories = categoryService.getAllCategories();
             User user = userService.getUser(principal.getName());
@@ -185,7 +185,8 @@ public class ProductController {
             }
 
             // ✅ 이미지 URL로 수정 (MultipartFile이 아님)
-            productService.modify(product, productDto);
+            // productService.modify(product, productDto);
+            productService.modify(id, productDto, user);
 
             // ✅ 올바른 경로로 리다이렉트
             return "redirect:/product/" + id;

@@ -2,6 +2,8 @@ package com.project.gugumarket.controller;
 
 import com.project.gugumarket.entity.Product;
 import com.project.gugumarket.entity.User;
+import com.project.gugumarket.repository.ProductRepository;
+import com.project.gugumarket.repository.UserRepository;
 import com.project.gugumarket.service.LikeService;
 import com.project.gugumarket.service.ProductService;
 import com.project.gugumarket.service.UserService;
@@ -60,6 +62,7 @@ public class LikeController {
                             "message", "오류가 발생했습니다: " + e.getMessage()
                     ));
         }
+
     }
 
 }

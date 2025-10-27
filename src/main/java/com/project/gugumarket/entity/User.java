@@ -61,6 +61,7 @@ public class User {
     private String role = "USER";
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     public String getProfileImageOrDefault() {
         if (profileImage == null || profileImage.isEmpty()) {
@@ -75,12 +76,26 @@ public class User {
         // 내부 경로인 경우 그대로 반환
         return profileImage;
 =======
+=======
+
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
     public String getProfileImageOrDefault() {
-        if (profileImage != null && !profileImage.isEmpty()) {
+        if (profileImage == null || profileImage.isEmpty()) {
+            return "/images/default-profile.png";
+        }
+
+        // 외부 URL (http:// 또는 https://로 시작)인 경우 그대로 반환
+        if (profileImage.startsWith("http://") || profileImage.startsWith("https://")) {
             return profileImage;
         }
+<<<<<<< HEAD
         return "/images/default-profile.png";
 >>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
+=======
+
+        // 내부 경로인 경우 그대로 반환
+        return profileImage;
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
     }
 
     // 연관관계

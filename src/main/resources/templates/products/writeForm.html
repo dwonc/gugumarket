@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>상품 등록 - GUGU Market</title>
+    <title th:text="${productDto.productId != null} ? '상품 수정 - GUGU Market' : '상품 등록 - GUGU Market'">상품 등록 - GUGU Market</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -22,6 +22,7 @@
     </style>
 </head>
 <body class="bg-gray-50">
+<<<<<<< HEAD
     <!-- Top Bar -->
     <div class="bg-primary text-white py-2">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,9 +30,32 @@
                 <span th:if="${user != null}" th:text="${user.nickname}">사용자님</span>
                 <a th:if="${user != null}" href="/logout" class="hover:underline">로그아웃</a>
             </div>
+=======
+<div class="bg-primary text-white py-2">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-end items-center space-x-6 text-sm">
+            <!-- ✅ 로그인 상태 -->
+            <span th:if="${#authorization.expression('isAuthenticated()')}"
+                  th:text="${#authentication.name} + '님'">사용자님</span>
+
+            <form th:if="${#authorization.expression('isAuthenticated()')}"
+                  th:action="@{/users/logout}" method="post" class="inline">
+                <button type="submit" class="hover:underline bg-transparent border-0 text-white">로그아웃</button>
+            </form>
+
+            <!-- ✅ 비로그인 상태 -->
+            <a th:if="${#authorization.expression('isAnonymous()')}"
+               href="/users/login"
+               class="hover:underline">로그인</a>
+
+            <a th:if="${#authorization.expression('isAnonymous()')}"
+               href="/users/signup"
+               class="hover:underline">회원가입</a>
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
         </div>
     </div>
 
+<<<<<<< HEAD
     <!-- Navbar -->
     <nav class="bg-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,9 +65,22 @@
                     <span class="text-3xl font-bold text-primary">GUGU Market</span>
                 </a>
             </div>
+=======
+<!-- Navbar -->
+<nav class="bg-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-20">
+            <a href="/" class="flex items-center space-x-3">
+                <img src="/images/gugumarket-logo.png"
+                     alt="GUGU Market Logo"
+                     class="w-12 h-12 object-contain group-hover:scale-110 transition-transform duration-300"/>
+                <span class="text-3xl font-bold text-primary">GUGU Market</span>
+            </a>
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
         </div>
     </nav>
 
+<<<<<<< HEAD
     <!-- Main Content -->
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div class="bg-white rounded-2xl shadow-xl p-8">
@@ -65,6 +102,33 @@
                     </label>
                     <select 
                         id="categoryId" 
+=======
+<!-- Main Content -->
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="bi bi-box-seam text-primary mr-2"></i>
+                <th:block th:text="${productDto.productId != null} ? '상품 수정' : '상품 등록'">상품 등록</th:block>
+            </h1>
+            <p class="text-gray-600" th:text="${productDto.productId != null} ? '상품 정보를 수정해주세요.' : '판매하실 상품 정보를 입력해주세요.'">판매하실 상품 정보를 입력해주세요.</p>
+        </div>
+
+        <!-- Form -->
+        <form th:action="${productDto.productId != null} ? @{/product/{id}/edit(id=${productDto.productId})} : @{/product/write}"
+              th:object="${productDto}"
+              method="post"
+              class="space-y-6">
+
+            <!-- Category -->
+            <div>
+                <label for="categoryId" class="block text-sm font-semibold text-gray-700 mb-2">
+                    카테고리 <span class="text-red-500">*</span>
+                </label>
+                <select
+                        id="categoryId"
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
                         th:field="*{categoryId}"
                         required
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
@@ -117,6 +181,7 @@
                     </p>
                 </div>
 
+<<<<<<< HEAD
                 <!-- Main Image -->
                 <div>
                     <label for="mainImage" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -131,8 +196,22 @@
                                 type="file" 
                                 id="mainImage" 
                                 name="mainImageFile"
+=======
+            <!-- Main Image -->
+            <div>
+                <label for="mainImage" class="block text-sm font-semibold text-gray-700 mb-2">
+                    대표 이미지 <span class="text-red-500">*</span>
+                </label>
+                <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-primary transition-colors">
+                    <div class="text-center" id="mainImageUploadArea">
+                        <i class="bi bi-cloud-upload text-5xl text-gray-400 mb-3"></i>
+                        <p class="text-gray-600 mb-2">클릭하여 이미지를 업로드하세요</p>
+                        <p class="text-sm text-gray-500">JPG, PNG, GIF, WEBP 파일 (최대 10MB)</p>
+                        <input
+                                type="file"
+                                id="mainImage"
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
                                 accept="image/*"
-                                required
                                 class="hidden"
                                 onchange="previewMainImage(event)"
                             />
@@ -149,6 +228,7 @@
                         </div>
                     </div>
                 </div>
+<<<<<<< HEAD
 
                 <!-- Additional Images -->
                 <div>
@@ -163,6 +243,26 @@
                                 type="file" 
                                 id="additionalImages" 
                                 name="additionalImageFiles"
+=======
+
+                <!-- Hidden input for image URL -->
+                <input type="hidden" id="mainImageUrl" th:field="*{mainImage}" />
+            </div>
+
+            <!-- Additional Images -->
+            <div>
+                <label for="additionalImages" class="block text-sm font-semibold text-gray-700 mb-2">
+                    추가 이미지 (최대 5개)
+                </label>
+                <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-primary transition-colors">
+                    <div class="text-center" id="additionalImagesUploadArea">
+                        <i class="bi bi-images text-5xl text-gray-400 mb-3"></i>
+                        <p class="text-gray-600 mb-2">여러 이미지를 선택하세요</p>
+                        <p class="text-sm text-gray-500">최대 5개까지 업로드 가능</p>
+                        <input
+                                type="file"
+                                id="additionalImages"
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
                                 accept="image/*"
                                 multiple
                                 class="hidden"
@@ -178,7 +278,24 @@
                         </div>
                         <div id="additionalImagesPreview" class="mt-4 grid grid-cols-5 gap-3 hidden"></div>
                     </div>
+<<<<<<< HEAD
                 </div>
+=======
+
+                    <!-- 업로드 진행 중 표시 -->
+                    <div id="additionalImagesProgress" class="upload-progress">
+                        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+                        <p class="text-primary mt-2">업로드 중...</p>
+                    </div>
+
+                    <!-- 미리보기 -->
+                    <div id="additionalImagesPreview" class="mt-4 grid grid-cols-5 gap-2 hidden"></div>
+                </div>
+
+                <!-- Hidden inputs container for additional image URLs -->
+                <div id="additionalImagesUrls"></div>
+            </div>
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
 
                 <!-- Content -->
                 <div>
@@ -189,6 +306,7 @@
                         id="content" 
                         th:field="*{content}"
                         required
+<<<<<<< HEAD
                         rows="12"
                         class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary resize-none transition-colors"
                         placeholder="상품에 대한 상세한 설명을 입력해주세요.&#10;&#10;예시:&#10;- 구매 시기&#10;- 사용 기간&#10;- 상품 상태&#10;- 하자 유무&#10;- 직거래 가능 지역 등"
@@ -307,8 +425,87 @@
                             </ul>
                         </div>
                     </div>
+=======
+                        rows="8"
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors resize-none"
+                        placeholder="상품에 대한 자세한 설명을 입력해주세요.&#10;&#10;- 상품 상태&#10;- 구매 시기&#10;- 하자 유무 등"
+                ></textarea>
+                <p th:if="${#fields.hasErrors('content')}" th:errors="*{content}" class="mt-1 text-sm text-red-500"></p>
+            </div>
+
+            <!-- Bank Info Section -->
+            <div class="bg-gray-50 rounded-lg p-6 space-y-4">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="bi bi-bank text-primary mr-2"></i>계좌 정보
+                </h3>
+
+                <!-- Bank Name -->
+                <div>
+                    <label for="bankName" class="block text-sm font-semibold text-gray-700 mb-2">
+                        은행명 <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                            id="bankName"
+                            th:field="*{bankName}"
+                            required
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                    >
+                        <option value="">은행을 선택하세요</option>
+                        <option value="KB국민은행">KB국민은행</option>
+                        <option value="신한은행">신한은행</option>
+                        <option value="우리은행">우리은행</option>
+                        <option value="하나은행">하나은행</option>
+                        <option value="NH농협은행">NH농협은행</option>
+                        <option value="IBK기업은행">IBK기업은행</option>
+                        <option value="SC제일은행">SC제일은행</option>
+                        <option value="한국씨티은행">한국씨티은행</option>
+                        <option value="KDB산업은행">KDB산업은행</option>
+                        <option value="SH수협은행">SH수협은행</option>
+                        <option value="새마을금고">새마을금고</option>
+                        <option value="신협">신협</option>
+                        <option value="우체국">우체국</option>
+                        <option value="카카오뱅크">카카오뱅크</option>
+                        <option value="케이뱅크">케이뱅크</option>
+                        <option value="토스뱅크">토스뱅크</option>
+                        <option value="기타">기타</option>
+                    </select>
+                    <p th:if="${#fields.hasErrors('bankName')}" th:errors="*{bankName}" class="mt-1 text-sm text-red-500"></p>
                 </div>
 
+                <!-- Account Number -->
+                <div>
+                    <label for="accountNumber" class="block text-sm font-semibold text-gray-700 mb-2">
+                        계좌번호 <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                            type="text"
+                            id="accountNumber"
+                            th:field="*{accountNumber}"
+                            required
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                            placeholder="- 없이 숫자만 입력"
+                    />
+                    <p th:if="${#fields.hasErrors('accountNumber')}" th:errors="*{accountNumber}" class="mt-1 text-sm text-red-500"></p>
+                </div>
+
+                <!-- Account Holder -->
+                <div>
+                    <label for="accountHolder" class="block text-sm font-semibold text-gray-700 mb-2">
+                        예금주 <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                            type="text"
+                            id="accountHolder"
+                            th:field="*{accountHolder}"
+                            required
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-primary transition-colors"
+                            placeholder="예금주명을 입력하세요"
+                    />
+                    <p th:if="${#fields.hasErrors('accountHolder')}" th:errors="*{accountHolder}" class="mt-1 text-sm text-red-500"></p>
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
+                </div>
+
+<<<<<<< HEAD
                 <!-- Buttons -->
                 <div class="flex gap-4 pt-6">
                     <button 
@@ -319,14 +516,35 @@
                         <i class="bi bi-x-circle mr-2"></i>취소
                     </button>
                     <button 
+=======
+            <!-- Submit Buttons -->
+            <div class="flex gap-4 pt-4">
+                <button
+                        type="button"
+                        onclick="history.back()"
+                        class="flex-1 bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-4 px-6 rounded-lg transition-all"
+                >
+                    <i class="bi bi-x-circle mr-2"></i>취소
+                </button>
+                <button
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
                         type="submit"
                         class="flex-1 bg-primary hover:bg-secondary text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+<<<<<<< HEAD
                     >
                         <i class="bi bi-check-circle mr-2"></i>등록하기
                     </button>
                 </div>
             </form>
         </div>
+=======
+                >
+                    <i class="bi bi-check-circle mr-2"></i>
+                    <th:block th:text="${productDto.productId != null} ? '수정하기' : '등록하기'">등록하기</th:block>
+                </button>
+            </div>
+        </form>
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
     </div>
 
     <!-- Footer -->
@@ -372,6 +590,53 @@
                 });
             }
         }
+<<<<<<< HEAD
     </script>
+=======
+    }
+
+    // 추가 이미지 업로드 영역 리셋
+    function resetAdditionalImagesUpload() {
+        document.getElementById('additionalImages').value = '';
+        document.getElementById('additionalImagesProgress').style.display = 'none';
+        document.getElementById('additionalImagesUploadArea').style.display = 'block';
+        document.getElementById('additionalImagesPreview').classList.add('hidden');
+        document.getElementById('additionalImagesUrls').innerHTML = '';
+    }
+
+    // 폼 제출 전 검증 - 등록 모드일 때만 이미지 필수
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const isEdit = /*[[${productDto.productId != null}]]*/ false;
+        const mainImageUrl = document.getElementById('mainImageUrl').value;
+
+        // 등록 모드일 때만 이미지 필수
+        if (!isEdit && !mainImageUrl) {
+            e.preventDefault();
+            alert('대표 이미지를 업로드해주세요.');
+            return false;
+        }
+    });
+
+    // 수정 모드일 때 기존 이미지 미리보기 표시
+    window.addEventListener('DOMContentLoaded', function() {
+        const isEdit = /*[[${productDto.productId != null}]]*/ false;
+        const existingImage = /*[[${productDto.mainImage}]]*/ '';
+
+        if (isEdit && existingImage) {
+            // 업로드 영역 숨기기
+            document.getElementById('mainImageUploadArea').style.display = 'none';
+
+            // 미리보기 표시
+            const preview = document.getElementById('mainImagePreview');
+            preview.querySelector('img').src = existingImage;
+            preview.classList.remove('hidden');
+
+            // Hidden input에 기존 이미지 URL 설정
+            document.getElementById('mainImageUrl').value = existingImage;
+        }
+    });
+</script>
+
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
 </body>
 </html>

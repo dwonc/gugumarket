@@ -53,6 +53,7 @@ public class MypageService {
     public void updateUserInfo(String userName, UserDto userDto) {
         User user = getUserByUserName(userName);
 
+        // 프로필 이미지는 건드리지 않음 (별도 메서드로 관리)
         user.setNickname(userDto.getNickname());
         user.setEmail(userDto.getEmail());
         user.setPhone(userDto.getPhone());
@@ -61,6 +62,7 @@ public class MypageService {
         user.setPostalCode(userDto.getPostalCode());
 
         userRepository.save(user);
+        System.out.println("✅ 기본 정보 저장 완료");
     }
 
     // 비밀번호 변경
@@ -87,10 +89,14 @@ public class MypageService {
 
         // 업로드 디렉토리 설정
 <<<<<<< HEAD
+<<<<<<< HEAD
         String uploadDir = uploadPath;
 =======
         String uploadDir = uploadPath + "profile/";
 >>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
+=======
+        String uploadDir = uploadPath;
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
 
         // 파일명 생성 (중복 방지)
         String originalFilename = profileImage.getOriginalFilename();
@@ -115,10 +121,14 @@ public class MypageService {
 
         // 웹에서 접근 가능한 URL 반환
 <<<<<<< HEAD
+<<<<<<< HEAD
         return "/uploads/" + fileName;
 =======
         return "/uploads/profile/" + fileName;
 >>>>>>> 99e0d3e7d634953e5cc34f25606565e61d769023
+=======
+        return "/uploads/" + fileName;
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
     }
 
     // 프로필 이미지 삭제

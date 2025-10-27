@@ -15,4 +15,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     // 특정 상품의 거래 내역
     List<Transaction> findByProduct_ProductId(Long productId);
+
+    List<Transaction> findByBuyer(User buyer);
+
+    List<Transaction> findBySeller(User seller);
 }

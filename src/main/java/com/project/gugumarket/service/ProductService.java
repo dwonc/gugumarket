@@ -12,8 +12,10 @@ import com.project.gugumarket.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,10 +41,17 @@ public class ProductService {
     }
 
     @Transactional
-    public void modify(Product product, ProductForm productDto) {
-        Category category = categoryService.getCategoryById(productDto.getCategoryId());
+    public void modify(Long productId, ProductForm productDto, User currentUser) {
+        // Service 안에서 조회 (영속 상태 유지)
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        product.setCategory(category);
+        // 권한 확인
+        if (!product.getSeller().equals(currentUser)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정권한이 없습니다.");
+        }
+
+        // 필드 수정
         product.setTitle(productDto.getTitle());
         product.setPrice(productDto.getPrice());
         product.setContent(productDto.getContent());
@@ -50,13 +59,16 @@ public class ProductService {
         product.setAccountNumber(productDto.getAccountNumber());
         product.setAccountHolder(productDto.getAccountHolder());
 
+        Category category = categoryService.getCategoryById(productDto.getCategoryId());
+        product.setCategory(category);
+
         if (productDto.getMainImage() != null && !productDto.getMainImage().isEmpty()) {
             if (!productDto.getMainImage().equals(product.getMainImage())) {
                 if (product.getMainImage() != null) {
                     try {
-                        String oldFileName = product.getMainImage().substring(product.getMainImage().lastIndexOf("/") + 1);
+                        String oldFileName = product.getMainImage().substring(
+                                product.getMainImage().lastIndexOf("/") + 1);
                         fileService.deleteFile(oldFileName);
-                        System.out.println("✅ 기존 이미지 삭제 완료: " + oldFileName);
                     } catch (IOException e) {
                         System.err.println("⚠️ 기존 이미지 삭제 실패: " + e.getMessage());
                     }
@@ -65,7 +77,7 @@ public class ProductService {
             }
         }
 
-        productRepository.save(product);
+        // ✅ save() 호출 제거! Dirty Checking으로 자동 업데이트
     }
 
     @Transactional
