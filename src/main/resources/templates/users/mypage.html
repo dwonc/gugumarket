@@ -149,8 +149,8 @@
                         </div>
                         <div class="flex flex-col justify-between">
                             <!-- 상태 배지 - 동적으로 변경 -->
-                            <span th:classappend="${transaction.status == T(com.project.gugumarket.TransactionStatus).COMPLETED} ? 'bg-green-100 text-green-700' :
-                                             (${transaction.status == T(com.project.gugumarket.TransactionStatus).PENDING} ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700')"
+                            <span th:classappend="${transaction.status.name() == 'COMPLETED'} ? 'bg-green-100 text-green-700' :
+                                             (${transaction.status.name() == 'PENDING'} ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700')"
                                   class="px-3 py-1 rounded-full text-sm font-medium"
                                   th:text="${transaction.status.description}">
                             상태
@@ -159,13 +159,13 @@
                             <!-- 상태에 따른 액션 버튼 -->
                             <div class="mt-3 space-y-2">
                                 <!-- COMPLETED 상태일 때만 문의하기 버튼 표시 -->
-                                <button th:if="${transaction.status == T(com.project.gugumarket.TransactionStatus).COMPLETED}"
+                                <button th:if="${transaction.status.name() == 'COMPLETED'}"
                                         class="text-gray-600 hover:text-primary text-sm w-full text-left">
                                     <i class="bi bi-chat-dots mr-1"></i>문의하기
                                 </button>
 
                                 <!-- PENDING 상태일 때 입금 확인 버튼 표시 -->
-                                <button th:if="${transaction.status == T(com.project.gugumarket.TransactionStatus).PENDING}"
+                                <button th:if="${transaction.status.name() == 'PENDING'}"
                                         class="text-blue-600 hover:text-blue-800 text-sm w-full text-left font-medium">
                                     <i class="bi bi-credit-card mr-1"></i>입금 확인
                                 </button>
@@ -209,8 +209,8 @@
                         </div>
                         <div class="flex flex-col justify-between">
                             <!-- 상태 배지 - 동적으로 변경 -->
-                            <span th:classappend="${transaction.status == T(com.project.gugumarket.TransactionStatus).COMPLETED} ? 'bg-blue-100 text-blue-700' :
-                                             (${transaction.status == T(com.project.gugumarket.TransactionStatus).PENDING} ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700')"
+                            <span th:classappend="${transaction.status.name() == 'COMPLETED'} ? 'bg-blue-100 text-blue-700' :
+                                             (${transaction.status.name() == 'PENDING'} ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700')"
                                   class="px-3 py-1 rounded-full text-sm font-medium"
                                   th:text="${transaction.status.description}">
                             상태
@@ -219,13 +219,13 @@
                             <!-- 상태에 따른 액션 버튼 -->
                             <div class="mt-3 space-y-2">
                                 <!-- COMPLETED 상태일 때만 문의하기 버튼 표시 -->
-                                <button th:if="${transaction.status == T(com.project.gugumarket.TransactionStatus).COMPLETED}"
+                                <button th:if="${transaction.status.name() == 'COMPLETED'}"
                                         class="text-gray-600 hover:text-primary text-sm w-full text-left">
                                     <i class="bi bi-chat-dots mr-1"></i>문의하기
                                 </button>
 
                                 <!-- PENDING 상태일 때 입금 확인 버튼 표시 -->
-                                <button th:if="${transaction.status == T(com.project.gugumarket.TransactionStatus).PENDING}"
+                                <button th:if="${transaction.status.name() == 'PENDING'}"
                                         th:onclick="|confirmPayment(${transaction.transactionId})|"
                                         class="bg-primary hover:bg-secondary text-white text-sm px-4 py-2 rounded-lg w-full font-medium transition-all">
                                     <i class="bi bi-check-circle mr-1"></i>입금 확인하기
@@ -249,99 +249,99 @@
         </div>
     </div>
 
-        <!-- 찜한 목록 Tab -->
-        <div id="content-likes" class="tab-content hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">찜한 목록</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Like Item -->
-                <div th:each="like : ${likes}" class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all group">
-                    <div class="relative">
-                        <a th:href="@{/product/{id}(id=${like.product.productId})}">
-                            <img
-                                    th:src="${like.product.mainImage}"
-                                    th:alt="${like.product.title}"
-                                    class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                                    onerror="this.src='https://via.placeholder.com/300x200/6B4F4F/FFFFFF?text=No+Image'"
-                            />
-                        </a>
-                        <button type="button"
-                                class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white toggle-like-btn"
-                                th:data-product-id="${like.product.productId}">
-                            <i class="bi bi-heart-fill text-red-500 text-xl"></i>
-                        </button>
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-bold text-gray-800 mb-2 line-clamp-1" th:text="${like.product.title}">상품명</h3>
-                        <p class="text-xl font-bold text-primary mb-2">
-                            <span th:text="${#numbers.formatInteger(like.product.price, 0, 'COMMA')}">0</span>원
-                        </p>
-                        <p class="text-sm text-gray-500">
-                            <i class="bi bi-geo-alt"></i>
-                            <span th:text="${like.product.seller.address}">위치</span>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Empty State -->
-                <div th:if="${likes == null || likes.empty}" class="col-span-4 text-center py-16">
-                    <i class="bi bi-heart text-6xl text-gray-300 mb-4"></i>
-                    <p class="text-gray-500 text-lg">찜한 상품이 없습니다.</p>
-                    <button onclick="location.href='/main'" class="mt-4 bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition-all">
-                        상품 둘러보기
+    <!-- 찜한 목록 Tab -->
+    <div id="content-likes" class="tab-content hidden">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">찜한 목록</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Like Item -->
+            <div th:each="like : ${likes}" class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all group">
+                <div class="relative">
+                    <a th:href="@{/product/{id}(id=${like.product.productId})}">
+                        <img
+                                th:src="${like.product.mainImage}"
+                                th:alt="${like.product.title}"
+                                class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                                onerror="this.src='https://via.placeholder.com/300x200/6B4F4F/FFFFFF?text=No+Image'"
+                        />
+                    </a>
+                    <button type="button"
+                            class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white toggle-like-btn"
+                            th:data-product-id="${like.product.productId}">
+                        <i class="bi bi-heart-fill text-red-500 text-xl"></i>
                     </button>
                 </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-gray-800 mb-2 line-clamp-1" th:text="${like.product.title}">상품명</h3>
+                    <p class="text-xl font-bold text-primary mb-2">
+                        <span th:text="${#numbers.formatInteger(like.product.price, 0, 'COMMA')}">0</span>원
+                    </p>
+                    <p class="text-sm text-gray-500">
+                        <i class="bi bi-geo-alt"></i>
+                        <span th:text="${like.product.seller.address}">위치</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${likes == null || likes.empty}" class="col-span-4 text-center py-16">
+                <i class="bi bi-heart text-6xl text-gray-300 mb-4"></i>
+                <p class="text-gray-500 text-lg">찜한 상품이 없습니다.</p>
+                <button onclick="location.href='/main'" class="mt-4 bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition-all">
+                    상품 둘러보기
+                </button>
             </div>
         </div>
+    </div>
 
-        <!-- 알림 Tab -->
-        <div id="content-notifications" class="tab-content hidden">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">알림</h2>
+    <!-- 알림 Tab -->
+    <div id="content-notifications" class="tab-content hidden">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">알림</h2>
 
-                <!-- 전체 보기 버튼 -->
-                <a href="/mypage/notifications" class="text-primary hover:text-secondary font-medium">
-                    전체 보기 <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
+            <!-- 전체 보기 버튼 -->
+            <a href="/mypage/notifications" class="text-primary hover:text-secondary font-medium">
+                전체 보기 <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
 
-            <div class="space-y-3">
-                <!-- 알림 목록 (존재할 때) -->
-                <div th:if="${recentNotifications != null and !recentNotifications.empty}">
-                    <div th:each="notification : ${recentNotifications}"
-                         class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all">
-                        <a th:href="${notification.url}"
-                           th:onclick="|markAsRead(${notification.notificationId})|"
-                           class="block">
-                            <div class="flex items-start gap-3">
-                                <!-- Icon -->
-                                <div class="flex-shrink-0">
-                                    <div th:classappend="${notification.isRead} ? 'bg-gray-100' : 'bg-primary/10'"
-                                         class="w-12 h-12 rounded-full flex items-center justify-center">
-                                        <i th:if="${notification.type.name() == 'COMMENT'}"
-                                           class="bi bi-chat-dots text-xl text-primary"></i>
-                                        <i th:if="${notification.type.name() == 'LIKE'}"
-                                           class="bi bi-heart-fill text-xl text-red-500"></i>
-                                        <i th:if="${notification.type.name() == 'PURCHASE'}"
-                                           class="bi bi-cart-fill text-xl text-green-600"></i>
-                                        <i th:if="${notification.type.name() == 'TRANSACTION'}"
-                                           class="bi bi-check-circle-fill text-xl text-blue-600"></i>
-                                    </div>
+        <div class="space-y-3">
+            <!-- 알림 목록 (존재할 때) -->
+            <div th:if="${recentNotifications != null and !recentNotifications.empty}">
+                <div th:each="notification : ${recentNotifications}"
+                     class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-all">
+                    <a th:href="${notification.url}"
+                       th:onclick="|markAsRead(${notification.notificationId})|"
+                       class="block">
+                        <div class="flex items-start gap-3">
+                            <!-- Icon -->
+                            <div class="flex-shrink-0">
+                                <div th:classappend="${notification.isRead} ? 'bg-gray-100' : 'bg-primary/10'"
+                                     class="w-12 h-12 rounded-full flex items-center justify-center">
+                                    <i th:if="${notification.type.name() == 'COMMENT'}"
+                                       class="bi bi-chat-dots text-xl text-primary"></i>
+                                    <i th:if="${notification.type.name() == 'LIKE'}"
+                                       class="bi bi-heart-fill text-xl text-red-500"></i>
+                                    <i th:if="${notification.type.name() == 'PURCHASE'}"
+                                       class="bi bi-cart-fill text-xl text-green-600"></i>
+                                    <i th:if="${notification.type.name() == 'TRANSACTION'}"
+                                       class="bi bi-check-circle-fill text-xl text-blue-600"></i>
                                 </div>
+                            </div>
 
-                                <!-- Content -->
-                                <div class="flex-1">
-                                    <p th:text="${notification.message}"
-                                       th:classappend="${notification.isRead} ? 'text-gray-600' : 'text-gray-800 font-semibold'"
-                                       class="mb-1">
-                                        알림 메시지
-                                    </p>
-                                    <p class="text-sm text-gray-500">
+                            <!-- Content -->
+                            <div class="flex-1">
+                                <p th:text="${notification.message}"
+                                   th:classappend="${notification.isRead} ? 'text-gray-600' : 'text-gray-800 font-semibold'"
+                                   class="mb-1">
+                                    알림 메시지
+                                </p>
+                                <p class="text-sm text-gray-500">
                                 <span th:text="${#temporals.format(notification.createdDate, 'yyyy-MM-dd HH:mm')}">
                                     2025-01-19 14:30
                                 </span>
-                                    </p>
-                                </div>
-        <!-- Badge -->
+                                </p>
+                            </div>
+                            <!-- Badge -->
                             <span th:if="${!notification.isRead}"
                                   class="flex-shrink-0 w-2 h-2 bg-red-500 rounded-full"></span>
                         </div>

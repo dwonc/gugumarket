@@ -141,7 +141,7 @@ public class UserService {
         User user=userRepository.findByUserName(userName)
                 .orElseThrow(()->new IllegalArgumentException("사용자를 찾을 수 없습니다:"+userName));
 
-        // Entity를 DTO로 변환
+
         UserDto dto=new UserDto();
         dto.setUserName(user.getUserName());
         dto.setEmail(user.getEmail());

@@ -12,8 +12,10 @@ import com.project.gugumarket.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,6 +50,7 @@ public class ProductService {
             throw new DataNotFoundException("Product not found");
     }
 
+<<<<<<< HEAD
     /**
      * 상품 정보 수정
      * 카테고리, 제목, 가격, 내용, 계좌정보, 메인 이미지를 업데이트
@@ -62,6 +65,20 @@ public class ProductService {
 
         // 기본 정보 업데이트
         product.setCategory(category);
+=======
+    @Transactional
+    public void modify(Long productId, ProductForm productDto, User currentUser) {
+        // Service 안에서 조회 (영속 상태 유지)
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+        // 권한 확인
+        if (!product.getSeller().equals(currentUser)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정권한이 없습니다.");
+        }
+
+        // 필드 수정
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
         product.setTitle(productDto.getTitle());
         product.setPrice(productDto.getPrice());
         product.setContent(productDto.getContent());
@@ -69,17 +86,27 @@ public class ProductService {
         product.setAccountNumber(productDto.getAccountNumber());
         product.setAccountHolder(productDto.getAccountHolder());
 
+<<<<<<< HEAD
         // 메인 이미지 변경 처리
+=======
+        Category category = categoryService.getCategoryById(productDto.getCategoryId());
+        product.setCategory(category);
+
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
         if (productDto.getMainImage() != null && !productDto.getMainImage().isEmpty()) {
             // 새 이미지가 기존 이미지와 다른 경우
             if (!productDto.getMainImage().equals(product.getMainImage())) {
                 // 기존 이미지가 있으면 파일 삭제
                 if (product.getMainImage() != null) {
                     try {
+<<<<<<< HEAD
                         // URL에서 파일명 추출
                         String oldFileName = product.getMainImage().substring(product.getMainImage().lastIndexOf("/") + 1);
+=======
+                        String oldFileName = product.getMainImage().substring(
+                                product.getMainImage().lastIndexOf("/") + 1);
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
                         fileService.deleteFile(oldFileName);
-                        System.out.println("✅ 기존 이미지 삭제 완료: " + oldFileName);
                     } catch (IOException e) {
                         System.err.println("⚠️ 기존 이미지 삭제 실패: " + e.getMessage());
                     }
@@ -89,8 +116,12 @@ public class ProductService {
             }
         }
 
+<<<<<<< HEAD
         // 변경사항 저장
         productRepository.save(product);
+=======
+        // ✅ save() 호출 제거! Dirty Checking으로 자동 업데이트
+>>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
     }
 
     /**

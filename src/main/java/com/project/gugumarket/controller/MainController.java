@@ -100,6 +100,7 @@ public class MainController {
 
         // 상품 목록 조회 (카테고리 필터 또는 전체)
         Page<ProductForm> products;
+
         if (categoryId != null) {
             // 특정 카테고리의 상품만 조회 (검색어 포함 가능)
             products = productService.getProductsByCategory(categoryId, keyword, pageable);
