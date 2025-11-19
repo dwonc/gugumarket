@@ -83,11 +83,8 @@ public class ProductController {
             return "redirect:/login";
         }
 
-<<<<<<< HEAD
         // 유효성 검증 실패 시 (필수 필드 누락, 형식 오류 등)
-=======
         // 유효성 검증 실패 시 -- 2.유효성 체크
->>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
         if (bindingResult.hasErrors()) {
             // 에러가 있으면 카테고리 목록과 사용자 정보를 다시 설정
             List<CategoryDto> categories = categoryService.getAllCategories();
@@ -205,14 +202,14 @@ public class ProductController {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정권한이 없습니다.");
             }
 
-<<<<<<< HEAD
+
             // 상품 정보 수정 (이미지 URL로 수정, MultipartFile이 아님)
             productService.modify(product, productDto);
-=======
+
             // ✅ 이미지 URL로 수정 (MultipartFile이 아님)
             // productService.modify(product, productDto);
             productService.modify(id, productDto, user);
->>>>>>> 28cebc40083f14c3d32f93518519a56ce9ec8b8a
+
 
             // 수정 완료 후 상품 상세 페이지로 리다이렉트
             return "redirect:/product/" + id;
