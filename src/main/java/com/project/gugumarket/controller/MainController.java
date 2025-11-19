@@ -19,6 +19,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.security.Principal;
 import java.util.List;
@@ -45,28 +46,28 @@ public class MainController {
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
-            Principal principal
+            Principal principal  // 이건 null일 수 있음
     ) {
         System.out.println("========== 메인 페이지 시작 ==========");
         System.out.println("📄 페이지: " + page + ", 사이즈: " + size);
         System.out.println("📂 카테고리: " + categoryId);
         System.out.println("🔍 검색어: " + keyword);
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        User user = userService.getUser(principal.getName());
-
-        long unreadCount = notificationService.getUnreadCount(user);
-
         User currentUser = null;
+        long unreadCount = 0;  // 🔥 기본값 설정
 
-        if (!"anonymousUser".equals(username)) {
+        // 🔥 principal이 null이 아닐 때만 사용자 정보 조회
+        if (principal != null) {
+            String username = principal.getName();
             System.out.println("👤 로그인 사용자: " + username);
+
             Optional<User> userOpt = userRepository.findByUserName(username);
             if (userOpt.isPresent()) {
                 currentUser = userOpt.get();
                 model.addAttribute("user", currentUser);
+
+                // 🔥 로그인한 사용자만 알림 개수 조회
+                unreadCount = notificationService.getUnreadCount(currentUser);
                 System.out.println("✅ 사용자 정보 로드: " + currentUser.getNickname());
             }
         } else {
@@ -84,23 +85,21 @@ public class MainController {
             products = productService.getProductList(keyword, pageable);
         }
 
-        // 🔥 로그인한 사용자가 찜한 상품 ID 목록 조회 (final로 선언)
+        // 🔥 로그인한 사용자가 찜한 상품 ID 목록 조회
         final List<Long> likedProductIds;
         if (currentUser != null) {
             likedProductIds = likeService.getLikedProductIds(currentUser);
             System.out.println("❤️ 찜한 상품: " + likedProductIds.size() + "개");
-        } else {
-            likedProductIds = List.of();  // 빈 리스트
-        }
 
-        // 🔥 각 상품에 찜 여부 설정
-        if (!likedProductIds.isEmpty()) {
+            // 🔥 각 상품에 찜 여부 설정
             products.getContent().forEach(product -> {
                 if (likedProductIds.contains(product.getProductId())) {
                     product.setIsLiked(true);
                     System.out.println("❤️ 상품 ID " + product.getProductId() + " 찜됨 표시");
                 }
             });
+        } else {
+            likedProductIds = List.of();  // 빈 리스트
         }
 
         List<Category> categories = categoryRepository.findAll();
@@ -112,7 +111,7 @@ public class MainController {
         model.addAttribute("totalPages", products.getTotalPages());
         model.addAttribute("totalElements", products.getTotalElements());
         model.addAttribute("keyword", keyword);
-        model.addAttribute("unreadCount", unreadCount);
+        model.addAttribute("unreadCount", unreadCount);  // 🔥 항상 값이 있음
 
         System.out.println("✅ 상품 " + products.getContent().size() + "개 조회 완료");
         System.out.println("📊 전체 상품: " + products.getTotalElements() + "개");

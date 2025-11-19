@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.project'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.2'
 description = 'gugumarket'
 
 java {
@@ -46,10 +46,21 @@ dependencies {
     // Spring Boot DevTools (개발용)
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+jar {
+    enabled = false  // plain JAR 생성 비활성화
+}
+
+bootJar {
+    enabled = true   // 실행 가능한 JAR만 생성
 }

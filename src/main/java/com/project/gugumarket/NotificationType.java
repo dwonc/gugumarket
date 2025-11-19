@@ -1,5 +1,8 @@
 package com.project.gugumarket;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public enum NotificationType {
     LIKE("찜"),
     PURCHASE("구매"),
@@ -15,5 +18,11 @@ public enum NotificationType {
 
     public String getDescription() {
         return description;
+    }
+
+    @Getter
+    @Setter
+    public static class ProductStatusRequest {
+        private String status; // "SALE", "RESERVED", "SOLD_OUT"
     }
 }

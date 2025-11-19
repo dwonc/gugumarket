@@ -1,9 +1,8 @@
 package com.project.gugumarket.controller;
 
+import com.project.gugumarket.NotificationType;
 import com.project.gugumarket.dto.CategoryDto;
 import com.project.gugumarket.dto.ProductForm;
-import com.project.gugumarket.dto.ProductStatusRequest;
-import com.project.gugumarket.entity.Category;
 import com.project.gugumarket.entity.Product;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.service.CategoryService;
@@ -246,7 +245,7 @@ public class ProductController {
     @ResponseBody
     public ResponseEntity<?> changeStatus(
             @PathVariable Long id,
-            @RequestBody ProductStatusRequest request,
+            @RequestBody NotificationType.ProductStatusRequest request,
             Principal principal) {
 
         if (principal == null) {

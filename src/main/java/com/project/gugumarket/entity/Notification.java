@@ -64,4 +64,5 @@ public class Notification {
         this.isRead = true;
         this.readDate = LocalDateTime.now();
     }
+
 }

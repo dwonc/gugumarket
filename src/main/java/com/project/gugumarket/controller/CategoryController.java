@@ -90,33 +90,6 @@ public class CategoryController {
     }
 
     /**
-     * 카테고리 통계 조회
-     * GET /api/categories/stats
-     */
-    @GetMapping("/stats")
-    @ResponseBody
-    public ResponseEntity<ResponseDto<Map<String, Object>>> stats() {
-        try {
-            log.info("카테고리 통계 조회 요청");
-
-            long totalCount = categoryService.getCategoryCount();
-
-            Map<String, Object> stats = new HashMap<>();
-            stats.put("totalCategories", totalCount);
-
-            return ResponseEntity.ok(
-                    ResponseDto.success("카테고리 통계 조회 성공", stats)
-            );
-
-        } catch (Exception e) {
-            log.error("카테고리 통계 조회 중 오류 발생", e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResponseDto.fail("통계 조회 중 오류가 발생했습니다."));
-        }
-    }
-
-    /**
      * 카테고리명으로 조회
      * GET /api/categories/name/{name}
      */
