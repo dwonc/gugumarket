@@ -59,6 +59,7 @@ public class SecurityConfig {
                                 "/api/auth/refresh",        // ✅ 토큰 갱신만
                                 "/api/users/signup",
                                 "/api/users/check-username",
+                                "/mypage/**",
                                 "/api/public/**",
                                 "/uploads/**",
                                 "/images/**",

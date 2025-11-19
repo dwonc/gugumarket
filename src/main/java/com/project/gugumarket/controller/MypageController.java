@@ -2,6 +2,7 @@ package com.project.gugumarket.controller;
 
 import com.project.gugumarket.dto.UserDto;
 import com.project.gugumarket.dto.UserUpdateDto;
+import com.project.gugumarket.dto.UserResponseDto;
 import com.project.gugumarket.entity.Like;
 import com.project.gugumarket.entity.Notification;
 import com.project.gugumarket.entity.Transaction;
@@ -13,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,7 +24,6 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @RestController
@@ -68,7 +67,7 @@ public class MypageController {
         long unreadCount = notificationService.getUnreadCount(user);
 
         response.put("success", true);
-        response.put("user", user);
+        response.put("user", UserResponseDto.fromEntity(user));
         response.put("likes", likes);
         response.put("purchases", purchases);
         response.put("sales", sales);
@@ -101,7 +100,7 @@ public class MypageController {
         userDto.setAddressDetail(user.getAddressDetail());
 
         response.put("success", true);
-        response.put("user", user);
+        response.put("user", UserResponseDto.fromEntity(user));
         response.put("userDto", userDto);
 
         return ResponseEntity.ok(response);
@@ -110,8 +109,12 @@ public class MypageController {
     // ✅ 단순화된 프로필 수정 처리
     @PostMapping("/edit")
     public ResponseEntity<Map<String, Object>> editProfile(
-            @Valid @RequestPart("userDto") UserUpdateDto userDto,
-            BindingResult bindingResult,
+            @RequestParam String nickname,
+            @RequestParam String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam String postalCode,
+            @RequestParam String address,
+            @RequestParam String addressDetail,
             @RequestParam(required = false) String currentPassword,
             @RequestParam(required = false) String newPassword,
             @RequestParam(required = false) String confirmPassword,
@@ -141,29 +144,22 @@ public class MypageController {
 
         // 🔥 받은 데이터 확인
         System.out.println("\n🔥 받은 데이터:");
-        System.out.println("  - 닉네임: " + userDto.getNickname());
-        System.out.println("  - 이메일: " + userDto.getEmail());
-        System.out.println("  - 전화번호: " + userDto.getPhone());
-        System.out.println("  - 주소: " + userDto.getAddress());
-        System.out.println("  - 상세주소: " + userDto.getAddressDetail());
-        System.out.println("  - 우편번호: " + userDto.getPostalCode());
+        System.out.println("  - 닉네임: " + nickname);
+        System.out.println("  - 이메일: " + email);
+        System.out.println("  - 전화번호: " + phone);
+        System.out.println("  - 주소: " + address);
+        System.out.println("  - 상세주소: " + addressDetail);
+        System.out.println("  - 우편번호: " + postalCode);
 
-        System.out.println("\n🔍 유효성 검사:");
-        System.out.println("  - 에러 있음: " + bindingResult.hasErrors());
-
-        // 유효성 검증 실패 시 먼저 처리
-        if (bindingResult.hasErrors()) {
-            System.out.println("❌ 유효성 검사 실패!");
-            Map<String, String> errors = bindingResult.getFieldErrors().stream()
-                    .collect(Collectors.toMap(
-                            FieldError::getField,
-                            error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : ""
-                    ));
-            bindingResult.getAllErrors().forEach(error -> {
-                System.out.println("    * " + error.getDefaultMessage());
-            });
+        // 수동 유효성 검증
+        if (nickname == null || nickname.trim().isEmpty()) {
             response.put("success", false);
-            response.put("errors", errors);
+            response.put("message", "닉네임은 필수 항목입니다.");
+            return ResponseEntity.badRequest().body(response);
+        }
+        if (email == null || !email.contains("@")) {
+            response.put("success", false);
+            response.put("message", "올바른 이메일 형식이 아닙니다.");
             return ResponseEntity.badRequest().body(response);
         }
 
@@ -241,15 +237,15 @@ public class MypageController {
 
             // 3️⃣ 기본 정보 업데이트
             System.out.println("\n📝 사용자 정보 업데이트 중...");
-            System.out.println("  - 기존 닉네임: " + user.getNickname() + " → 새 닉네임: " + userDto.getNickname());
-            System.out.println("  - 기존 이메일: " + user.getEmail() + " → 새 이메일: " + userDto.getEmail());
+            System.out.println("  - 기존 닉네임: " + user.getNickname() + " → 새 닉네임: " + nickname);
+            System.out.println("  - 기존 이메일: " + user.getEmail() + " → 새 이메일: " + email);
 
-            user.setNickname(userDto.getNickname());
-            user.setEmail(userDto.getEmail());
-            user.setPhone(userDto.getPhone());
-            user.setAddress(userDto.getAddress());
-            user.setAddressDetail(userDto.getAddressDetail());
-            user.setPostalCode(userDto.getPostalCode());
+            user.setNickname(nickname);
+            user.setEmail(email);
+            user.setPhone(phone);
+            user.setAddress(address);
+            user.setAddressDetail(addressDetail);
+            user.setPostalCode(postalCode);
 
             // 4️⃣ 한 번에 모든 정보 저장
             System.out.println("\n💾 데이터베이스에 저장 중...");
@@ -263,7 +259,7 @@ public class MypageController {
 
             response.put("success", true);
             response.put("message", "회원정보가 수정되었습니다.");
-            response.put("user", savedUser);
+            response.put("user", UserResponseDto.fromEntity(savedUser));
             return ResponseEntity.ok(response);
 
         } catch (IOException e) {
@@ -293,7 +289,7 @@ public class MypageController {
 
         response.put("success", true);
         response.put("likeList", likeList);
-        response.put("user", user);
+        response.put("user", UserResponseDto.fromEntity(user));
 
         return ResponseEntity.ok(response);
     }
@@ -315,7 +311,7 @@ public class MypageController {
         List<Transaction> purchases = transactionService.getPurchasesByBuyer(user);
 
         response.put("success", true);
-        response.put("user", user);
+        response.put("user", UserResponseDto.fromEntity(user));
         response.put("purchases", purchases);
 
         return ResponseEntity.ok(response);
@@ -342,7 +338,7 @@ public class MypageController {
         List<Transaction> sales = transactionService.getSalesBySeller(user);
 
         response.put("success", true);
-        response.put("user", user);
+        response.put("user", UserResponseDto.fromEntity(user));
         response.put("sales", sales);
 
         return ResponseEntity.ok(response);
@@ -369,7 +365,7 @@ public class MypageController {
         long unreadCount = notificationService.getUnreadCount(user);
 
         response.put("success", true);
-        response.put("user", user);
+        response.put("user", UserResponseDto.fromEntity(user));
         response.put("notifications", notifications);
         response.put("unreadCount", unreadCount);
 
