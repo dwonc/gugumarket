@@ -60,6 +60,9 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 new AntPathRequestMatcher("/h2-console/**"),
                                 new AntPathRequestMatcher("/api/**"),  // 🔥 이 줄 추가!
+                                new AntPathRequestMatcher("/users/signup"),      // ✅ 추가
+                                new AntPathRequestMatcher("/users/check-username"), // ✅ 추가
+                                new AntPathRequestMatcher("/users/logout"),      // ✅ 추가
                                 new AntPathRequestMatcher("/product/*/status"),
                                 new AntPathRequestMatcher("/product/*/like"),
                                 new AntPathRequestMatcher("/product/*"),
