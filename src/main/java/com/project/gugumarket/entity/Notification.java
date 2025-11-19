@@ -1,5 +1,6 @@
 package com.project.gugumarket.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.gugumarket.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,18 +27,22 @@ public class Notification {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "RECEIVER_ID", nullable = false)
+    @JsonIgnore  // ✅ 추가
     private User receiver;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "SENDER_ID")
+    @JsonIgnore  // ✅ 추가
     private User sender;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PRODUCT_ID")
+    @JsonIgnore  // ✅ 추가
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "TRANSACTION_ID")
+    @JsonIgnore  // ✅ 추가
     private Transaction transaction;
 
     @Enumerated(EnumType.STRING)
@@ -64,5 +69,4 @@ public class Notification {
         this.isRead = true;
         this.readDate = LocalDateTime.now();
     }
-
 }

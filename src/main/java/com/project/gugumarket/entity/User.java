@@ -1,6 +1,7 @@
 package com.project.gugumarket.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -26,6 +27,7 @@ public class User {
     @Column(name = "USER_NAME", length = 50, nullable = false, unique = true)
     private String userName;
 
+    @JsonIgnore
     @Column(name = "PASSWORD", length = 255, nullable = false)
     private String password;
 
@@ -76,9 +78,11 @@ public class User {
     }
 
     // 연관관계
+    @JsonIgnore
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL)
     private List<Product> products = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Like> likes = new ArrayList<>();
 

@@ -1,29 +1,33 @@
 package com.project.gugumarket.controller;
 
+import com.project.gugumarket.dto.*;
 import com.project.gugumarket.entity.Product;
 import com.project.gugumarket.entity.QnaPost;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.service.AdminService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
- * 관리자 기능을 처리하는 컨트롤러
+ * 관리자 기능을 처리하는 REST API 컨트롤러
  * - 회원 관리 (조회, 상태 변경, 삭제)
  * - 상품 관리 (조회, 검색, 삭제)
  * - Q&A 관리 (조회, 답변 등록)
  * - 통계 데이터 제공
  */
 @Slf4j
-@Controller
-@RequestMapping("/admin")
+@RestController
+@RequestMapping("/api/admin")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')") // ADMIN 역할을 가진 사용자만 접근 가능
 public class AdminController {
@@ -31,199 +35,228 @@ public class AdminController {
     private final AdminService adminService;
 
     /**
-     * 관리자 메인 페이지
-     * - 통계 데이터 표시 (총 회원 수, 상품 수, 미답변 Q&A 수)
-     * - 회원 목록 조회 및 검색
-     * - 상품 목록 조회, 검색, 삭제 상태 필터링
-     * - Q&A 목록 조회 (미답변 우선 정렬)
+     * 관리자 대시보드 통계 조회
      *
-     * @param userSearch 회원 검색 키워드
-     * @param productSearch 상품 검색 키워드
-     * @param isDeleted 상품 삭제 상태 필터 (true: 삭제된 상품, false: 활성 상품)
-     * @param tab 활성화할 탭 (users/products/qna)
-     * @param model 뷰에 전달할 데이터
-     * @return 관리자 메인 페이지 뷰
+     * @return 통계 데이터 (총 회원 수, 상품 수, 미답변 Q&A 수)
      */
-    @GetMapping
-    public String adminPage(
-            @RequestParam(required = false) String userSearch,
-            @RequestParam(required = false) String productSearch,
-            @RequestParam(required = false) Boolean isDeleted,
-            @RequestParam(required = false) String tab,
-            Model model
-    ) {
-        // 통계 데이터 조회
-        long totalUsers = adminService.getTotalUsersCount();
-        long totalProducts = adminService.getTotalProductsCount();
-        long unansweredQna = adminService.getUnansweredQnaCount();
+    @GetMapping("/dashboard")
+    public ResponseEntity<ResponseDto<AdminDashboardDto>> getDashboard() {
+        try {
+            long totalUsers = adminService.getTotalUsersCount();
+            long totalProducts = adminService.getTotalProductsCount();
+            long unansweredQna = adminService.getUnansweredQnaCount();
 
-        model.addAttribute("totalUsers", totalUsers);
-        model.addAttribute("totalProducts", totalProducts);
-        model.addAttribute("unansweredQna", unansweredQna);
+            AdminDashboardDto dashboard = AdminDashboardDto.builder()
+                    .totalUsers(totalUsers)
+                    .totalProducts(totalProducts)
+                    .unansweredQna(unansweredQna)
+                    .build();
 
-        // 회원 목록 조회 (검색어가 있으면 검색, 없으면 전체 조회)
-        List<User> users = userSearch != null && !userSearch.trim().isEmpty()
-                ? adminService.searchUsers(userSearch)
-                : adminService.getAllUsers();
-        model.addAttribute("users", users);
-
-        // 상품 목록 조회 (검색어 또는 삭제 상태 필터 적용)
-        List<Product> products;
-        if (productSearch != null && !productSearch.trim().isEmpty()) {
-            products = adminService.searchProducts(productSearch);
-        } else if (isDeleted != null) {
-            products = adminService.getProductsByDeletedStatus(isDeleted);
-        } else {
-            products = adminService.getAllProducts();
+            return ResponseEntity.ok(ResponseDto.success("통계 조회 성공", dashboard));
+        } catch (Exception e) {
+            log.error("대시보드 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseDto.fail("통계 조회에 실패했습니다."));
         }
-        model.addAttribute("products", products);
-
-        // Q&A 목록 조회 (미답변 게시글이 먼저 표시되도록 정렬)
-        List<QnaPost> qnaPosts = adminService.getAllQnaPostsSortedByAnswered();
-        model.addAttribute("qnaPosts", qnaPosts);
-
-        // 현재 활성화된 탭 정보 유지 (페이지 새로고침 시에도 같은 탭 유지)
-        if (tab != null) {
-            model.addAttribute("activeTab", tab);
-        }
-
-        return "admin/admin";
     }
 
     /**
-     * 회원 상세 페이지
-     * - 회원 기본 정보
-     * - 회원이 등록한 상품 목록
-     * - 회원이 작성한 Q&A 게시글 목록
-     * - 상품 및 Q&A 작성 수
+     * 회원 목록 조회
+     *
+     * @param search 검색 키워드 (선택)
+     * @return 회원 목록
+     */
+    @GetMapping("/users")
+    public ResponseEntity<ResponseDto<List<UserListDto>>> getUsers(
+            @RequestParam(required = false) String search) {
+        try {
+            List<User> users = search != null && !search.trim().isEmpty()
+                    ? adminService.searchUsers(search)
+                    : adminService.getAllUsers();
+
+            // ✅ Entity → DTO 변환
+            List<UserListDto> userDtos = users.stream()
+                    .map(UserListDto::fromEntity)
+                    .toList();
+
+            return ResponseEntity.ok(ResponseDto.success("회원 목록 조회 성공", userDtos));
+        } catch (Exception e) {
+            log.error("회원 목록 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseDto.fail("회원 목록 조회에 실패했습니다."));
+        }
+    }
+
+    /**
+     * 회원 상세 조회
      *
      * @param userId 조회할 회원 ID
-     * @param model 뷰에 전달할 데이터
-     * @param redirectAttributes 리다이렉트 시 전달할 메시지
-     * @return 회원 상세 페이지 뷰 또는 관리자 메인으로 리다이렉트
+     * @return 회원 상세 정보 (기본 정보, 등록 상품, 작성 Q&A)
      */
     @GetMapping("/users/{userId}")
-    public String userDetailPage(@PathVariable Long userId, Model model, RedirectAttributes redirectAttributes) {
+    public ResponseEntity<ResponseDto<UserDetailDto>> getUserDetail(@PathVariable Long userId) {
         try {
-            // 회원 정보 및 관련 데이터 조회
             User user = adminService.getUserById(userId);
             List<Product> products = adminService.getProductsByUser(userId);
             List<QnaPost> qnaPosts = adminService.getQnaPostsByUser(userId);
 
-            long productCount = products.size();
-            long qnaCount = qnaPosts.size();
+            UserDetailDto userDetail = UserDetailDto.fromEntity(user, products, qnaPosts);
 
-            model.addAttribute("user", user);
-            model.addAttribute("products", products);
-            model.addAttribute("qnaPosts", qnaPosts);
-            model.addAttribute("productCount", productCount);
-            model.addAttribute("qnaCount", qnaCount);
-
-            return "admin/user-detail";
+            return ResponseEntity.ok(ResponseDto.success("회원 상세 조회 성공", userDetail));
         } catch (Exception e) {
             log.error("회원 상세 조회 실패: userId={}", userId, e);
-            redirectAttributes.addFlashAttribute("error", "회원 정보를 불러올 수 없습니다.");
-            return "redirect:/admin";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseDto.fail("회원 정보를 찾을 수 없습니다."));
         }
     }
 
     /**
      * 회원 상태 토글 (활성/정지)
-     * - 현재 상태를 반대로 전환
-     * - 활성 회원 → 정지, 정지 회원 → 활성
      *
      * @param userId 상태를 변경할 회원 ID
-     * @param redirectAttributes 리다이렉트 시 전달할 메시지
-     * @return 회원 상세 페이지로 리다이렉트
+     * @return 변경된 상태
      */
-    @PostMapping("/users/{userId}/toggle-status")
-    public String toggleUserStatus(@PathVariable Long userId, RedirectAttributes redirectAttributes) {
+    @PatchMapping("/users/{userId}/toggle-status")
+    public ResponseEntity<ResponseDto<Map<String, Object>>> toggleUserStatus(@PathVariable Long userId) {
         try {
-            // 상태 변경 후 새로운 상태값 반환 (true: 활성, false: 정지)
             boolean newStatus = adminService.toggleUserStatus(userId);
             String statusMessage = newStatus ? "활성화" : "정지";
-            redirectAttributes.addFlashAttribute("message", "회원이 " + statusMessage + " 되었습니다.");
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("userId", userId);
+            result.put("isActive", newStatus);
+            result.put("status", statusMessage);
+
+            return ResponseEntity.ok(ResponseDto.success("회원이 " + statusMessage + " 되었습니다.", result));
         } catch (Exception e) {
             log.error("회원 상태 변경 실패: userId={}", userId, e);
-            redirectAttributes.addFlashAttribute("error", "회원 상태 변경에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseDto.fail("회원 상태 변경에 실패했습니다."));
         }
-        return "redirect:/admin/users/" + userId;
     }
 
     /**
      * 회원 삭제
-     * - 회원 계정 및 관련 데이터 삭제
-     * - 삭제 후 관리자 메인 페이지로 이동
      *
      * @param userId 삭제할 회원 ID
-     * @param redirectAttributes 리다이렉트 시 전달할 메시지
-     * @return 관리자 메인 페이지 또는 회원 상세 페이지로 리다이렉트
+     * @return 삭제 결과
      */
-    @PostMapping("/users/{userId}/delete")
-    public String deleteUser(@PathVariable Long userId, RedirectAttributes redirectAttributes) {
+    @DeleteMapping("/users/{userId}")
+    public ResponseEntity<ResponseDto<Void>> deleteUser(@PathVariable Long userId) {
         try {
             adminService.deleteUser(userId);
-            redirectAttributes.addFlashAttribute("message", "회원이 삭제되었습니다.");
-            return "redirect:/admin";
+            return ResponseEntity.ok(ResponseDto.success("회원이 삭제되었습니다."));
         } catch (Exception e) {
             log.error("회원 삭제 실패: userId={}", userId, e);
-            redirectAttributes.addFlashAttribute("error", "회원 삭제에 실패했습니다.");
-            return "redirect:/admin/users/" + userId;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseDto.fail("회원 삭제에 실패했습니다."));
+        }
+    }
+
+    /**
+     * 상품 목록 조회
+     *
+     * @param search 검색 키워드 (선택)
+     * @param isDeleted 삭제 상태 필터 (선택)
+     * @return 상품 목록
+     */
+    @GetMapping("/products")
+    public ResponseEntity<ResponseDto<List<ProductSimpleDto>>> getProducts(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean isDeleted) {
+        try {
+            List<Product> products;
+
+            if (search != null && !search.trim().isEmpty()) {
+                products = adminService.searchProducts(search);
+            } else if (isDeleted != null) {
+                products = adminService.getProductsByDeletedStatus(isDeleted);
+            } else {
+                products = adminService.getAllProducts();
+            }
+
+            // ✅ Entity → DTO 변환
+            List<ProductSimpleDto> productDtos = products.stream()
+                    .map(ProductSimpleDto::fromEntity)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(ResponseDto.success("상품 목록 조회 성공", productDtos));
+        } catch (Exception e) {
+            log.error("상품 목록 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseDto.fail("상품 목록 조회에 실패했습니다."));
         }
     }
 
     /**
      * 상품 삭제
-     * - 상품을 삭제 처리
-     * - 삭제 후 관리자 메인 페이지의 상품 탭으로 이동
      *
      * @param productId 삭제할 상품 ID
-     * @param redirectAttributes 리다이렉트 시 전달할 메시지
-     * @return 관리자 메인 페이지(상품 탭)로 리다이렉트
+     * @return 삭제 결과
      */
-    @PostMapping("/products/{productId}/delete")
-    public String deleteProduct(@PathVariable Long productId, RedirectAttributes redirectAttributes) {
+    @DeleteMapping("/products/{productId}")
+    public ResponseEntity<ResponseDto<Void>> deleteProduct(@PathVariable Long productId) {
         try {
             adminService.deleteProduct(productId);
-            redirectAttributes.addFlashAttribute("message", "상품이 삭제되었습니다.");
+            return ResponseEntity.ok(ResponseDto.success("상품이 삭제되었습니다."));
         } catch (Exception e) {
             log.error("상품 삭제 실패: productId={}", productId, e);
-            redirectAttributes.addFlashAttribute("error", "상품 삭제에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseDto.fail("상품 삭제에 실패했습니다."));
         }
-        return "redirect:/admin?tab=products";
+    }
+
+    /**
+     * Q&A 목록 조회 (미답변 우선 정렬)
+     *
+     * @return Q&A 목록
+     */
+    @GetMapping("/qna")
+    public ResponseEntity<ResponseDto<List<QnaSimpleDto>>> getQnaPosts() {
+        try {
+            List<QnaPost> qnaPosts = adminService.getAllQnaPostsSortedByAnswered();
+
+            // ✅ Entity → DTO 변환
+            List<QnaSimpleDto> qnaDtos = qnaPosts.stream()
+                    .map(QnaSimpleDto::fromEntity)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(ResponseDto.success("Q&A 목록 조회 성공", qnaDtos));
+        } catch (Exception e) {
+            log.error("Q&A 목록 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseDto.fail("Q&A 목록 조회에 실패했습니다."));
+        }
     }
 
     /**
      * Q&A 답변 등록
-     * - 관리자가 Q&A 게시글에 답변 작성
-     * - 답변 내용 유효성 검사 (빈 값 체크)
-     * - 등록 후 관리자 메인 페이지의 Q&A 탭으로 이동
      *
-     * @param qnaId 답변을 등록할 Q&A 게시글 ID
-     * @param content 답변 내용
-     * @param redirectAttributes 리다이렉트 시 전달할 메시지
-     * @return 관리자 메인 페이지(Q&A 탭)로 리다이렉트
+     * @param qnaId Q&A ID
+     * @param answerRequest 답변 내용
+     * @return 답변 등록 결과
      */
-    @PostMapping("/qna/answer")
-    public String answerQna(
-            @RequestParam Long qnaId,
-            @RequestParam String content,
-            RedirectAttributes redirectAttributes
-    ) {
+    @PostMapping("/qna/{qnaId}/answer")
+    public ResponseEntity<ResponseDto<Void>> answerQna(
+            @PathVariable Long qnaId,
+            @Valid @RequestBody QnaAnswerRequestDto answerRequest) {
         try {
-            // 답변 내용이 비어있는지 검증
-            if (content == null || content.trim().isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "답변 내용을 입력해주세요.");
-                return "redirect:/admin?tab=qna";
-            }
-
-            // 답변 등록 (앞뒤 공백 제거)
-            adminService.answerQna(qnaId, content.trim());
-            redirectAttributes.addFlashAttribute("message", "답변이 등록되었습니다.");
+            // ✅ AdminService에서 SecurityContextHolder로 admin 정보를 가져오므로
+            // Controller에서는 qnaId와 content만 전달하면 됨!
+            adminService.answerQna(qnaId, answerRequest.getContent().trim());
+            return ResponseEntity.ok(ResponseDto.success("답변이 등록되었습니다."));
+        } catch (IllegalArgumentException e) {
+            log.error("Q&A 답변 등록 실패 - 존재하지 않는 Q&A: qnaId={}", qnaId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ResponseDto.fail(e.getMessage()));
+        } catch (IllegalStateException e) {
+            log.error("Q&A 답변 등록 실패 - {}: qnaId={}", e.getMessage(), qnaId);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseDto.fail(e.getMessage()));
         } catch (Exception e) {
             log.error("Q&A 답변 등록 실패: qnaId={}", qnaId, e);
-            redirectAttributes.addFlashAttribute("error", "답변 등록에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseDto.fail("답변 등록에 실패했습니다."));
         }
-        return "redirect:/admin?tab=qna";
     }
 }

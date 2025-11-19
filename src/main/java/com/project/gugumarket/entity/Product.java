@@ -1,5 +1,6 @@
 package com.project.gugumarket.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.gugumarket.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -76,11 +77,13 @@ public class Product {
     private ProductStatus status = ProductStatus.SALE; // 기본값: 판매중
 
     // 연관관계
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> productImages = new ArrayList<>();
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Like> likes = new ArrayList<>();
-
+    @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
