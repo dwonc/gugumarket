@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
@@ -80,16 +80,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/login")
-    public ResponseEntity<Map<String, Object>> loginForm(@RequestParam(value = "error", required = false) String error) {
-        Map<String, Object> response = new HashMap<>();
-
-        if (error != null) {
-            response.put("error", "아이디 또는 비밀번호가 올바르지 않습니다.");
-        }
-        return ResponseEntity.ok(response);
-    }
-
     // 아이디 중복 체크
     @PostMapping("/check-username")
     public ResponseEntity<Map<String, Object>> checkUsername(@RequestBody Map<String, String> request) {
@@ -108,25 +98,4 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<Map<String, Object>> logout(HttpServletRequest request, HttpServletResponse response) {
-        Map<String, Object> result = new HashMap<>();
-
-        // 현재 인증 정보 가져오기
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication != null) {
-            // Spring Security의 로그아웃 핸들러 사용
-            new SecurityContextLogoutHandler().logout(request, response, authentication);
-            System.out.println("로그아웃 성공 - 사용자: " + authentication.getName());
-
-            result.put("success", true);
-            result.put("message", "로그아웃되었습니다.");
-        } else {
-            result.put("success", false);
-            result.put("message", "인증 정보가 없습니다.");
-        }
-
-        return ResponseEntity.ok(result);
-    }
 }
