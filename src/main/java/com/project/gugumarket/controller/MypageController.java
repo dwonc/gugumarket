@@ -10,21 +10,25 @@ import com.project.gugumarket.repository.NotificationRepository;
 import com.project.gugumarket.repository.UserRepository;
 import com.project.gugumarket.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-@Controller
+@RestController
+@RequestMapping("/mypage")
 public class MypageController {
 
     private final PasswordEncoder passwordEncoder;
@@ -36,9 +40,15 @@ public class MypageController {
     private final NotificationService notificationService;
     private final UserService userService;
 
-    @GetMapping("/mypage")
-    public String mypage(Principal principal, Model model) {
-        if (principal == null) return "redirect:/login";
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> mypage(Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (principal == null) {
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
 
         String userName = principal.getName();
         User user = userRepository.findByUserName(userName)
@@ -54,21 +64,29 @@ public class MypageController {
         List<Transaction> purchases = transactionService.findByBuyer(user);
         // ✅ 판매내역
         List<Transaction> sales = transactionService.findBySeller(user);
-        List<Notification> recentNotifications = notificationService.getRecentNotifications(user,5);
+        List<Notification> recentNotifications = notificationService.getRecentNotifications(user, 5);
         long unreadCount = notificationService.getUnreadCount(user);
 
-        model.addAttribute("recentNotifications", recentNotifications);
-        model.addAttribute("unreadCount", unreadCount);
-        model.addAttribute("likes", likes);
-        model.addAttribute("user", user);
-        model.addAttribute("purchases", purchases);
-        model.addAttribute("sales", sales);
-        return "users/mypage";
+        response.put("success", true);
+        response.put("user", user);
+        response.put("likes", likes);
+        response.put("purchases", purchases);
+        response.put("sales", sales);
+        response.put("recentNotifications", recentNotifications);
+        response.put("unreadCount", unreadCount);
+
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/mypage/edit")
-    public String editForm(Principal principal, Model model) {
-        if (principal == null) return "redirect:/login";
+    @GetMapping("/edit")
+    public ResponseEntity<Map<String, Object>> editForm(Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (principal == null) {
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
 
         String userName = principal.getName();
         User user = mypageService.getUserByUserName(userName);
@@ -82,25 +100,26 @@ public class MypageController {
         userDto.setAddress(user.getAddress());
         userDto.setAddressDetail(user.getAddressDetail());
 
-        model.addAttribute("user", user);
-        model.addAttribute("userDto", userDto);
+        response.put("success", true);
+        response.put("user", user);
+        response.put("userDto", userDto);
 
-        return "users/edit";
+        return ResponseEntity.ok(response);
     }
 
     // ✅ 단순화된 프로필 수정 처리
-    @PostMapping("/users/edit")
-    public String editProfile(
-            @Valid @ModelAttribute UserUpdateDto userDto,  // ← 여기만 변경!
+    @PostMapping("/edit")
+    public ResponseEntity<Map<String, Object>> editProfile(
+            @Valid @RequestPart("userDto") UserUpdateDto userDto,
             BindingResult bindingResult,
             @RequestParam(required = false) String currentPassword,
             @RequestParam(required = false) String newPassword,
             @RequestParam(required = false) String confirmPassword,
-            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage,
             @RequestParam(value = "deleteProfileImage", required = false) String deleteProfileImage,
-            Principal principal,
-            Model model,
-            RedirectAttributes redirectAttributes) {
+            Principal principal) {
+
+        Map<String, Object> response = new HashMap<>();
 
         // 🔥 디버깅 로그 추가
         System.out.println("\n========================================");
@@ -109,7 +128,9 @@ public class MypageController {
 
         if (principal == null) {
             System.out.println("❌ Principal이 null입니다!");
-            return "redirect:/login";
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
         String userName = principal.getName();
@@ -119,7 +140,7 @@ public class MypageController {
         System.out.println("✅ 사용자 정보 조회 완료: " + user.getNickname());
 
         // 🔥 받은 데이터 확인
-        System.out.println("\n📥 받은 데이터:");
+        System.out.println("\n🔥 받은 데이터:");
         System.out.println("  - 닉네임: " + userDto.getNickname());
         System.out.println("  - 이메일: " + userDto.getEmail());
         System.out.println("  - 전화번호: " + userDto.getPhone());
@@ -133,18 +154,23 @@ public class MypageController {
         // 유효성 검증 실패 시 먼저 처리
         if (bindingResult.hasErrors()) {
             System.out.println("❌ 유효성 검사 실패!");
+            Map<String, String> errors = bindingResult.getFieldErrors().stream()
+                    .collect(Collectors.toMap(
+                            FieldError::getField,
+                            error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : ""
+                    ));
             bindingResult.getAllErrors().forEach(error -> {
                 System.out.println("    * " + error.getDefaultMessage());
             });
-            model.addAttribute("user", user);
-            model.addAttribute("userDto", userDto);
-            return "users/edit";
+            response.put("success", false);
+            response.put("errors", errors);
+            return ResponseEntity.badRequest().body(response);
         }
 
         System.out.println("✅ 유효성 검사 통과!");
 
         try {
-            System.out.println("\n🔄 데이터 업데이트 시작...");
+            System.out.println("\n📄 데이터 업데이트 시작...");
 
             // 1️⃣ 프로필 이미지 처리
             if ("true".equals(deleteProfileImage)) {
@@ -155,10 +181,9 @@ public class MypageController {
 
                 // 파일 크기 체크 (5MB)
                 if (profileImage.getSize() > 5 * 1024 * 1024) {
-                    model.addAttribute("error", "파일 크기는 5MB 이하여야 합니다.");
-                    model.addAttribute("user", user);
-                    model.addAttribute("userDto", userDto);
-                    return "users/edit";
+                    response.put("success", false);
+                    response.put("message", "파일 크기는 5MB 이하여야 합니다.");
+                    return ResponseEntity.badRequest().body(response);
                 }
 
                 // 파일 형식 체크
@@ -168,10 +193,9 @@ public class MypageController {
                                 !contentType.equals("image/jpg") &&
                                 !contentType.equals("image/png") &&
                                 !contentType.equals("image/gif"))) {
-                    model.addAttribute("error", "JPG, PNG, GIF 형식의 이미지만 업로드 가능합니다.");
-                    model.addAttribute("user", user);
-                    model.addAttribute("userDto", userDto);
-                    return "users/edit";
+                    response.put("success", false);
+                    response.put("message", "JPG, PNG, GIF 형식의 이미지만 업로드 가능합니다.");
+                    return ResponseEntity.badRequest().body(response);
                 }
 
                 // MypageService를 통한 파일 업로드
@@ -188,31 +212,27 @@ public class MypageController {
 
             if (passwordChangeRequested) {
                 if (currentPassword == null || currentPassword.isEmpty()) {
-                    model.addAttribute("error", "현재 비밀번호를 입력해주세요.");
-                    model.addAttribute("user", user);
-                    model.addAttribute("userDto", userDto);
-                    return "users/edit";
+                    response.put("success", false);
+                    response.put("message", "현재 비밀번호를 입력해주세요.");
+                    return ResponseEntity.badRequest().body(response);
                 }
 
                 if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-                    model.addAttribute("error", "현재 비밀번호가 일치하지 않습니다.");
-                    model.addAttribute("user", user);
-                    model.addAttribute("userDto", userDto);
-                    return "users/edit";
+                    response.put("success", false);
+                    response.put("message", "현재 비밀번호가 일치하지 않습니다.");
+                    return ResponseEntity.badRequest().body(response);
                 }
 
                 if (newPassword == null || newPassword.isEmpty()) {
-                    model.addAttribute("error", "새 비밀번호를 입력해주세요.");
-                    model.addAttribute("user", user);
-                    model.addAttribute("userDto", userDto);
-                    return "users/edit";
+                    response.put("success", false);
+                    response.put("message", "새 비밀번호를 입력해주세요.");
+                    return ResponseEntity.badRequest().body(response);
                 }
 
                 if (!newPassword.equals(confirmPassword)) {
-                    model.addAttribute("error", "새 비밀번호가 일치하지 않습니다.");
-                    model.addAttribute("user", user);
-                    model.addAttribute("userDto", userDto);
-                    return "users/edit";
+                    response.put("success", false);
+                    response.put("message", "새 비밀번호가 일치하지 않습니다.");
+                    return ResponseEntity.badRequest().body(response);
                 }
 
                 user.setPassword(passwordEncoder.encode(newPassword));
@@ -241,23 +261,28 @@ public class MypageController {
             System.out.println("   - 저장된 프로필 이미지: " + savedUser.getProfileImage());
             System.out.println("========================================\n");
 
-            redirectAttributes.addFlashAttribute("successMessage", "회원정보가 수정되었습니다.");
-            return "redirect:/mypage";
+            response.put("success", true);
+            response.put("message", "회원정보가 수정되었습니다.");
+            response.put("user", savedUser);
+            return ResponseEntity.ok(response);
 
         } catch (IOException e) {
             System.err.println("❌ 파일 처리 중 오류: " + e.getMessage());
             e.printStackTrace();
-            model.addAttribute("error", "프로필 이미지 업로드 중 오류가 발생했습니다.");
-            model.addAttribute("user", user);
-            model.addAttribute("userDto", userDto);
-            return "users/edit";
+            response.put("success", false);
+            response.put("message", "프로필 이미지 업로드 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
-    @GetMapping("/mypage/likes")
-    public String likeList(Principal principal, Model model) {
+    @GetMapping("/likes")
+    public ResponseEntity<Map<String, Object>> likeList(Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
         if (principal == null) {
-            return "redirect:/login";
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
         String userName = principal.getName();
@@ -265,16 +290,22 @@ public class MypageController {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         List<Like> likeList = likeService.getUserLikes(user);
-        model.addAttribute("likeList", likeList);
-        model.addAttribute("user", user);
 
-        return "users/mypage_likes";
+        response.put("success", true);
+        response.put("likeList", likeList);
+        response.put("user", user);
+
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/mypage/purchases")
-    public String purchaseList(Principal principal, Model model) {
+    @GetMapping("/purchases")
+    public ResponseEntity<Map<String, Object>> purchaseList(Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
         if (principal == null) {
-            return "redirect:/login";
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
         String userName = principal.getName();
@@ -283,18 +314,24 @@ public class MypageController {
 
         List<Transaction> purchases = transactionService.getPurchasesByBuyer(user);
 
-        model.addAttribute("user", user);
-        model.addAttribute("purchases", purchases);
+        response.put("success", true);
+        response.put("user", user);
+        response.put("purchases", purchases);
 
-        return "users/mypage";
+        return ResponseEntity.ok(response);
     }
+
     /**
-     * 🛍 판매 내역 보기
+     * 🛒 판매 내역 보기
      */
-    @GetMapping("/mypage/sales")
-    public String salesList (Principal principal, Model model){
+    @GetMapping("/sales")
+    public ResponseEntity<Map<String, Object>> salesList(Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
         if (principal == null) {
-            return "redirect:/login";
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
         String userName = principal.getName();
@@ -304,64 +341,95 @@ public class MypageController {
         // ✅ TransactionService를 통해 판매 내역 조회
         List<Transaction> sales = transactionService.getSalesBySeller(user);
 
-        model.addAttribute("user", user);
-        model.addAttribute("sales", sales);
+        response.put("success", true);
+        response.put("user", user);
+        response.put("sales", sales);
 
-        return "mypage"; // mypage.html 내 판매내역 탭에 표시됨
+        return ResponseEntity.ok(response);
     }
+
     // ✅ 사용자별 알림 내역 조회
     public List<Notification> getNotificationsByUser(User user) {
         return notificationRepository.findByReceiverOrderByCreatedDateDesc(user);
     }
+
     // 알림 전체 보기 페이지
-    @GetMapping("/mypage/notifications")
-    public String notificationsPage(Principal principal, Model model) {
-        if (principal == null) return "redirect:/login";
+    @GetMapping("/notifications")
+    public ResponseEntity<Map<String, Object>> notificationsPage(Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (principal == null) {
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
 
         User user = userService.getUserByUserName(principal.getName());
         List<Notification> notifications = notificationService.getUserNotifications(user);
         long unreadCount = notificationService.getUnreadCount(user);
 
-        model.addAttribute("user", user);
-        model.addAttribute("notifications", notifications);
-        model.addAttribute("unreadCount", unreadCount);
+        response.put("success", true);
+        response.put("user", user);
+        response.put("notifications", notifications);
+        response.put("unreadCount", unreadCount);
 
-        return "notifications/notifications";
+        return ResponseEntity.ok(response);
     }
 
     // 알림 읽음 처리
-    @PostMapping("/mypage/notifications/{id}/read")
-    @ResponseBody
-    public String markNotificationAsRead(@PathVariable Long id, Principal principal) {
-        if (principal == null) return "error";
+    @PostMapping("/notifications/{id}/read")
+    public ResponseEntity<Map<String, Object>> markNotificationAsRead(@PathVariable Long id, Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (principal == null) {
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
 
         User user = userService.getUserByUserName(principal.getName());
         notificationService.markAsRead(id, user);
 
-        return "success";
+        response.put("success", true);
+        response.put("message", "알림을 읽음 처리했습니다.");
+        return ResponseEntity.ok(response);
     }
 
     // 모든 알림 읽음 처리
-    @PostMapping("/mypage/notifications/read-all")
-    @ResponseBody
-    public String markAllNotificationsAsRead(Principal principal) {
-        if (principal == null) return "error";
+    @PostMapping("/notifications/read-all")
+    public ResponseEntity<Map<String, Object>> markAllNotificationsAsRead(Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (principal == null) {
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
 
         User user = userService.getUserByUserName(principal.getName());
         notificationService.markAllAsRead(user);
 
-        return "success";
+        response.put("success", true);
+        response.put("message", "모든 알림을 읽음 처리했습니다.");
+        return ResponseEntity.ok(response);
     }
 
     // 알림 삭제
-    @PostMapping("/mypage/notifications/{id}/delete")
-    @ResponseBody
-    public String deleteNotification(@PathVariable Long id, Principal principal) {
-        if (principal == null) return "error";
+    @PostMapping("/notifications/{id}/delete")
+    public ResponseEntity<Map<String, Object>> deleteNotification(@PathVariable Long id, Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (principal == null) {
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
 
         User user = userService.getUserByUserName(principal.getName());
         notificationService.deleteNotification(id, user);
 
-        return "success";
+        response.put("success", true);
+        response.put("message", "알림이 삭제되었습니다.");
+        return ResponseEntity.ok(response);
     }
 }
