@@ -2,6 +2,7 @@ package com.project.gugumarket.service;
 
 import com.project.gugumarket.DataNotFoundException;
 import com.project.gugumarket.ProductStatus;
+import com.project.gugumarket.dto.ProductDto;
 import com.project.gugumarket.dto.ProductForm;
 import com.project.gugumarket.entity.Category;
 import com.project.gugumarket.entity.Product;
@@ -10,6 +11,7 @@ import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.ProductImageRepository;
 import com.project.gugumarket.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,6 +30,7 @@ import java.util.Optional;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
 
     private final ProductRepository productRepository;  // 상품 데이터베이스 접근
@@ -50,7 +53,9 @@ public class ProductService {
             throw new DataNotFoundException("Product not found");
     }
 
-
+    /**
+     * 상품 수정
+     */
     @Transactional
     public void modify(Long productId, ProductForm productDto, User currentUser) {
         // Service 안에서 조회 (영속 상태 유지)
@@ -71,7 +76,6 @@ public class ProductService {
         product.setAccountHolder(productDto.getAccountHolder());
 
         // 메인 이미지 변경 처리
-
         Category category = categoryService.getCategoryById(productDto.getCategoryId());
         product.setCategory(category);
 
@@ -81,12 +85,11 @@ public class ProductService {
                 // 기존 이미지가 있으면 파일 삭제
                 if (product.getMainImage() != null) {
                     try {
-
                         String oldFileName = product.getMainImage().substring(
                                 product.getMainImage().lastIndexOf("/") + 1);
                         fileService.deleteFile(oldFileName);
                     } catch (IOException e) {
-                        System.err.println("⚠️ 기존 이미지 삭제 실패: " + e.getMessage());
+                        log.error("⚠️ 기존 이미지 삭제 실패: {}", e.getMessage());
                     }
                 }
                 // 새 이미지 URL 설정
@@ -177,7 +180,7 @@ public class ProductService {
         // 상품 저장
         Product savedProduct = productRepository.save(product);
 
-        System.out.println("✅ 상품 등록 완료: " + savedProduct.getTitle());
+        log.info("✅ 상품 등록 완료: {}", savedProduct.getTitle());
 
         // 추가 이미지가 있는 경우 처리
         if (productForm.getAdditionalImages() != null && !productForm.getAdditionalImages().isEmpty()) {
@@ -198,11 +201,13 @@ public class ProductService {
 
             // 모든 추가 이미지를 한 번에 저장
             productImageRepository.saveAll(productImages);
-            System.out.println("✅ 추가 이미지 " + productImages.size() + "개 저장 완료");
+            log.info("✅ 추가 이미지 {}개 저장 완료", productImages.size());
         }
 
         return savedProduct;
     }
+
+    // ========== 기존 메서드 (ProductForm 반환) ==========
 
     /**
      * 메인 페이지용 - 전체 상품 목록 조회
@@ -219,11 +224,11 @@ public class ProductService {
         if (keyword != null && !keyword.trim().isEmpty()) {
             // 제목에 검색어가 포함되고, 삭제되지 않은 상품을 최신순으로 조회
             products = productRepository.findByTitleContainingAndIsDeletedFalseOrderByCreatedDateDesc(keyword, pageable);
-            System.out.println("🔍 검색어: '" + keyword + "' - " + products.getTotalElements() + "개 검색됨");
+            log.info("🔍 검색어: '{}' - {}개 검색됨", keyword, products.getTotalElements());
         } else {
             // 검색어가 없으면 전체 상품 조회 (삭제되지 않은 것만)
             products = productRepository.findByIsDeletedFalseOrderByCreatedDateDesc(pageable);
-            System.out.println("📦 전체 상품 조회 - " + products.getTotalElements() + "개");
+            log.info("📦 전체 상품 조회 - {}개", products.getTotalElements());
         }
 
         // Entity를 DTO로 변환하여 반환
@@ -247,14 +252,83 @@ public class ProductService {
             // 특정 카테고리 + 제목 검색 + 삭제되지 않은 상품
             products = productRepository.findByTitleContainingAndCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(
                     keyword, categoryId, pageable);
-            System.out.println("🔍 카테고리 " + categoryId + " + 검색어 '" + keyword + "' - " + products.getTotalElements() + "개 검색됨");
+            log.info("🔍 카테고리 {} + 검색어 '{}' - {}개 검색됨", categoryId, keyword, products.getTotalElements());
         } else {
             // 특정 카테고리의 전체 상품 조회
             products = productRepository.findByCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(categoryId, pageable);
-            System.out.println("📂 카테고리 " + categoryId + " - " + products.getTotalElements() + "개");
+            log.info("📂 카테고리 {} - {}개", categoryId, products.getTotalElements());
         }
 
         // Entity를 DTO로 변환하여 반환
         return products.map(ProductForm::fromEntity);
+    }
+
+    // ========== 🔥 NEW: REST API용 DTO 변환 메서드 추가 ==========
+
+    /**
+     * 전체 상품 목록 조회 (ProductDto 반환 - REST API용)
+     * 무한 재귀 문제 방지를 위해 DTO로 변환
+     */
+    @Transactional(readOnly = true)
+    public Page<ProductDto> getProductListDto(String keyword, Pageable pageable) {
+        Page<Product> products;
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            products = productRepository.findByTitleContainingAndIsDeletedFalseOrderByCreatedDateDesc(keyword, pageable);
+            log.info("🔍 검색어: '{}' - {}개 검색됨", keyword, products.getTotalElements());
+        } else {
+            products = productRepository.findByIsDeletedFalseOrderByCreatedDateDesc(pageable);
+            log.info("📦 전체 상품 조회 - {}개", products.getTotalElements());
+        }
+
+        // Entity를 ProductDto로 변환
+        return products.map(ProductDto::fromEntity);
+    }
+
+    /**
+     * 카테고리별 상품 조회 (ProductDto 반환 - REST API용)
+     * 무한 재귀 문제 방지를 위해 DTO로 변환
+     */
+    @Transactional(readOnly = true)
+    public Page<ProductDto> getProductsByCategoryDto(Long categoryId, String keyword, Pageable pageable) {
+        Page<Product> products;
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            products = productRepository.findByTitleContainingAndCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(
+                    keyword, categoryId, pageable);
+            log.info("🔍 카테고리 {} + 검색어 '{}' - {}개 검색됨", categoryId, keyword, products.getTotalElements());
+        } else {
+            products = productRepository.findByCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(categoryId, pageable);
+            log.info("📂 카테고리 {} - {}개", categoryId, products.getTotalElements());
+        }
+
+        // Entity를 ProductDto로 변환
+        return products.map(ProductDto::fromEntity);
+    }
+
+    /**
+     * 상품 상세 조회 (ProductDto 반환 - REST API용)
+     * 찜 여부, 찜 개수, 댓글 개수 포함
+     */
+    @Transactional
+    public ProductDto getProductDetailDto(Long productId, User currentUser) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다: " + productId));
+
+        // 조회수 증가
+        product.setViewCount(product.getViewCount() + 1);
+        productRepository.save(product);
+
+        // 기본 DTO 변환
+        ProductDto dto = ProductDto.fromEntity(product);
+
+        // 추가 정보 설정 (필요시 LikeService, CommentService 주입 필요)
+        // dto.setIsLiked(likeService.isLiked(currentUser, product));
+        // dto.setLikeCount(likeService.getLikeCount(product));
+        // dto.setCommentCount(commentService.getCommentCount(product));
+
+        log.info("✅ 상품 상세 조회: {} (조회수: {})", product.getTitle(), product.getViewCount());
+
+        return dto;
     }
 }
