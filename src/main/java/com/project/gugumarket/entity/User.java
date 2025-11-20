@@ -1,6 +1,5 @@
 package com.project.gugumarket.entity;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -78,11 +77,9 @@ public class User {
     }
 
     // 연관관계
-    @JsonIgnore
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL)
     private List<Product> products = new ArrayList<>();
 
-    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Like> likes = new ArrayList<>();
 
