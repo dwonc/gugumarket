@@ -1,8 +1,6 @@
 package com.project.gugumarket.controller;
 
-import com.project.gugumarket.dto.UserDto;
-import com.project.gugumarket.dto.UserUpdateDto;
-import com.project.gugumarket.dto.UserResponseDto;
+import com.project.gugumarket.dto.*;
 import com.project.gugumarket.entity.Like;
 import com.project.gugumarket.entity.Notification;
 import com.project.gugumarket.entity.Transaction;
@@ -14,11 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.validation.Valid;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.HashMap;
