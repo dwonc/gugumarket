@@ -20,6 +20,7 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors; // ✅ 추가
 
 @RequiredArgsConstructor
 @RestController
@@ -62,12 +63,26 @@ public class MypageController {
         List<Notification> recentNotifications = notificationService.getRecentNotifications(user, 5);
         long unreadCount = notificationService.getUnreadCount(user);
 
+        // ✅ DTO 변환
+        List<LikeResponseDto> likeDtos = likes.stream()
+                .map(LikeResponseDto::fromEntity)
+                .collect(Collectors.toList());
+        List<TransactionResponseDto> purchaseDtos = purchases.stream()
+                .map(TransactionResponseDto::fromEntity)
+                .collect(Collectors.toList());
+        List<TransactionResponseDto> salesDtos = sales.stream()
+                .map(TransactionResponseDto::fromEntity)
+                .collect(Collectors.toList());
+        List<NotificationResponseDto> notificationDtos = recentNotifications.stream()
+                .map(NotificationResponseDto::fromEntity)
+                .collect(Collectors.toList());
+
         response.put("success", true);
         response.put("user", UserResponseDto.fromEntity(user));
-        response.put("likes", likes);
-        response.put("purchases", purchases);
-        response.put("sales", sales);
-        response.put("recentNotifications", recentNotifications);
+        response.put("likes", likeDtos); // ✅ DTO로 변경
+        response.put("purchases", purchaseDtos); // ✅ DTO로 변경
+        response.put("sales", salesDtos); // ✅ DTO로 변경
+        response.put("recentNotifications", notificationDtos); // ✅ DTO로 변경
         response.put("unreadCount", unreadCount);
 
         return ResponseEntity.ok(response);
@@ -283,8 +298,13 @@ public class MypageController {
 
         List<Like> likeList = likeService.getUserLikes(user);
 
+        // ✅ DTO 변환
+        List<LikeResponseDto> likeDtos = likeList.stream()
+                .map(LikeResponseDto::fromEntity)
+                .collect(Collectors.toList());
+
         response.put("success", true);
-        response.put("likeList", likeList);
+        response.put("likeList", likeDtos); // ✅ DTO로 변경
         response.put("user", UserResponseDto.fromEntity(user));
 
         return ResponseEntity.ok(response);
@@ -306,9 +326,14 @@ public class MypageController {
 
         List<Transaction> purchases = transactionService.getPurchasesByBuyer(user);
 
+        // ✅ DTO 변환
+        List<TransactionResponseDto> purchaseDtos = purchases.stream()
+                .map(TransactionResponseDto::fromEntity)
+                .collect(Collectors.toList());
+
         response.put("success", true);
         response.put("user", UserResponseDto.fromEntity(user));
-        response.put("purchases", purchases);
+        response.put("purchases", purchaseDtos); // ✅ DTO로 변경
 
         return ResponseEntity.ok(response);
     }
@@ -333,9 +358,14 @@ public class MypageController {
         // ✅ TransactionService를 통해 판매 내역 조회
         List<Transaction> sales = transactionService.getSalesBySeller(user);
 
+        // ✅ DTO 변환
+        List<TransactionResponseDto> salesDtos = sales.stream()
+                .map(TransactionResponseDto::fromEntity)
+                .collect(Collectors.toList());
+
         response.put("success", true);
         response.put("user", UserResponseDto.fromEntity(user));
-        response.put("sales", sales);
+        response.put("sales", salesDtos); // ✅ DTO로 변경
 
         return ResponseEntity.ok(response);
     }
@@ -360,9 +390,14 @@ public class MypageController {
         List<Notification> notifications = notificationService.getUserNotifications(user);
         long unreadCount = notificationService.getUnreadCount(user);
 
+        // ✅ DTO 변환
+        List<NotificationResponseDto> notificationDtos = notifications.stream()
+                .map(NotificationResponseDto::fromEntity)
+                .collect(Collectors.toList());
+
         response.put("success", true);
         response.put("user", UserResponseDto.fromEntity(user));
-        response.put("notifications", notifications);
+        response.put("notifications", notificationDtos); // ✅ DTO로 변경
         response.put("unreadCount", unreadCount);
 
         return ResponseEntity.ok(response);
