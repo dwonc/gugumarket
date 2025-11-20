@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")     //API 명시
 public class ProductController {
 
-    private final AdminController adminController;
 
     private final ProductService productService;
     private final UserService userService;
@@ -58,7 +57,6 @@ public class ProductController {
         //User entity -> DTO 변환
         UserSimpleResponse userDTO = UserSimpleResponse.from(user);
         
-
         // 카테고리 목록 조회
         List<CategoryDto> categories = categoryService.getAllCategories();
 
@@ -190,7 +188,7 @@ public class ProductController {
                     "success", true,
                     "productDto", productDto,
                     "categories", categories,
-                    "user", user,
+                    "user", userDto,
                     "isEdit", true
             ));
 
@@ -384,7 +382,7 @@ public class ProductController {
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("product", product);
+            response.put("product", productDto);
             response.put("likeCount", likeCount);
 
             // 로그인한 사용자의 좋아요 여부 및 구매 희망자 목록
