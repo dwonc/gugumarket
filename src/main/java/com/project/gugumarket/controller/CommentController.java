@@ -22,7 +22,6 @@ import java.util.Map;
  * - 댓글 작성 (일반 댓글 및 대댓글)
  * - 댓글 수정
  * - 댓글 삭제
- *
  * 모든 응답은 JSON 형식으로 반환
  */
 @RestController
