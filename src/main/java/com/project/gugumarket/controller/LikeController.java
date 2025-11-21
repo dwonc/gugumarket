@@ -24,7 +24,7 @@ public class LikeController {
     /**
      *         좋아요 토글 (추가/삭제)
      */
-    @PostMapping("/products/{productId}/like")  //RESTFULL 규칙으로 porduct (단수) -> products (복수) 로 변경
+    @PostMapping("/api/products/{id}/like")  //RESTFULL 규칙으로 porduct (단수) -> products (복수) 로 변경
     public ResponseEntity<?> toggleLike(
             @PathVariable Long productId,       //URL의 productId 값을 변수로 받기
             Principal principal) {              // 현재 로그인한 사용자 정보 (로그인 안했으면 null)

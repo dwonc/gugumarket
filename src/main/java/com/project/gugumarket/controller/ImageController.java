@@ -99,13 +99,13 @@ public class ImageController {
                     .map(fileName -> "/uploads/products/" + fileName)
                     .collect(Collectors.toList());
 
-            // 응답 데이터
+             // 응답 데이터
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("fileNames", savedFileNames);
             response.put("imageUrls", imageUrls);
             response.put("count", savedFileNames.size());
-            response.put("message", savedFileNames.size() + "개의 이미지 업로드 성공");
+            response.put("message",savedFileNames.size() + "개의 이미지 업로드 성공");
 
             return ResponseEntity.ok(response);
 
