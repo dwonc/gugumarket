@@ -331,15 +331,4 @@ public class ProductService {
 
         return dto;
     }
-    /**
-     * ✅ [추가] 특정 판매자가 등록한 모든 상품 (삭제되지 않은 것만)을 최신순으로 조회합니다.
-     * MypageController에서 "판매 내역"에 판매 중인 상품을 포함하기 위해 사용됩니다.
-     * @param seller 조회할 사용자 (판매자)
-     * @return 등록된 모든 Product 목록
-     */
-    @Transactional(readOnly = true) // 조회 전용 트랜잭션
-    public List<Product> getProductsBySeller(User seller) {
-        // ProductRepository에 정의한 쿼리 메서드를 호출하여 등록 상품 목록을 가져옵니다.
-        return productRepository.findBySellerAndIsDeletedFalseOrderByCreatedDateDesc(seller);
-    }
 }
