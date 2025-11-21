@@ -36,6 +36,7 @@ public class ProductDto {
     private Long sellerId;
     private String sellerNickname;
     private String sellerProfileImage;
+    private String sellerAddress;  // ⭐ 추가: 판매자 주소
 
     // 이미지 정보
     private String thumbnailImageUrl;  // 대표 이미지 (mainImage)
@@ -87,6 +88,7 @@ public class ProductDto {
                 .sellerId(product.getSeller() != null ? product.getSeller().getUserId() : null)
                 .sellerNickname(product.getSeller() != null ? product.getSeller().getNickname() : null)
                 .sellerProfileImage(product.getSeller() != null ? product.getSeller().getProfileImage() : null)
+                .sellerAddress(product.getSeller() != null ? product.getSeller().getAddress() : "위치정보 없음")  // ⭐ 추가
 
                 // 이미지 정보
                 .thumbnailImageUrl(product.getMainImage())  // mainImage를 썸네일로
