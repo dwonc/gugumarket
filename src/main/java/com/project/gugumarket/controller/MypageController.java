@@ -9,6 +9,7 @@ import com.project.gugumarket.repository.NotificationRepository;
 import com.project.gugumarket.repository.UserRepository;
 import com.project.gugumarket.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -85,7 +86,12 @@ public class MypageController {
         response.put("recentNotifications", notificationDtos); // ✅ DTO로 변경
         response.put("unreadCount", unreadCount);
 
-        return ResponseEntity.ok(response);
+        // ✅ 캐시 방지 헤더 추가
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noCache().noStore().mustRevalidate())
+                .header("Pragma", "no-cache")
+                .header("Expires", "0")
+                .body(response);
     }
 
     @GetMapping("/edit")
@@ -114,7 +120,12 @@ public class MypageController {
         response.put("user", UserResponseDto.fromEntity(user));
         response.put("userDto", userDto);
 
-        return ResponseEntity.ok(response);
+        // ✅ 캐시 방지 헤더 추가
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noCache().noStore().mustRevalidate())
+                .header("Pragma", "no-cache")
+                .header("Expires", "0")
+                .body(response);
     }
 
     // ✅ 단순화된 프로필 수정 처리
@@ -271,7 +282,12 @@ public class MypageController {
             response.put("success", true);
             response.put("message", "회원정보가 수정되었습니다.");
             response.put("user", UserResponseDto.fromEntity(savedUser));
-            return ResponseEntity.ok(response);
+            // ✅ 캐시 방지 헤더 추가
+            return ResponseEntity.ok()
+                    .cacheControl(CacheControl.noCache().noStore().mustRevalidate())
+                    .header("Pragma", "no-cache")
+                    .header("Expires", "0")
+                    .body(response);
 
         } catch (IOException e) {
             System.err.println("❌ 파일 처리 중 오류: " + e.getMessage());
@@ -459,4 +475,6 @@ public class MypageController {
         response.put("message", "알림이 삭제되었습니다.");
         return ResponseEntity.ok(response);
     }
+
+
 }
