@@ -28,12 +28,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailService customUserDetailService;
 
-    // ✅ 필터를 건너뛸 경로들 (구체적으로 지정!)
+    // 🔥 필터를 건너뛸 경로들 (카카오 추가!)
     private static final List<String> EXCLUDE_URLS = Arrays.asList(
-            "/api/auth/login",          // ✅ 로그인만
-            "/api/auth/refresh",        // ✅ 토큰 갱신만
-            "/api/users/signup",        // ✅ 회원가입
-            "/api/users/check-username", // ✅ 아이디 중복 체크
+            "/api/auth/login",
+            "/api/auth/refresh",
+            "/api/auth/kakao/**",          // 🔥 카카오 로그인
+            "/api/users/signup",
+            "/api/users/check-username",
+            "/api/public/**",
             "/h2-console/**",
             "/uploads/**",
             "/images/**",
