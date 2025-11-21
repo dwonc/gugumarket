@@ -50,7 +50,7 @@ public class MypageService {
     /**
      * 사용자 정보를 DTO로 변환하여 반환
      * 엔티티의 민감한 정보(비밀번호 등)를 제외하고 필요한 정보만 전달
-     * @param userName 조회할 사용자 이름
+     *
      * @return 사용자 정보가 담긴 UserDto
      */
     public UserDto getUserInfo(String userName) {
