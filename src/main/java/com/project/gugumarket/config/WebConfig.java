@@ -2,6 +2,7 @@ package com.project.gugumarket.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -15,6 +16,18 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Value("${file.upload.path:uploads/}")
     private String uploadPath;
+    // 🔥 CORS 설정 추가
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:5173")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
+
+        System.out.println("✅ CORS 설정 완료: http://localhost:5173");
+    }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
