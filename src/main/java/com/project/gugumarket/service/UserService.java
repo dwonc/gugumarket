@@ -323,4 +323,53 @@ public class UserService {
 
         log.info("✅ 비밀번호 재설정 완료 - 사용자: {}", userName);
     }
+
+    /**
+     * ✅ 소셜 로그인 사용자 필수정보 입력 (주소 + 비밀번호)
+     * @param userName 사용자 이름
+     * @param address 주소
+     * @param addressDetail 상세 주소
+     * @param postalCode 우편번호
+     * @param newPassword 새 비밀번호 (선택)
+     */
+    @Transactional
+    public User completeProfile(String userName, String address, String addressDetail,
+                                String postalCode, String newPassword) {
+        log.info("📝 필수정보 입력 - 사용자: {}", userName);
+
+        User user = userRepository.findByUserName(userName)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userName));
+
+        // 1. 주소 정보 업데이트 (필수)
+        if (address == null || address.trim().isEmpty()) {
+            throw new IllegalArgumentException("주소는 필수 항목입니다.");
+        }
+        if (postalCode == null || postalCode.trim().isEmpty()) {
+            throw new IllegalArgumentException("우편번호는 필수 항목입니다.");
+        }
+
+        user.setAddress(address);
+        user.setAddressDetail(addressDetail != null ? addressDetail : "");
+        user.setPostalCode(postalCode);
+
+        log.info("✅ 주소 정보 업데이트 완료");
+
+        // 2. 비밀번호 설정 (선택)
+        if (newPassword != null && !newPassword.trim().isEmpty()) {
+            // 비밀번호 유효성 검증
+            validatePassword(newPassword);
+
+            // 비밀번호 암호화 후 저장
+            user.setPassword(passwordEncoder.encode(newPassword));
+
+            log.info("✅ 비밀번호 설정 완료");
+        }
+
+        // 3. 저장
+        User savedUser = userRepository.save(user);
+
+        log.info("✅ 필수정보 입력 완료 - 사용자: {}", userName);
+
+        return savedUser;
+    }
 }  // ✅ 마지막 중괄호 추가!

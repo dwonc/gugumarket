@@ -29,6 +29,7 @@ public class UserResponseDto {
 
     // ✅ products는 포함하지 않음! (순환 참조 방지)
 
+    
     // User 엔티티 → DTO 변환
     public static UserResponseDto fromEntity(User user) {
         return UserResponseDto.builder()

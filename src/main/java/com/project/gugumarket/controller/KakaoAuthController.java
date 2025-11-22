@@ -18,6 +18,7 @@ public class KakaoAuthController {
 
     private final KakaoAuthService kakaoAuthService;
 
+
     @GetMapping("/callback")
     public ResponseEntity<ResponseDto<LoginResponse>> kakaoCallback(
             @RequestParam("code") String code
@@ -48,4 +49,6 @@ public class KakaoAuthController {
         System.out.println("✅ 테스트 엔드포인트 도달!");
         return "OK";
     }
+
+
 }
