@@ -44,7 +44,7 @@ public class NotificationService {
                 .product(product)
                 .type(NotificationType.LIKE)
                 .message(message)
-                .url("/product/" + product.getProductId())
+                .url("/products/" + product.getProductId())
                 .isRead(false)
                 .build();
 
@@ -139,7 +139,7 @@ public class NotificationService {
                 .product(product)
                 .type(NotificationType.COMMENT)
                 .message(message)
-                .url("/product/" + product.getProductId())
+                .url("/products/" + product.getProductId())
                 .isRead(false)
                 .build();
 

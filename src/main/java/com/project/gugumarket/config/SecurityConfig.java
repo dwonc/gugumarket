@@ -1,8 +1,9 @@
 package com.project.gugumarket.config;
 
+import com.project.gugumarket.security.JwtAuthenticationEntryPoint;
 import com.project.gugumarket.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,65 +19,88 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
-@Slf4j
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @Value("${cors.allowed-origins}")
+    private String[] allowedOrigins;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                // CORS 설정
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+
+                // CSRF 비활성화 (JWT 사용하므로)
+                .csrf(csrf -> csrf.disable())
+
+                // 세션 사용 안 함 (JWT 사용)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
+                // 인증 실패 처리
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                )
+
                 .authorizeHttpRequests(auth -> auth
-                        // 🔥 인증 없이 접근 가능한 경로
                         .requestMatchers(
-                                "/api/auth/**",
+                                "/api/auth/**",              // 🔥 /api/auth/kakao/** 포함!
                                 "/api/users/signup",
-                                "/api/users/check-username",
                                 "/api/users/find-username",      // 🔥 아이디 찾기
                                 "/api/users/verify-email",       // 🔥 이메일 인증
                                 "/api/users/reset-password",     // 🔥 비밀번호 재설정
+                                "/api/users/check-username",
                                 "/api/public/**",
                                 "/uploads/**",
                                 "/images/**",
                                 "/css/**",
                                 "/js/**",
-                                "/error"
+                                "/mypage/**"
                         ).permitAll()
-
-                        // 관리자 전용
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )
+                // JWT 필터 추가
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        log.info("✅ SecurityFilterChain 설정 완료");
         return http.build();
     }
 
+    // CORS 설정
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+
+        // React 앱의 주소 허용
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
+
+        // 모든 HTTP 메서드 허용
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+
+        // 모든 헤더 허용
         configuration.setAllowedHeaders(Arrays.asList("*"));
+
+        // 인증 정보 포함 허용
         configuration.setAllowCredentials(true);
+
+        // preflight 요청 캐시 시간
         configuration.setMaxAge(3600L);
+
+        // 노출할 헤더 설정
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
 
-        log.info("✅ CORS 설정 완료: http://localhost:5173");
         return source;
     }
 
@@ -85,8 +109,9 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    // AuthenticationManager Bean 등록 (로그인 시 필요)
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
     }
 }
