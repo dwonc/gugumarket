@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 상품 관련 비즈니스 로직을 처리하는 서비스
@@ -53,54 +54,117 @@ public class ProductService {
             throw new DataNotFoundException("Product not found");
     }
 
-    /**
-     * 상품 수정
-     */
-    @Transactional
-    public void modify(Long productId, ProductForm productDto, User currentUser) {
-        // Service 안에서 조회 (영속 상태 유지)
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+/**
+ * 상품 수정
+ */
+@Transactional
+public void modify(Long productId, ProductForm productDto, User currentUser) {
+    // Service 안에서 조회 (영속 상태 유지)
+    Product product = productRepository.findById(productId)
+            .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        // 권한 확인
-        if (!product.getSeller().equals(currentUser)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정권한이 없습니다.");
-        }
+    // 권한 확인
+    if (!product.getSeller().equals(currentUser)) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정권한이 없습니다.");
+    }
 
-        // 필드 수정
-        product.setTitle(productDto.getTitle());
-        product.setPrice(productDto.getPrice());
-        product.setContent(productDto.getContent());
-        product.setBankName(productDto.getBankName());
-        product.setAccountNumber(productDto.getAccountNumber());
-        product.setAccountHolder(productDto.getAccountHolder());
+    // 필드 수정
+    product.setTitle(productDto.getTitle());
+    product.setPrice(productDto.getPrice());
+    product.setContent(productDto.getContent());
+    product.setBankName(productDto.getBankName());
+    product.setAccountNumber(productDto.getAccountNumber());
+    product.setAccountHolder(productDto.getAccountHolder());
 
-        // 메인 이미지 변경 처리
-        Category category = categoryService.getCategoryById(productDto.getCategoryId());
-        product.setCategory(category);
+    // 카테고리 변경
+    Category category = categoryService.getCategoryById(productDto.getCategoryId());
+    product.setCategory(category);
 
-        if (productDto.getMainImage() != null && !productDto.getMainImage().isEmpty()) {
-            // 새 이미지가 기존 이미지와 다른 경우
-            if (!productDto.getMainImage().equals(product.getMainImage())) {
-                // 기존 이미지가 있으면 파일 삭제
-                if (product.getMainImage() != null) {
-                    try {
-                        String oldFileName = product.getMainImage().substring(
-                                product.getMainImage().lastIndexOf("/") + 1);
-                        fileService.deleteFile(oldFileName);
-                    } catch (IOException e) {
-                        log.error("⚠️ 기존 이미지 삭제 실패: {}", e.getMessage());
-                    }
+    // 메인 이미지 변경 처리
+    if (productDto.getMainImage() != null && !productDto.getMainImage().isEmpty()) {
+        if (!productDto.getMainImage().equals(product.getMainImage())) {
+            if (product.getMainImage() != null) {
+                try {
+                    String oldFileName = product.getMainImage().substring(
+                            product.getMainImage().lastIndexOf("/") + 1);
+                    fileService.deleteFile(oldFileName);
+                } catch (IOException e) {
+                    log.error("⚠️ 기존 메인 이미지 삭제 실패: {}", e.getMessage());
                 }
-                // 새 이미지 URL 설정
-                product.setMainImage(productDto.getMainImage());
+            }
+            product.setMainImage(productDto.getMainImage());
+        }
+    }
+
+    // ✅ 추가 이미지 업데이트 (스마트 업데이트)
+    if (productDto.getAdditionalImages() != null) {
+        log.info("🔄 추가 이미지 업데이트 시작");
+        log.info("📥 새로운 이미지 개수: {}", productDto.getAdditionalImages().size());
+
+        // 1. 기존 추가 이미지 조회
+        List<ProductImage> existingImages = productImageRepository.findByProduct(product);
+        log.info("📦 기존 이미지 개수: {}", existingImages.size());
+
+        // 2. 기존 이미지 URL 목록
+        List<String> existingUrls = existingImages.stream()
+                .map(ProductImage::getImageUrl)
+                .collect(Collectors.toList());
+
+        // 3. 새로운 이미지 URL 목록
+        List<String> newUrls = productDto.getAdditionalImages();
+
+        // 4. 삭제할 이미지 찾기 (기존에는 있지만 새 목록에는 없는 것)
+        List<String> urlsToDelete = existingUrls.stream()
+                .filter(url -> !newUrls.contains(url))
+                .collect(Collectors.toList());
+
+        log.info("🗑️ 삭제할 이미지: {}", urlsToDelete.size());
+
+        // 5. 삭제할 이미지만 파일 삭제
+        if (!urlsToDelete.isEmpty()) {
+            for (String urlToDelete : urlsToDelete) {
+                try {
+                    String fileName = urlToDelete.substring(
+                            urlToDelete.lastIndexOf("/") + 1);
+                    fileService.deleteFile(fileName);
+                    log.info("🗑️ 파일 삭제: {}", fileName);
+                } catch (IOException e) {
+                    log.error("⚠️ 파일 삭제 실패: {}", e.getMessage());
+                }
             }
         }
 
-        // 변경사항 저장
-        productRepository.save(product);
+        // 6. DB에서 기존 이미지 모두 삭제 (재정렬을 위해)
+        if (!existingImages.isEmpty()) {
+            productImageRepository.deleteAll(existingImages);
+            log.info("✅ DB에서 기존 이미지 {}개 삭제 완료", existingImages.size());
+        }
+
+        // 7. 새로운 이미지 목록 전체 저장 (순서 유지)
+        if (!newUrls.isEmpty()) {
+            List<ProductImage> newImages = new ArrayList<>();
+
+            for (int i = 0; i < newUrls.size(); i++) {
+                String imageUrl = newUrls.get(i);
+
+                ProductImage productImage = ProductImage.builder()
+                        .product(product)
+                        .imageUrl(imageUrl)
+                        .imageOrder(i + 1)
+                        .build();
+
+                newImages.add(productImage);
+            }
+
+            productImageRepository.saveAll(newImages);
+            log.info("✅ 새로운 추가 이미지 {}개 저장 완료", newImages.size());
+        }
     }
 
+    // 변경사항 저장
+    productRepository.save(product);
+    log.info("✅ 상품 수정 완료: {}", product.getTitle());
+}
     /**
      * 상품 조회수 증가
      * 상품 상세 페이지 조회 시 호출됨
