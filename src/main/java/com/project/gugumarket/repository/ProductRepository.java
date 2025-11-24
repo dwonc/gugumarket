@@ -1,6 +1,8 @@
 package com.project.gugumarket.repository;
 
 import com.project.gugumarket.entity.Product;
+import com.project.gugumarket.entity.ProductImage;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -98,6 +100,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      * 삭제 상태별 상품 조회 (최신순)
      */
     List<Product> findByIsDeletedOrderByCreatedDateDesc(Boolean isDeleted);
+
+
 
     // ========== 통계 및 집계 쿼리 ==========
 

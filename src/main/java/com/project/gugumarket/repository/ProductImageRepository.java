@@ -1,5 +1,6 @@
 package com.project.gugumarket.repository;
 
+import com.project.gugumarket.entity.Product;
 import com.project.gugumarket.entity.ProductImage;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,4 +13,10 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, Long
 
     // 특정 상품의 이미지 삭제
     void deleteByProduct_ProductId(Long productId);
+
+        // ✅ 특정 상품의 모든 이미지 조회
+        List<ProductImage> findByProduct(Product product);
+    
+        // ✅ 특정 상품의 이미지 삭제
+        void deleteByProduct(Product product);
 }

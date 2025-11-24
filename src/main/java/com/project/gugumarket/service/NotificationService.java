@@ -44,7 +44,7 @@ public class NotificationService {
                 .product(product)
                 .type(NotificationType.LIKE)
                 .message(message)
-                .url("/product/" + product.getProductId())
+                .url("/products/" + product.getProductId())
                 .isRead(false)
                 .build();
 
@@ -77,7 +77,7 @@ public class NotificationService {
                 .transaction(transaction)
                 .type(NotificationType.PURCHASE)
                 .message(message)
-                .url("/transaction/" + transaction.getTransactionId())
+                .url("/transactions/" + transaction.getTransactionId())
                 .isRead(false)
                 .build();
 
@@ -108,7 +108,7 @@ public class NotificationService {
                 .transaction(transaction)
                 .type(NotificationType.TRANSACTION)
                 .message(message)
-                .url("/transaction/" + transaction.getTransactionId())
+                .url("/transactions/" + transaction.getTransactionId())
                 .isRead(false)
                 .build();
 
@@ -122,7 +122,11 @@ public class NotificationService {
      * 댓글 알림 생성
      */
     @Transactional
-    public Notification createCommentNotification(User receiver, User commenter, Product product, String comment) {
+    public Notification createCommentNotification(
+        User receiver, //알림 받을 사람
+        User commenter, //댓글 작성자
+        Product product,    //상품
+        String comment) {  //댓글내용
         // 자기가 자기 상품에 댓글 단 경우 알림 생성 안함
         if (receiver.getUserId().equals(commenter.getUserId())) {
             return null;
@@ -139,7 +143,7 @@ public class NotificationService {
                 .product(product)
                 .type(NotificationType.COMMENT)
                 .message(message)
-                .url("/product/" + product.getProductId())
+                .url("/products/" + product.getProductId())
                 .isRead(false)
                 .build();
 
