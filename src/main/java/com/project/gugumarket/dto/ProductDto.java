@@ -37,6 +37,7 @@ public class ProductDto {
     private String sellerNickname;
     private String sellerProfileImage;
     private String sellerAddress;  // ⭐ 추가: 판매자 주소
+    private String sellerDistrict;  // 🔥 추가: 판매자 구 정보
 
     // 이미지 정보
     private String thumbnailImageUrl;  // 대표 이미지 (mainImage)
@@ -89,6 +90,7 @@ public class ProductDto {
                 .sellerNickname(product.getSeller() != null ? product.getSeller().getNickname() : null)
                 .sellerProfileImage(product.getSeller() != null ? product.getSeller().getProfileImage() : null)
                 .sellerAddress(product.getSeller() != null ? product.getSeller().getAddress() : "위치정보 없음")  // ⭐ 추가
+                .sellerDistrict(extractDistrict(product.getSeller() != null ? product.getSeller().getAddress() : null))  // 🔥 추가
 
                 // 이미지 정보
                 .thumbnailImageUrl(product.getMainImage())  // mainImage를 썸네일로
@@ -123,5 +125,35 @@ public class ProductDto {
             dto.setCommentCount(commentCount);
         }
         return dto;
+    }
+
+    /**
+     * 🔥 주소에서 "구" 추출하는 유틸 메서드
+     * 예: "서울특별시 강남구 역삼동" → "강남구"
+     */
+    private static String extractDistrict(String address) {
+        if (address == null || address.isEmpty()) {
+            return null;
+        }
+
+        // "구 " 패턴 찾기
+        int guIndex = address.indexOf("구");
+        if (guIndex == -1) {
+            return null;
+        }
+
+        // "구" 앞의 단어 추출
+        String beforeGu = address.substring(0, guIndex + 1);
+        String[] parts = beforeGu.split(" ");
+
+        if (parts.length > 0) {
+            String district = parts[parts.length - 1];
+            // "구"로 끝나는지 확인
+            if (district.endsWith("구")) {
+                return district;
+            }
+        }
+
+        return null;
     }
 }
