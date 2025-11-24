@@ -10,15 +10,14 @@ import com.project.gugumarket.service.TransactionService;
 import com.project.gugumarket.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-// org.springframework.stereotype.Controller;         // (삭제됨)
-// org.springframework.ui.Model;                   // (삭제됨)
-import org.springframework.web.bind.annotation.*;    // ★ 변경: RestController까지 포함되도록 사용
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.Map;
 
-@RestController                                    // ★ 변경: @Controller → @RestController
-@RequestMapping("/purchase")
+@RestController
+@RequestMapping("/api/purchase")
 @RequiredArgsConstructor
 public class PurchaseController {
 
@@ -26,200 +25,176 @@ public class PurchaseController {
     private final ProductService productService;
     private final UserService userService;
 
-    // 구매 페이지 데이터 조회 (이제 HTML이 아니라 JSON으로 내려줌)
+    // =============== 1. 구매 페이지 진입 ======================
+    // GET /api/purchase/ready?productId=1
+    @GetMapping("/ready")
+    public ResponseEntity<?> purchaseReady(@RequestParam Long productId,
+                                           Principal principal) {
 
-    // 🔥 구매 처리
-    @PostMapping
-    public ResponseEntity<?> createPurchase(@RequestParam Long productId,
-                                            @RequestBody PurchaseDto dto,   // ★ 변경: 입금자명만 받던 것 → DTO 전체 JSON으로 받기
-                                            Principal principal) {          // ★ 변경: 반환 타입 String → ResponseEntity<?>
-
-
-        // ★ 추가: 로그인 여부 체크 (principal 자체가 null이면 비로그인 상태)
         if (principal == null) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("success", false, "needLogin", true));
+            return ResponseEntity.status(401).body(
+                    Map.of("success", false, "message", "로그인이 필요합니다.")
+            );
         }
 
-        // ★ 추가: 실제 User 엔티티 조회 및 null 방어
         User buyer = userService.getCurrentUser(principal);
-        if (buyer == null) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("success", false, "needLogin", true));
+
+        Product product = productService.getProduct(productId);
+        if (product == null) {
+            return ResponseEntity.status(404).body(
+                    Map.of("success", false, "message", "상품을 찾을 수 없습니다.")
+            );
         }
 
-        // ★ 변경: 예전에는 여기서 새 PurchaseDto를 만들고 depositorName만 세팅했지만,
-        //         이제는 프론트에서 받은 dto(depositorName, phone, address, message)를 그대로 전달
+        // ---- 여기서 엔티티를 통째로 보내지 말고 필요한 필드만 골라서 Map으로 구성 ----
+        Map<String, Object> productMap = new HashMap<>();
+        productMap.put("productId", product.getProductId());
+        productMap.put("title", product.getTitle());
+        productMap.put("price", product.getPrice());
+        productMap.put("mainImage", product.getMainImage());
+        productMap.put("bankName", product.getBankName());
+        productMap.put("accountNumber", product.getAccountNumber());
+        productMap.put("accountHolder", product.getAccountHolder());
+        productMap.put("sellerNickname", product.getSeller().getNickname());
+
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("userId", buyer.getUserId());
+        userMap.put("nickname", buyer.getNickname());
+        userMap.put("phone", buyer.getPhone());
+        userMap.put("address", buyer.getAddress());
+
+        Map<String, Object> data = Map.of(
+                "product", productMap,
+                "user", userMap
+        );
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "success", true,
+                        "data", data
+                )
+        );
+    }
+
+    // =============== 2. 구매 생성 ============================
+    // POST /api/purchase
+    @PostMapping
+    public ResponseEntity<?> createPurchase(@RequestBody PurchaseDto dto,
+                                            Principal principal) {
+
+        if (principal == null) {
+            return ResponseEntity.status(401).body(
+                    Map.of("success", false, "message", "로그인이 필요합니다.")
+            );
+        }
+
+        User buyer = userService.getCurrentUser(principal);
+
+        if (dto.getProductId() == null) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("success", false, "message", "productId가 필요합니다.")
+            );
+        }
+
         Transaction transaction = transactionService.createTransaction(
-                productId, buyer, dto
+                dto.getProductId(), buyer, dto
         );
 
-        // ★ 변경: redirect 문자열 대신 JSON으로 결과 반환
+        System.out.println(transaction);
+
+        Map<String, Object> data = Map.of(
+                "transactionId", transaction.getTransactionId()
+        );
+        System.out.println(data);
         return ResponseEntity.ok(
                 Map.of(
                         "success", true,
-                        "transactionId", transaction.getTransactionId()
+                        "data", data
                 )
         );
     }
 
-    // 🔥 구매 완료 정보 조회
+    // =============== 3. 구매 완료 페이지 조회 =================
+    // GET /api/purchase/complete?transactionId=...
     @GetMapping("/complete")
-    public ResponseEntity<?> purchaseComplete(@RequestParam Long transactionId) {  // ★ 변경: Model 제거, 반환 타입 변경
+    public ResponseEntity<?> purchaseComplete(@RequestParam Long transactionId) {
 
-        Transaction transaction = transactionService.getTransaction(transactionId);
+        Transaction t = transactionService.getTransaction(transactionId);
+        if (t == null) {
+            return ResponseEntity.status(404).body(
+                    Map.of("success", false, "message", "거래 정보를 찾을 수 없습니다.")
+            );
+        }
 
-        // ★ 변경: 뷰 이름("purchase/purchase_complete") 대신 JSON 응답
+        Product product = t.getProduct();
+        User buyer = t.getBuyer();
+        User seller = t.getSeller();
+
+        Map<String, Object> productMap = new HashMap<>();
+        productMap.put("productId", product.getProductId());
+        productMap.put("title", product.getTitle());
+        productMap.put("price", product.getPrice());
+        productMap.put("mainImage", product.getMainImage());
+        productMap.put("bankName", product.getBankName());
+        productMap.put("accountNumber", product.getAccountNumber());
+        productMap.put("accountHolder", product.getAccountHolder());
+        productMap.put("sellerNickname", seller.getNickname());
+
+        Map<String, Object> buyerMap = new HashMap<>();
+        buyerMap.put("userId", buyer.getUserId());
+        buyerMap.put("nickname", buyer.getNickname());
+        buyerMap.put("phone", buyer.getPhone());
+        buyerMap.put("address", buyer.getAddress());
+
+        Map<String, Object> sellerMap = new HashMap<>();
+        sellerMap.put("userId", seller.getUserId());
+        sellerMap.put("nickname", seller.getNickname());
+        sellerMap.put("phone", seller.getPhone());
+        sellerMap.put("address", seller.getAddress());
+
+        Map<String, Object> transactionMap = new HashMap<>();
+        transactionMap.put("transactionId", t.getTransactionId());
+        transactionMap.put("product", productMap);
+        transactionMap.put("buyer", buyerMap);
+        transactionMap.put("seller", sellerMap);
+
+        Map<String, Object> data = Map.of("transaction", transactionMap);
+
         return ResponseEntity.ok(
                 Map.of(
                         "success", true,
-                        "transaction", transaction
+                        "data", data
                 )
         );
     }
 
-    // 입금자명 수정 (기존에도 JSON이었음)
+    // Path 방식도 지원
+    @GetMapping("/{transactionId}")
+    public ResponseEntity<?> purchaseCompleteByPath(@PathVariable Long transactionId) {
+        return purchaseComplete(transactionId);
+    }
+
+    // =============== 4. 입금자명 수정 =======================
     @PutMapping("/{transactionId}/depositor")
-    // @ResponseBody                                      // ★ 변경(삭제): @RestController라 필요 없음
     public ResponseEntity<?> updateDepositor(@PathVariable Long transactionId,
                                              @RequestBody DepositorDto dto) {
+
         transactionService.updateDepositor(transactionId, dto.getDepositorName());
-        return ResponseEntity.ok().body(Map.of("success", true));
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
-    // 거래 취소
+    // =============== 5. 거래 취소 ===========================
     @DeleteMapping("/{transactionId}/cancel")
     public ResponseEntity<?> cancelTransaction(@PathVariable Long transactionId,
-                                               Principal principal) { // ★ 변경: 반환 타입 String → ResponseEntity<?>
+                                               Principal principal) {
 
-        // ★ 추가: 비로그인 상태 방어
         if (principal == null) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("success", false, "needLogin", true));
+            return ResponseEntity.status(401).body(
+                    Map.of("success", false, "message", "로그인이 필요합니다.")
+            );
         }
 
         transactionService.cancelTransaction(transactionId, principal.getName());
-
-        // ★ 변경: redirect:/mypage → JSON 응답
-        return ResponseEntity.ok(
-                Map.of(
-                        "success", true
-                )
-        );
+        return ResponseEntity.ok(Map.of("success", true));
     }
 }
-
-
-
-//package com.project.gugumarket.controller;
-//
-//import com.project.gugumarket.dto.DepositorDto;
-//import com.project.gugumarket.dto.PurchaseDto;
-//import com.project.gugumarket.entity.Product;
-//import com.project.gugumarket.entity.Transaction;
-//import com.project.gugumarket.entity.User;
-//import com.project.gugumarket.service.ProductService;
-//import com.project.gugumarket.service.TransactionService;
-//import com.project.gugumarket.service.UserService;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.http.ResponseEntity;
-//// org.springframework.stereotype.Controller;         // (삭제됨)
-//// org.springframework.ui.Model;                   // (삭제됨)
-//import org.springframework.web.bind.annotation.*;    // ★ 변경: RestController까지 포함되도록 사용
-//
-//import java.security.Principal;
-//import java.util.Map;
-//
-//@RestController                                    // ★ 변경: @Controller → @RestController
-//@RequestMapping("/purchase")
-//@RequiredArgsConstructor
-//public class PurchaseController {
-//
-//    private final TransactionService transactionService;
-//    private final ProductService productService;
-//    private final UserService userService;
-//
-//    // 구매 페이지 데이터 조회 (이제 HTML이 아니라 JSON으로 내려줌)
-//    @GetMapping
-//    public ResponseEntity<?> purchasePage(@RequestParam Long productId,
-//                                          Principal principal) {   // ★ 변경: Model 제거
-//
-//        Product product = productService.getProduct(productId);
-//        User currentUser = userService.getCurrentUser(principal);
-//
-//        // 🔥 빈 DTO 객체 추가 (원래 코드 그대로)
-//        PurchaseDto purchaseDto = new PurchaseDto();
-//
-//        // ★ 변경: Model에 담아서 뷰 리턴 → JSON 바디로 리턴
-//        Map<String, Object> body = Map.of(
-//                "user", currentUser,
-//                "product", product,
-//                "purchaseDto", purchaseDto
-//        );
-//
-//        return ResponseEntity.ok(body);             // ★ 변경: "purchase/purchase" 뷰 이름 → JSON 응답
-//    }
-//
-//    // 🔥 구매 처리
-//    @PostMapping
-//    public ResponseEntity<?> createPurchase(@RequestParam Long productId,
-//                                            @RequestParam String depositorName,
-//                                            Principal principal) {  // ★ 변경: 반환 타입 String → ResponseEntity<?>
-//
-//        User buyer = userService.getCurrentUser(principal);
-//
-//        PurchaseDto dto = new PurchaseDto();
-//        dto.setDepositorName(depositorName);
-//
-//        Transaction transaction = transactionService.createTransaction(
-//                productId, buyer, dto
-//        );
-//
-//        // ★ 변경: redirect 문자열 대신 JSON으로 결과 반환
-//        return ResponseEntity.ok(
-//                Map.of(
-//                        "success", true,
-//                        "transactionId", transaction.getTransactionId()
-//                )
-//        );
-//    }
-//
-//    // 🔥 구매 완료 정보 조회
-//    @GetMapping("/complete")
-//    public ResponseEntity<?> purchaseComplete(@RequestParam Long transactionId) {  // ★ 변경: Model 제거, 반환 타입 변경
-//
-//        Transaction transaction = transactionService.getTransaction(transactionId);
-//
-//        // ★ 변경: 뷰 이름("purchase/purchase_complete") 대신 JSON 응답
-//        return ResponseEntity.ok(
-//                Map.of(
-//                        "success", true,
-//                        "transaction", transaction
-//                )
-//        );
-//    }
-//
-//    // 입금자명 수정 (기존에도 JSON이었음)
-//    @PutMapping("/{transactionId}/depositor")
-//    // @ResponseBody                                      // ★ 변경(삭제): @RestController라 필요 없음
-//    public ResponseEntity<?> updateDepositor(@PathVariable Long transactionId,
-//                                             @RequestBody DepositorDto dto) {
-//        transactionService.updateDepositor(transactionId, dto.getDepositorName());
-//        return ResponseEntity.ok().body(Map.of("success", true));
-//    }
-//
-//    // 거래 취소
-//    @DeleteMapping("/{transactionId}/cancel")
-//    public ResponseEntity<?> cancelTransaction(@PathVariable Long transactionId,
-//                                               Principal principal) { // ★ 변경: 반환 타입 String → ResponseEntity<?>
-//
-//        transactionService.cancelTransaction(transactionId, principal.getName());
-//
-//        // ★ 변경: redirect:/mypage → JSON 응답
-//        return ResponseEntity.ok(
-//                Map.of(
-//                        "success", true
-//                )
-//        );
-//    }
-//}
