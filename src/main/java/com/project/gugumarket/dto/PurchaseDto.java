@@ -10,6 +10,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PurchaseDto {
+
+    private Long productId;
     private String depositorName;  // 입금자명
     private String phone;          // 구매자 연락처
     private String address;        // 배송지
