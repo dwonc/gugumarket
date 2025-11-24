@@ -16,4 +16,10 @@ public class LoginResponse {
     private String username;
     private String email;
     private String role;
+
+    // ✅ 신규 추가: 주소 입력 필요 여부
+    private Boolean requiresAddressUpdate;
+
+    // ✅ 신규 추가: 사용자 정보 (모달에서 사용)
+    private UserResponseDto user;
 }

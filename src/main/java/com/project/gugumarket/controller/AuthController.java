@@ -8,9 +8,11 @@ import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.UserRepository;
 import com.project.gugumarket.security.JwtTokenProvider;
 import com.project.gugumarket.service.CustomUserDetailService;
+import com.project.gugumarket.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,6 +21,10 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -30,6 +36,7 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final CustomUserDetailService customUserDetailService;  // ✅ 추가
+    private final UserService userService;
 
     /**
      * 로그인 API
@@ -168,5 +175,60 @@ public class AuthController {
         UserResponseDto userDto = UserResponseDto.fromEntity(user);
 
         return ResponseEntity.ok(ResponseDto.success("조회 성공", userDto));
+    }
+
+    /**
+     * ✅ 소셜 로그인 사용자 필수정보 입력 (주소 + 비밀번호)
+     * POST /api/auth/complete-profile
+     */
+    @PostMapping("/complete-profile")
+    public ResponseEntity<Map<String, Object>> completeProfile(
+            @RequestParam String address,
+            @RequestParam String addressDetail,
+            @RequestParam String postalCode,
+            @RequestParam(required = false) String password,
+            Principal principal
+    )
+    {
+        Map<String, Object> response = new HashMap<>();
+
+        if (principal == null) {
+            response.put("success", false);
+            response.put("message", "로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        String userName = principal.getName();
+
+        log.info("📝 필수정보 입력 요청 - 사용자: {}, 주소: {}", userName, address);
+
+        try {
+            // UserService의 completeProfile 메서드 호출
+            User updatedUser = userService.completeProfile(
+                    userName,
+                    address,
+                    addressDetail,
+                    postalCode,
+                    password
+            );
+
+            response.put("success", true);
+            response.put("message", "필수 정보가 입력되었습니다.");
+            response.put("user", UserResponseDto.fromEntity(updatedUser));
+
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            log.error("❌ 필수정보 입력 실패: {}", e.getMessage());
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+
+        } catch (Exception e) {
+            log.error("❌ 필수정보 입력 오류: {}", e.getMessage());
+            response.put("success", false);
+            response.put("message", "필수 정보 입력 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 }

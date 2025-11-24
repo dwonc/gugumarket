@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.gugumarket.dto.KakaoTokenResponse;
 import com.project.gugumarket.dto.KakaoUserInfo;
 import com.project.gugumarket.dto.LoginResponse;
+import com.project.gugumarket.dto.UserResponseDto;
 import com.project.gugumarket.entity.User;
 import com.project.gugumarket.repository.UserRepository;
 import com.project.gugumarket.security.JwtTokenProvider;
@@ -137,6 +138,18 @@ public class KakaoAuthService {
     }
 
     /**
+     * ✅ 주소 정보가 필요한지 체크하는 메서드
+     */
+    private boolean requiresAddressUpdate(User user) {
+        // 주소가 "미입력" 또는 비어있거나 null인 경우
+        return user.getAddress() == null ||
+                user.getAddress().isEmpty() ||
+                user.getAddress().equals("미입력") ||
+                user.getPostalCode() == null ||
+                user.getPostalCode().equals("00000");
+    }
+
+    /**
      * 카카오 로그인 처리 (회원가입 or 로그인)
      */
     @Transactional
@@ -158,7 +171,12 @@ public class KakaoAuthService {
         User user = userRepository.findByEmail(kakaoUserInfo.getEmail())
                 .orElseGet(() -> createKakaoUser(kakaoUserInfo));
 
-        // 5. JWT 토큰 생성
+        // ✅ 5. 주소 입력 필요 여부 체크
+        boolean needsAddress = requiresAddressUpdate(user);
+
+        log.info("🏠 주소 입력 필요 여부: {}", needsAddress);
+
+        // 6. JWT 토큰 생성
         UserDetails userDetails = customUserDetailService.loadUserByUsername(user.getUserName());
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userDetails,
@@ -178,6 +196,8 @@ public class KakaoAuthService {
                 .username(user.getUserName())
                 .email(user.getEmail())
                 .role(user.getRole())
+                .requiresAddressUpdate(needsAddress)  // ✅ 플래그 추가
+                .user(UserResponseDto.fromEntity(user))  // ✅ 사용자 정보 추가
                 .build();
     }
 
@@ -207,7 +227,7 @@ public class KakaoAuthService {
                 .password(passwordEncoder.encode(randomPassword))
                 .profileImage(kakaoUserInfo.getProfileImage())
                 .phone("") // 카카오에서 제공하지 않음
-                .address("미입력")
+                .address("미입력")  // ✅ 주소 누락 표시
                 .addressDetail("미입력")
                 .postalCode("00000")
                 .role("USER")
