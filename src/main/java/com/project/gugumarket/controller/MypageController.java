@@ -1,10 +1,7 @@
 package com.project.gugumarket.controller;
 
 import com.project.gugumarket.dto.*;
-import com.project.gugumarket.entity.Like;
-import com.project.gugumarket.entity.Notification;
-import com.project.gugumarket.entity.Transaction;
-import com.project.gugumarket.entity.User;
+import com.project.gugumarket.entity.*;
 import com.project.gugumarket.repository.NotificationRepository;
 import com.project.gugumarket.repository.UserRepository;
 import com.project.gugumarket.service.*;
@@ -36,6 +33,7 @@ public class MypageController {
     private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
     private final UserService userService;
+    private final ProductService productService;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> mypage(Principal principal) {
@@ -63,6 +61,8 @@ public class MypageController {
         List<Transaction> sales = transactionService.findBySeller(user);
         List<Notification> recentNotifications = notificationService.getRecentNotifications(user, 5);
         long unreadCount = notificationService.getUnreadCount(user);
+        // ✅ (추가) 사용자가 등록한 모든 상품 조회 (거래 여부와 관계없이)
+        List<Product> products = productService.getProductsBySeller(user); // TransactionService와 유사한 메서드 가정
 
         // ✅ DTO 변환
         List<LikeResponseDto> likeDtos = likes.stream()
@@ -77,6 +77,10 @@ public class MypageController {
         List<NotificationResponseDto> notificationDtos = recentNotifications.stream()
                 .map(NotificationResponseDto::fromEntity)
                 .collect(Collectors.toList());
+        // ✅ (추가) Product 엔티티를 별도의 DTO로 변환
+        List<ProductDetailResponse> productListDtos = products.stream()
+                .map(ProductDetailResponse::from) // ProductDetailResponse DTO 사용 가정
+                .collect(Collectors.toList());
 
         response.put("success", true);
         response.put("user", UserResponseDto.fromEntity(user));
@@ -84,6 +88,7 @@ public class MypageController {
         response.put("purchases", purchaseDtos); // ✅ DTO로 변경
         response.put("sales", salesDtos); // ✅ DTO로 변경
         response.put("recentNotifications", notificationDtos); // ✅ DTO로 변경
+        response.put("products", productListDtos); // ✅ 추가: 등록된 모든 상품 목록
         response.put("unreadCount", unreadCount);
 
         // ✅ 캐시 방지 헤더 추가

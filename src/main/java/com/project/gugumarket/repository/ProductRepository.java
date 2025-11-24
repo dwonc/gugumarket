@@ -1,6 +1,7 @@
 package com.project.gugumarket.repository;
 
 import com.project.gugumarket.entity.Product;
+import com.project.gugumarket.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -138,4 +139,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("categoryId") Long categoryId,
             @Param("keyword") String keyword,
             Pageable pageable);
+    // ========== 판매자 마이페이지용 쿼리 ==========
+
+    /**
+     * 특정 판매자(User)가 등록한 모든 상품 (삭제되지 않은 것만)을 최신 등록일 순으로 조회합니다.
+     * @param seller 상품을 등록한 User 엔티티
+     * @return 해당 판매자의 Product 목록 (삭제된 상품 제외)
+     */
+    List<Product> findBySellerAndIsDeletedFalseOrderByCreatedDateDesc(User seller);
 }
