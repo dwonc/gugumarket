@@ -138,4 +138,71 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("categoryId") Long categoryId,
             @Param("keyword") String keyword,
             Pageable pageable);
+
+    // ========== 🔥 지역 + 정렬 필터링 추가 ==========
+
+    /**
+     * 지역(구) 필터링 + 동적 정렬
+     * @param district 구 이름 (예: "강남구")
+     * @param pageable 페이징 + 정렬 정보
+     */
+    @Query("SELECT p FROM Product p " +
+            "WHERE p.seller.address LIKE %:district% " +
+            "AND p.isDeleted = false")
+    Page<Product> findByDistrictAndIsDeletedFalse(
+            @Param("district") String district,
+            Pageable pageable);
+
+    /**
+     * 지역 + 카테고리 필터링
+     */
+    @Query("SELECT p FROM Product p " +
+            "WHERE p.seller.address LIKE %:district% " +
+            "AND p.category.categoryId = :categoryId " +
+            "AND p.isDeleted = false")
+    Page<Product> findByDistrictAndCategoryAndIsDeletedFalse(
+            @Param("district") String district,
+            @Param("categoryId") Long categoryId,
+            Pageable pageable);
+
+    /**
+     * 지역 + 검색어 필터링
+     */
+    @Query("SELECT p FROM Product p " +
+            "WHERE p.seller.address LIKE %:district% " +
+            "AND p.title LIKE %:keyword% " +
+            "AND p.isDeleted = false")
+    Page<Product> findByDistrictAndKeywordAndIsDeletedFalse(
+            @Param("district") String district,
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+    /**
+     * 지역 + 카테고리 + 검색어 필터링
+     */
+    @Query("SELECT p FROM Product p " +
+            "WHERE p.seller.address LIKE %:district% " +
+            "AND p.category.categoryId = :categoryId " +
+            "AND p.title LIKE %:keyword% " +
+            "AND p.isDeleted = false")
+    Page<Product> findByDistrictAndCategoryAndKeywordAndIsDeletedFalse(
+            @Param("district") String district,
+            @Param("categoryId") Long categoryId,
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+    /**
+     * 지역 목록 조회 (중복 제거)
+     * 판매자 주소에서 "구"만 추출
+     */
+    @Query("SELECT DISTINCT " +
+            "CASE " +
+            "  WHEN u.address LIKE '%구 %' THEN SUBSTRING(u.address, LOCATE('구', u.address) - LOCATE(' ', REVERSE(SUBSTRING(u.address, 1, LOCATE('구', u.address)))) + 1, LOCATE('구', u.address) - LOCATE(' ', REVERSE(SUBSTRING(u.address, 1, LOCATE('구', u.address)))) + 1) " +
+            "  ELSE NULL " +
+            "END " +
+            "FROM User u " +
+            "WHERE u.address IS NOT NULL " +
+            "AND u.address LIKE '%구%' " +
+            "ORDER BY 1")
+    List<String> findDistinctDistricts();
 }

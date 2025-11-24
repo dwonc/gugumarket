@@ -331,4 +331,83 @@ public class ProductService {
 
         return dto;
     }
+    /**
+     * 🔥 지역 + 카테고리 + 검색어 + 정렬 필터링
+     * @param district 구 이름 (null 가능)
+     * @param categoryId 카테고리 ID (null 가능)
+     * @param keyword 검색어 (null 가능)
+     * @param pageable 페이징 + 정렬 정보
+     * @return 필터링된 상품 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<ProductDto> getProductsWithFilters(
+            String district,
+            Long categoryId,
+            String keyword,
+            Pageable pageable) {
+
+        Page<Product> products;
+
+        // 🔥 모든 필터 조합 처리
+        if (district != null && categoryId != null && keyword != null && !keyword.trim().isEmpty()) {
+            // 지역 + 카테고리 + 검색어
+            products = productRepository.findByDistrictAndCategoryAndKeywordAndIsDeletedFalse(
+                    district, categoryId, keyword, pageable);
+            log.info("🔍 필터: 구={}, 카테고리={}, 검색어={} - {}개",
+                    district, categoryId, keyword, products.getTotalElements());
+
+        } else if (district != null && categoryId != null) {
+            // 지역 + 카테고리
+            products = productRepository.findByDistrictAndCategoryAndIsDeletedFalse(
+                    district, categoryId, pageable);
+            log.info("🔍 필터: 구={}, 카테고리={} - {}개",
+                    district, categoryId, products.getTotalElements());
+
+        } else if (district != null && keyword != null && !keyword.trim().isEmpty()) {
+            // 지역 + 검색어
+            products = productRepository.findByDistrictAndKeywordAndIsDeletedFalse(
+                    district, keyword, pageable);
+            log.info("🔍 필터: 구={}, 검색어={} - {}개",
+                    district, keyword, products.getTotalElements());
+
+        } else if (district != null) {
+            // 지역만
+            products = productRepository.findByDistrictAndIsDeletedFalse(district, pageable);
+            log.info("🔍 필터: 구={} - {}개", district, products.getTotalElements());
+
+        } else if (categoryId != null && keyword != null && !keyword.trim().isEmpty()) {
+            // 카테고리 + 검색어 (기존 메서드 활용)
+            products = productRepository.findByTitleContainingAndCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(
+                    keyword, categoryId, pageable);
+            log.info("🔍 필터: 카테고리={}, 검색어={} - {}개",
+                    categoryId, keyword, products.getTotalElements());
+
+        } else if (categoryId != null) {
+            // 카테고리만 (기존 메서드 활용)
+            products = productRepository.findByCategoryCategoryIdAndIsDeletedFalse(categoryId, pageable);
+            log.info("🔍 필터: 카테고리={} - {}개", categoryId, products.getTotalElements());
+
+        } else if (keyword != null && !keyword.trim().isEmpty()) {
+            // 검색어만 (기존 메서드 활용)
+            products = productRepository.findByTitleContainingAndIsDeletedFalse(keyword, pageable);
+            log.info("🔍 필터: 검색어={} - {}개", keyword, products.getTotalElements());
+
+        } else {
+            // 필터 없음 - 전체 조회
+            products = productRepository.findByIsDeletedFalseOrderByCreatedDateDesc(pageable);
+            log.info("📦 전체 상품 조회 - {}개", products.getTotalElements());
+        }
+
+        return products.map(ProductDto::fromEntity);
+    }
+
+    /**
+     * 🔥 지역(구) 목록 조회
+     * @return 구 목록 (중복 제거)
+     */
+    public List<String> getDistinctDistricts() {
+        List<String> districts = productRepository.findDistinctDistricts();
+        log.info("📍 지역 목록 조회 - {}개 구 발견", districts.size());
+        return districts;
+    }
 }
