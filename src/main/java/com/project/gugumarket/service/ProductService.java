@@ -478,4 +478,26 @@ public class ProductService {
 
         log.info("🗺️ 좌표 업데이트 완료 - 성공: {}개, 실패: {}개", successCount, failCount);
     }
+
+    // service/ProductService.java 에 추가
+
+    /**
+     * 🔥 지도용 상품 조회 (가격 필터 포함)
+     */
+    @Transactional(readOnly = true)
+    public List<ProductDto> getProductsForMapWithPrice(Integer maxPrice) {
+        List<Product> products;
+
+        if (maxPrice != null && maxPrice > 0) {
+            products = productRepository.findAllWithCoordinatesAndMaxPrice(maxPrice);
+            log.info("🗺️ 지도용 상품 조회 ({}원 이하): {}개", maxPrice, products.size());
+        } else {
+            products = productRepository.findAllWithCoordinates();
+            log.info("🗺️ 지도용 상품 조회 (전체): {}개", products.size());
+        }
+
+        return products.stream()
+                .map(ProductDto::fromEntity)
+                .collect(Collectors.toList());
+    }
 }
