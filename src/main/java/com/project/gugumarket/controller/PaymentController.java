@@ -86,7 +86,7 @@ public class PaymentController {
 
             // 프론트엔드 리다이렉트 URL
             String redirectUrl = String.format(
-                    "http://localhost:3000/payment/success?transaction_id=%d&payment_method=KAKAOPAY",
+                    "http://localhost:5173/payment/success?transaction_id=%d&payment_method=KAKAOPAY",
                     transactionId
             );
 
@@ -103,7 +103,7 @@ public class PaymentController {
         } catch (Exception e) {
             log.error("카카오페이 결제 승인 실패", e);
             String errorUrl = String.format(
-                    "http://localhost:3000/payment/fail?transaction_id=%d&message=%s",
+                    "http://localhost:5173/payment/fail?transaction_id=%d&message=%s",
                     transactionId, "결제 승인 중 오류가 발생했습니다."
             );
 
@@ -128,7 +128,7 @@ public class PaymentController {
         log.info("카카오페이 결제 취소 - transactionId: {}", transactionId);
 
         String redirectUrl = String.format(
-                "http://localhost:3000/payment/cancel?transaction_id=%d",
+                "http://localhost:5173/payment/cancel?transaction_id=%d",
                 transactionId
         );
 
@@ -152,7 +152,7 @@ public class PaymentController {
         log.info("카카오페이 결제 실패 - transactionId: {}", transactionId);
 
         String redirectUrl = String.format(
-                "http://localhost:3000/payment/fail?transaction_id=%d&message=%s",
+                "http://localhost:5173/payment/fail?transaction_id=%d&message=%s",
                 transactionId, "결제에 실패했습니다."
         );
 
