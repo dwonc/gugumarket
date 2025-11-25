@@ -15,7 +15,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/report")  // 👈 변경!
+@RequestMapping("/report")
 public class ReportController {
 
     private final ReportService reportService;
@@ -40,6 +40,9 @@ public class ReportController {
                     "success", true,
                     "message", "신고가 접수되었습니다."
             ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400)
+                    .body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(Map.of("success", false, "message", "신고 접수 중 오류가 발생했습니다."));
@@ -65,7 +68,31 @@ public class ReportController {
         }
     }
 
-    // 추가 =================================================================
+    // 🎯🎯🎯 내 신고 목록 조회 API 추가 🎯🎯🎯🎯
+    @GetMapping("/my")
+    public ResponseEntity<?> getMyReports(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다."));
+        }
+
+        try {
+            List<Report> reports = reportService.getMyReports(principal.getName());
+
+            List<ReportResponseDto> reportDtos = reports.stream()
+                    .map(ReportResponseDto::fromEntity)
+                    .toList();
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "reports", reportDtos
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("success", false, "message", "조회 실패"));
+        }
+    }
+
     @PostMapping("/{reportId}/resolve")
     public ResponseEntity<?> resolveReport(@PathVariable Long reportId) {
         try {
@@ -79,6 +106,4 @@ public class ReportController {
                     .body(Map.of("success", false, "message", "처리 실패"));
         }
     }
-
-
 }
