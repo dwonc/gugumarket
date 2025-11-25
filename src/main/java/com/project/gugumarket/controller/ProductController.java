@@ -470,16 +470,20 @@ public class ProductController {
 
     // 🗺️ 지도에 표시할 모든 상품 조회 (인증 불필요)
     @GetMapping("/products/map")
-    public ResponseEntity<?> getProductsForMap() {
+    public ResponseEntity<?> getProductsForMap(
+            @RequestParam(required = false) Integer maxPrice) {
         try {
-            List<ProductDto> products = productService.getProductsForMap();
+            List<ProductDto> products = maxPrice != null
+                    ? productService.getProductsForMapWithPrice(maxPrice)
+                    : productService.getProductsForMap();
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("products", products);
             response.put("count", products.size());
 
-            log.info("🗺️ 지도용 상품 조회 API 호출 - {}개", products.size());
+            log.info("🗺️ 지도용 상품 조회 API 호출 - {}개 (가격필터: {})",
+                    products.size(), maxPrice != null ? maxPrice + "원 이하" : "전체");
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
