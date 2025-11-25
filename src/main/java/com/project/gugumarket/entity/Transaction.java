@@ -4,7 +4,6 @@ package com.project.gugumarket.entity;
 import com.project.gugumarket.TransactionStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 

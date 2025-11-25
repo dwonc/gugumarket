@@ -12,6 +12,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;  // 🔥 이거 import 필요!
 import java.util.HashMap;
 import java.util.Map;
 
@@ -193,6 +194,55 @@ public class UserController {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body(ResponseDto.fail(e.getMessage()));
+        }
+    }
+
+    // 🆕🆕🆕 회원 등급 관련 API 추가 🆕🆕🆕
+
+    /**
+     * 🥚 내 등급 정보 조회
+     * GET /api/users/me/level
+     */
+    @GetMapping("/me/level")
+    public ResponseEntity<?> getMyLevel(Principal principal) {  // 🔥 Principal 추가!
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다."));
+        }
+
+        try {
+            User user = userService.getUser(principal.getName());
+            UserLevelDto levelInfo = UserLevelDto.from(user);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "levelInfo", levelInfo
+            ));
+        } catch (Exception e) {
+            log.error("❌ 등급 조회 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "등급 조회 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * 🥚 특정 사용자 등급 조회
+     * GET /api/users/{userId}/level
+     */
+    @GetMapping("/{userId}/level")
+    public ResponseEntity<?> getUserLevel(@PathVariable Long userId) {
+        try {
+            User user = userService.getUserById(userId);
+            UserLevelDto levelInfo = UserLevelDto.from(user);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "levelInfo", levelInfo
+            ));
+        } catch (Exception e) {
+            log.error("❌ 사용자 등급 조회 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "등급 조회 중 오류가 발생했습니다."));
         }
     }
 }
