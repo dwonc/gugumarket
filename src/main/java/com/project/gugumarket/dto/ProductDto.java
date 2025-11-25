@@ -39,6 +39,10 @@ public class ProductDto {
     private String sellerAddress;  // ⭐ 추가: 판매자 주소
     private String sellerDistrict;  // 🔥 추가: 판매자 구 정보
 
+    // 🗺️ 지도 기능을 위한 좌표 정보 추가
+    private Double latitude;
+    private Double longitude;
+
     // 이미지 정보
     private String thumbnailImageUrl;  // 대표 이미지 (mainImage)
     private List<String> imageUrls;    // 전체 이미지 목록 (productImages)
@@ -91,6 +95,10 @@ public class ProductDto {
                 .sellerProfileImage(product.getSeller() != null ? product.getSeller().getProfileImage() : null)
                 .sellerAddress(product.getSeller() != null ? product.getSeller().getAddress() : "위치정보 없음")  // ⭐ 추가
                 .sellerDistrict(extractDistrict(product.getSeller() != null ? product.getSeller().getAddress() : null))  // 🔥 추가
+
+                // 🗺️ 좌표 정보 추가
+                .latitude(product.getLatitude())
+                .longitude(product.getLongitude())
 
                 // 이미지 정보
                 .thumbnailImageUrl(product.getMainImage())  // mainImage를 썸네일로

@@ -59,6 +59,8 @@ public class SecurityConfig {
                                 "/api/users/verify-email",       // 🔥 이메일 인증
                                 "/api/users/reset-password",     // 🔥 비밀번호 재설정
                                 "/api/users/check-username",
+                                "/api/products/map",           // 🗺️ 추가
+                                "/api/products/map/bounds",    // 🗺️ 추가
                                 "/api/public/**",
                                 "/uploads/**",
                                 "/images/**",

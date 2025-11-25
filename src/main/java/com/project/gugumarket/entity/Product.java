@@ -18,7 +18,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Product {
 
     @Id
@@ -70,19 +69,27 @@ public class Product {
     @Column(name = "ACCOUNT_HOLDER", length = 50)
     private String accountHolder;
 
-    // 판매 상태
+    // 🗺️ 지도 기능을 위한 위도/경도 필드 추가
+    @Column(name = "LATITUDE")
+    private Double latitude;  // 위도
 
+    @Column(name = "LONGITUDE")
+    private Double longitude;  // 경도
+
+    // 판매 상태
     @Enumerated(EnumType.STRING)
     @Column(name = "STATUS", length = 20)
-    private ProductStatus status = ProductStatus.SALE; // 기본값: 판매중
+    private ProductStatus status = ProductStatus.SALE;
 
     // 연관관계
     @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> productImages = new ArrayList<>();
+
     @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Like> likes = new ArrayList<>();
+
     @JsonIgnore
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
@@ -90,38 +97,39 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<Transaction> transactions = new ArrayList<>();
 
-    // 🔥 상태 변경 메서드 추가
+    // 🔥 상태 변경 메서드
     public void updateStatus(ProductStatus status) {
         this.status = status;
     }
 
-    // 🔥 판매중으로 변경
     public void markAsSale() {
         this.status = ProductStatus.SALE;
     }
 
-    // 🔥 예약중으로 변경
     public void markAsReserved() {
         this.status = ProductStatus.RESERVED;
     }
 
-    // 🔥 판매완료로 변경
     public void markAsSoldOut() {
         this.status = ProductStatus.SOLD_OUT;
     }
 
-    // 🔥 조회수 증가
     public void increaseViewCount() {
         this.viewCount = (this.viewCount == null ? 0 : this.viewCount) + 1;
     }
 
-    // 🔥 상품 정보 수정
     public void update(String title, Integer price, String content, Category category, String mainImage) {
         this.title = title;
         this.price = price;
         this.content = content;
         this.category = category;
         this.mainImage = mainImage;
+    }
+
+    // 🗺️ 위도/경도 업데이트 메서드 추가
+    public void updateCoordinates(Double latitude, Double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     @PrePersist
