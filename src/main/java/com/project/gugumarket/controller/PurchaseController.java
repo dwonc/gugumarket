@@ -1,10 +1,10 @@
 package com.project.gugumarket.controller;
 
-import com.project.gugumarket.dto.DepositorDto;
-import com.project.gugumarket.dto.PurchaseDto;
+import com.project.gugumarket.dto.*;
 import com.project.gugumarket.entity.Product;
 import com.project.gugumarket.entity.Transaction;
 import com.project.gugumarket.entity.User;
+import com.project.gugumarket.service.KakaoPayService;
 import com.project.gugumarket.service.ProductService;
 import com.project.gugumarket.service.TransactionService;
 import com.project.gugumarket.service.UserService;
@@ -24,9 +24,9 @@ public class PurchaseController {
     private final TransactionService transactionService;
     private final ProductService productService;
     private final UserService userService;
+    private final KakaoPayService kakaoPayService;  // ⭐ 추가
 
     // =============== 1. 구매 페이지 진입 ======================
-    // GET /api/purchase/ready?productId=1
     @GetMapping("/ready")
     public ResponseEntity<?> purchaseReady(@RequestParam Long productId,
                                            Principal principal) {
@@ -46,7 +46,7 @@ public class PurchaseController {
             );
         }
 
-        // ---- 여기서 엔티티를 통째로 보내지 말고 필요한 필드만 골라서 Map으로 구성 ----
+        // 필요한 필드만 골라서 Map으로 구성
         Map<String, Object> productMap = new HashMap<>();
         productMap.put("productId", product.getProductId());
         productMap.put("title", product.getTitle());
@@ -76,8 +76,7 @@ public class PurchaseController {
         );
     }
 
-    // =============== 2. 구매 생성 ============================
-    // POST /api/purchase
+    // =============== 2. 구매 생성 - ⭐ 통합 버전 ============================
     @PostMapping
     public ResponseEntity<?> createPurchase(@RequestBody PurchaseDto dto,
                                             Principal principal) {
@@ -88,34 +87,68 @@ public class PurchaseController {
             );
         }
 
-        User buyer = userService.getCurrentUser(principal);
-
         if (dto.getProductId() == null) {
             return ResponseEntity.badRequest().body(
                     Map.of("success", false, "message", "productId가 필요합니다.")
             );
         }
 
-        Transaction transaction = transactionService.createTransaction(
-                dto.getProductId(), buyer, dto
-        );
+        User buyer = userService.getCurrentUser(principal);
 
-        System.out.println(transaction);
+        // ⭐ 결제 수단 확인 (기본값: BANK_TRANSFER)
+        String paymentMethod = dto.getPaymentMethod() != null
+                ? dto.getPaymentMethod()
+                : "BANK_TRANSFER";
 
+        // 1. ⭐ 거래 생성 (통합 - User 객체로 통일!)
+        Transaction transaction = transactionService.createTransaction(buyer, dto);
+
+        // 2. ⭐ 카카오페이면 결제 준비
+        if ("KAKAOPAY".equals(paymentMethod)) {
+            try {
+                KakaoPayReadyResponse kakaoPayReady = kakaoPayService.kakaoPayReady(
+                        transaction.getTransactionId(),
+                        buyer.getUserId()
+                );
+
+                Map<String, Object> data = Map.of(
+                        "transactionId", transaction.getTransactionId(),
+                        "kakaoPayUrl", kakaoPayReady.getNextRedirectPcUrl(),
+                        "mobileUrl", kakaoPayReady.getNextRedirectMobileUrl()
+                );
+
+                return ResponseEntity.ok(
+                        Map.of(
+                                "success", true,
+                                "paymentMethod", "KAKAOPAY",
+                                "data", data
+                        )
+                );
+            } catch (Exception e) {
+                return ResponseEntity.status(500).body(
+                        Map.of(
+                                "success", false,
+                                "message", "카카오페이 결제 준비 중 오류가 발생했습니다: " + e.getMessage()
+                        )
+                );
+            }
+        }
+
+        // 3. ✅ 무통장 입금 - 기존 응답
         Map<String, Object> data = Map.of(
                 "transactionId", transaction.getTransactionId()
         );
-        System.out.println(data);
+
         return ResponseEntity.ok(
                 Map.of(
                         "success", true,
+                        "paymentMethod", "BANK_TRANSFER",
                         "data", data
                 )
         );
     }
 
     // =============== 3. 구매 완료 페이지 조회 =================
-    // GET /api/purchase/complete?transactionId=...
     @GetMapping("/complete")
     public ResponseEntity<?> purchaseComplete(@RequestParam Long transactionId) {
 
