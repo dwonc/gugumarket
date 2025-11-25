@@ -69,6 +69,7 @@ public class SecurityConfig {
                                 "/mypage/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/products/map/update-coordinates").authenticated()
                         .anyRequest().authenticated()
                 )
                 // JWT 필터 추가
