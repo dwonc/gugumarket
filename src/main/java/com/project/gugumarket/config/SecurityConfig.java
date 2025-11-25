@@ -52,24 +52,30 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+                        // ✅ 인증 불필요 경로
                         .requestMatchers(
-                                "/api/auth/**",              // 🔥 /api/auth/kakao/** 포함!
+                                "/api/auth/**",              // 로그인, 회원가입, 카카오 로그인
                                 "/api/users/signup",
-                                "/api/users/find-username",      // 🔥 아이디 찾기
-                                "/api/users/verify-email",       // 🔥 이메일 인증
-                                "/api/users/reset-password",     // 🔥 비밀번호 재설정
+                                "/api/users/find-username",
+                                "/api/users/verify-email",
+                                "/api/users/reset-password",
                                 "/api/users/check-username",
-                                "/api/products/map",           // 🗺️ 추가
-                                "/api/products/map/bounds",    // 🗺️ 추가
+                                "/api/products/map",
+                                "/api/products/map/bounds",
                                 "/api/public/**",
                                 "/uploads/**",
                                 "/images/**",
                                 "/css/**",
-                                "/js/**",
-                                "/mypage/**"
+                                "/js/**"
+                                // ❌ "/mypage/**" 제거! (인증 필요)
                         ).permitAll()
+
+                        // ✅ 인증 필요 경로
+                        .requestMatchers("/mypage/**").authenticated()  // ⭐ 추가!
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/products/map/update-coordinates").authenticated()
+
+                        // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )
                 // JWT 필터 추가
