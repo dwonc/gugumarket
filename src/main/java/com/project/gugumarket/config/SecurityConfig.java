@@ -62,6 +62,13 @@ public class SecurityConfig {
                                 "/api/users/check-username",
                                 "/api/products/map",
                                 "/api/products/map/bounds",
+                                "/api/main",                 // 👈 메인 페이지
+                                "/api/products/list",        // 👈 상품 목록
+                                "/api/products/{id}",        // 👈 상품 상세
+                                "/api/categories",           // 👈 카테고리
+                                "/api/districts",            // 👈 지역
+                                "/api/products/map",           // 🗺️ 추가
+                                "/api/products/map/bounds",    // 🗺️ 추가
                                 "/api/public/**",
                                 "/uploads/**",
                                 "/images/**",
