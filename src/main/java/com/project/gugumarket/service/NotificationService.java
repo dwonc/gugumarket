@@ -235,4 +235,37 @@ public class NotificationService {
                 .limit(limit)
                 .collect(Collectors.toList());
     }
+
+
+    // 🎯🔥✨💫⭐🌟 [추가] 신고 처리 완료 알림 생성 🌟⭐💫✨🔥🎯
+    /**
+     * 신고 처리 완료 알림 생성
+     * - 신고자에게 신고가 처리되었음을 알림
+     */
+    @Transactional
+    public Notification createReportResolvedNotification(Report report) {
+        User reporter = report.getReporter();
+        Product product = report.getProduct();
+
+        String message = String.format("신고하신 '%s' 상품에 대한 신고가 처리 완료되었습니다.",
+                product.getTitle());
+
+        Notification notification = Notification.builder()
+                .receiver(reporter)
+                .sender(null)  // Admin이 처리하므로 sender는 null
+                .product(product)
+                .type(NotificationType.TRANSACTION)
+                .message(message)
+                .url("/products/" + product.getProductId())
+                .isRead(false)
+                .build();
+
+        Notification saved = notificationRepository.save(notification);
+        log.info("신고 처리 알림 생성 완료 - ID: {}, 신고자: {}, 상품: {}",
+                saved.getNotificationId(), reporter.getNickname(), product.getTitle());
+
+        return saved;
+    }
+
+
 }
