@@ -107,10 +107,14 @@ public class MainController {
             // 4. 로그인한 사용자의 찜 목록 조회
             if (currentUser != null) {
                 List<Long> likedProductIds = likeService.getLikedProductIds(currentUser);
+                log.info("❤️ 찜한 상품 ID 목록: {}", likedProductIds);  // 👈 ID 리스트 출력
                 log.info("❤️ 찜한 상품: {}개", likedProductIds.size());
 
                 // 각 상품에 찜 여부 설정
                 products.getContent().forEach(product -> {
+                    boolean isLiked = likedProductIds.contains(product.getProductId());
+                    log.info("🔍 상품 ID {}: 찜 여부 = {}", product.getProductId(), isLiked);  // 👈 추가
+                    
                     if (likedProductIds.contains(product.getProductId())) {
                         product.setIsLiked(true);
                         log.debug("❤️ 상품 ID {} 찜됨 표시", product.getProductId());

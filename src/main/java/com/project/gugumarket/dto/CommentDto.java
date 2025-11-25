@@ -12,6 +12,7 @@ public class CommentDto {
     private Long id;
     private Long userId;
     private String userNickname;
+    private String profileImage;
     private String content;
     private String createdAt;   // yyyy-MM-dd HH:mm
     private boolean mine;       // 현재 로그인 사용자의 댓글 여부
@@ -24,6 +25,7 @@ public class CommentDto {
                 .id(c.getCommentId())
                 .userId(c.getUser().getUserId())
                 .userNickname(c.getUser().getNickname())
+                .profileImage(c.getUser().getProfileImage())
                 .content(c.getContent())
                 .createdAt(c.getCreatedDate() == null ? "" :
                         c.getCreatedDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))

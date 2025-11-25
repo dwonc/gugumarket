@@ -413,7 +413,8 @@ public class ProductController {
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
-            @RequestParam(defaultValue = "createdDate,desc") String[] sort) {
+            @RequestParam(defaultValue = "createdDate,desc") String[] sort,
+                Principal principal) {
 
         try {
             Sort.Order order;
@@ -433,6 +434,32 @@ public class ProductController {
 
             Page<ProductDto> products = productService.getProductsWithFilters(
                     district, categoryId, keyword, pageable);
+
+                    // 🔥 로그인한 사용자의 찜 여부 설정
+        if (principal != null) {
+                try {
+                    User user = userService.getUser(principal.getName());
+                    List<Long> likedProductIds = likeService.getLikedProductIds(user);
+                    
+                    log.info("❤️ 로그인 사용자: {} (ID: {})", user.getUserName(), user.getUserId());
+                    log.info("❤️ 찜한 상품 {}개: {}", likedProductIds.size(), likedProductIds);
+    
+                    // 각 상품에 찜 여부 설정
+                    products.getContent().forEach(productDto -> {
+                        boolean isLiked = likedProductIds.contains(productDto.getProductId());
+                        productDto.setIsLiked(isLiked);
+                        
+                        if (isLiked) {
+                            log.info("❤️ 상품 ID {} 찜됨 표시", productDto.getProductId());
+                        }
+                    });
+                } catch (Exception e) {
+                    log.error("❌ 찜 여부 설정 실패: {}", e.getMessage());
+                    // 찜 여부 설정 실패해도 상품 목록은 반환
+                }
+            } else {
+                log.info("⚠️ 비로그인 사용자 - 모든 상품 isLiked = false");
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
