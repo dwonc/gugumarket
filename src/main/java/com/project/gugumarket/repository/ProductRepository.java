@@ -1,9 +1,7 @@
 package com.project.gugumarket.repository;
 
 import com.project.gugumarket.entity.Product;
-
 import com.project.gugumarket.entity.User;
-
 import com.project.gugumarket.entity.ProductImage;
 
 import org.springframework.data.domain.Page;
@@ -104,8 +102,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      */
     List<Product> findByIsDeletedOrderByCreatedDateDesc(Boolean isDeleted);
 
-
-
     // ========== 통계 및 집계 쿼리 ==========
 
     /**
@@ -153,12 +149,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
      */
     List<Product> findBySellerAndIsDeletedFalseOrderByCreatedDateDesc(User seller);
 
-    // ========== 🔥 지역 + 정렬 필터링 추가 ==========
+    // ========== 🔥 지역 + 정렬 필터링 ==========
 
     /**
      * 지역(구) 필터링 + 동적 정렬
-     * @param district 구 이름 (예: "강남구")
-     * @param pageable 페이징 + 정렬 정보
      */
     @Query("SELECT p FROM Product p " +
             "WHERE p.seller.address LIKE %:district% " +
@@ -219,4 +213,43 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND u.address LIKE '%구%' " +
             "ORDER BY 1")
     List<String> findDistinctDistricts();
+
+    // ========== 🗺️ 지도 기능을 위한 쿼리 추가 ==========
+
+    /**
+     * 지도에 표시할 상품 목록 조회 (위도/경도가 있는 상품만)
+     * @return 좌표가 있는 모든 상품
+     */
+    @Query("SELECT p FROM Product p " +
+            "WHERE p.isDeleted = false " +
+            "AND p.latitude IS NOT NULL " +
+            "AND p.longitude IS NOT NULL " +
+            "ORDER BY p.createdDate DESC")
+    List<Product> findAllWithCoordinates();
+
+    /**
+     * 특정 범위 내의 상품 조회 (바운딩 박스)
+     * @param minLat 최소 위도
+     * @param maxLat 최대 위도
+     * @param minLng 최소 경도
+     * @param maxLng 최대 경도
+     */
+    @Query("SELECT p FROM Product p " +
+            "WHERE p.isDeleted = false " +
+            "AND p.latitude BETWEEN :minLat AND :maxLat " +
+            "AND p.longitude BETWEEN :minLng AND :maxLng " +
+            "ORDER BY p.createdDate DESC")
+    List<Product> findProductsInBounds(
+            @Param("minLat") Double minLat,
+            @Param("maxLat") Double maxLat,
+            @Param("minLng") Double minLng,
+            @Param("maxLng") Double maxLng);
+
+    /**
+     * 위도/경도가 없는 상품 목록 조회 (좌표 업데이트 필요)
+     */
+    @Query("SELECT p FROM Product p " +
+            "WHERE p.isDeleted = false " +
+            "AND (p.latitude IS NULL OR p.longitude IS NULL)")
+    List<Product> findProductsWithoutCoordinates();
 }

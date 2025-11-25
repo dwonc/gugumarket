@@ -478,4 +478,92 @@ public class ProductController {
                     ));
         }
     }
+
+    // ========== 🗺️ 지도 기능 API ==========
+
+    // 🗺️ 지도에 표시할 모든 상품 조회 (인증 불필요)
+    @GetMapping("/products/map")
+    public ResponseEntity<?> getProductsForMap() {
+        try {
+            List<ProductDto> products = productService.getProductsForMap();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("products", products);
+            response.put("count", products.size());
+
+            log.info("🗺️ 지도용 상품 조회 API 호출 - {}개", products.size());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("❌ 지도용 상품 조회 실패", e);
+
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "상품 조회 실패: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * 지도 범위 내 상품 조회
+     * GET /api/products/map/bounds?minLat=37.4&maxLat=37.6&minLng=126.9&maxLng=127.1
+     */
+    @GetMapping("/products/map/bounds")
+    public ResponseEntity<?> getProductsInBounds(
+            @RequestParam Double minLat,
+            @RequestParam Double maxLat,
+            @RequestParam Double minLng,
+            @RequestParam Double maxLng) {
+        try {
+            List<ProductDto> products = productService.getProductsInBounds(minLat, maxLat, minLng, maxLng);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "products", products,
+                    "count", products.size()
+            ));
+
+        } catch (Exception e) {
+            log.error("❌ 범위 내 상품 조회 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "범위 내 상품 조회 중 오류가 발생했습니다: " + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
+     * 🔧 관리자용: 기존 상품 좌표 일괄 업데이트
+     * POST /api/products/map/update-coordinates
+     */
+    @PostMapping("/products/map/update-coordinates")
+    public ResponseEntity<?> updateProductCoordinates(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "로그인이 필요합니다."
+                    ));
+        }
+
+        try {
+            productService.updateProductCoordinates();
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "상품 좌표 업데이트가 완료되었습니다."
+            ));
+
+        } catch (Exception e) {
+            log.error("❌ 좌표 업데이트 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "좌표 업데이트 중 오류가 발생했습니다: " + e.getMessage()
+                    ));
+        }
+    }
 }
