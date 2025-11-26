@@ -16,10 +16,10 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     // ========== 기존 메서드들 유지 ==========
-    Page<Product> findByIsDeletedFalseOrderByCreatedDateDesc(Pageable pageable);
+    Page<Product> findByIsDeletedFalse(Pageable pageable);
     Page<Product> findByCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(Long categoryId, Pageable pageable);
     Page<Product> findByTitleContainingAndIsDeletedFalseOrderByCreatedDateDesc(String keyword, Pageable pageable);
-    Page<Product> findByTitleContainingAndCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(String keyword, Long categoryId, Pageable pageable);
+    Page<Product> findByTitleContainingAndCategory_CategoryIdAndIsDeletedFalse(String keyword, Long categoryId, Pageable pageable);
     Page<Product> findByCategory_CategoryIdAndIsDeletedFalse(Long categoryId, Pageable pageable);
     Page<Product> findByCategory_CategoryIdAndTitleContainingAndIsDeletedFalse(Long categoryId, String title, Pageable pageable);
     Page<Product> findByTitleContainingAndIsDeletedFalse(String title, Pageable pageable);
