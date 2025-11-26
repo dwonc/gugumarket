@@ -53,6 +53,15 @@ dependencies {
 
     // 🗺️ JSON 라이브러리 추가 (카카오 지도 API용)
     implementation 'org.json:json:20230227'
+    // ✅ WebSocket & STOMP (Spring Boot 3.x 기준)
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // ✅ JSON 처리 (이미 있을 수 있음)
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    // ✅ SockJS (fallback 지원) - Optional but recommended
+    // implementation 'org.webjars:sockjs-client:1.5.1'
+    // implementation 'org.webjars:stomp-websocket:2.3.4'
 
 }
 

@@ -293,10 +293,14 @@ public class ProductService {
         if (keyword != null && !keyword.trim().isEmpty()) {
             products = productRepository.findByTitleContainingAndIsDeletedFalseOrderByCreatedDateDesc(keyword, pageable);
             log.info("🔍 검색어: '{}' - {}개 검색됨", keyword, products.getTotalElements());
+        } else if(keyword == null){
+            products = productRepository.findByIsDeletedFalseOrderByCreatedDateDesc(pageable);
+            log.info("📦 전체 상품 조회 - {}개", products.getTotalElements());
         } else {
             products = productRepository.findByIsDeletedFalseOrderByCreatedDateDesc(pageable);
             log.info("📦 전체 상품 조회 - {}개", products.getTotalElements());
         }
+
 
         return products.map(ProductDto::fromEntity);
     }
@@ -389,13 +393,16 @@ public class ProductService {
                     categoryId, keyword, products.getTotalElements());
 
         } else if (categoryId != null) {
-            products = productRepository.findByCategoryCategoryIdAndIsDeletedFalse(categoryId, pageable);
+            products = productRepository.findByCategory_CategoryIdAndIsDeletedFalse(categoryId, pageable);
             log.info("🔍 필터: 카테고리={} - {}개", categoryId, products.getTotalElements());
 
         } else if (keyword != null && !keyword.trim().isEmpty()) {
             products = productRepository.findByTitleContainingAndIsDeletedFalse(keyword, pageable);
             log.info("🔍 필터: 검색어={} - {}개", keyword, products.getTotalElements());
 
+        } else if (keyword == null){
+            products = productRepository.findByIsDeletedFalseOrderByCreatedDateDesc(pageable);
+            log.info("📦 전체 상품 조회 - {}개", products.getTotalElements());
         } else {
             products = productRepository.findByIsDeletedFalseOrderByCreatedDateDesc(pageable);
             log.info("📦 전체 상품 조회 - {}개", products.getTotalElements());

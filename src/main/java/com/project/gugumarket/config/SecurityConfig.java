@@ -69,6 +69,10 @@ public class SecurityConfig {
                                 "/api/districts",            // 👈 지역
                                 "/api/products/map",           // 🗺️ 추가
                                 "/api/products/map/bounds",    // 🗺️ 추가
+                                // ✅ WebSocket 엔드포인트 허용
+                                "/ws/**",
+                                "/topic/**",
+                                "/app/**",
                                 "/api/public/**",
                                 "/uploads/**",
                                 "/images/**",
@@ -81,6 +85,8 @@ public class SecurityConfig {
                         .requestMatchers("/mypage/**").authenticated()  // ⭐ 추가!
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/products/map/update-coordinates").authenticated()
+                        // ✅ 채팅 API는 인증 필요
+                        .requestMatchers("/api/chat/**").authenticated()
 
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()

@@ -20,8 +20,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(Long categoryId, Pageable pageable);
     Page<Product> findByTitleContainingAndIsDeletedFalseOrderByCreatedDateDesc(String keyword, Pageable pageable);
     Page<Product> findByTitleContainingAndCategory_CategoryIdAndIsDeletedFalseOrderByCreatedDateDesc(String keyword, Long categoryId, Pageable pageable);
-    Page<Product> findByCategoryCategoryIdAndIsDeletedFalse(Long categoryId, Pageable pageable);
-    Page<Product> findByCategoryCategoryIdAndTitleContainingAndIsDeletedFalse(Long categoryId, String title, Pageable pageable);
+    Page<Product> findByCategory_CategoryIdAndIsDeletedFalse(Long categoryId, Pageable pageable);
+    Page<Product> findByCategory_CategoryIdAndTitleContainingAndIsDeletedFalse(Long categoryId, String title, Pageable pageable);
     Page<Product> findByTitleContainingAndIsDeletedFalse(String title, Pageable pageable);
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.category.categoryId = :categoryId AND p.isDeleted = false")

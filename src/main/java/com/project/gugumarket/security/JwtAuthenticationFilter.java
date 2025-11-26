@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -108,5 +109,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         return null;
+    }
+
+    /**
+     * ✅ WebSocket에서 사용할 JWT 인증 메서드 추가
+     * - WebSocketConfig에서 호출됨
+     */
+    public Authentication getAuthentication(String token) {
+        try {
+            // JWT 토큰 유효성 검증
+            if (!jwtTokenProvider.validateToken(token)) {
+                return null;
+            }
+
+            // 토큰에서 사용자 정보 추출
+            String username = jwtTokenProvider.getUsernameFromToken(token);
+
+            // UserDetails 로드
+            UserDetails userDetails = customUserDetailService.loadUserByUsername(username);
+
+            // Authentication 객체 생성
+            return new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities()
+            );
+
+        } catch (Exception e) {
+            System.err.println("JWT 인증 실패: " + e.getMessage());
+            return null;
+        }
     }
 }
