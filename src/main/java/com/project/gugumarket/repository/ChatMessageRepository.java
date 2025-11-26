@@ -2,6 +2,7 @@ package com.project.gugumarket.repository;
 
 import com.project.gugumarket.entity.ChatMessage;
 import com.project.gugumarket.entity.ChatRoom;
+import com.project.gugumarket.entity.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -70,4 +71,5 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
      * 채팅방 삭제 시 메시지도 함께 삭제
      */
     void deleteByChatRoom(ChatRoom chatRoom);
+
 }

@@ -4,11 +4,13 @@ import com.project.gugumarket.dto.chat.*;
 import com.project.gugumarket.entity.*;
 import com.project.gugumarket.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ChatService {
 
     private final ChatRoomRepository chatRoomRepository;
@@ -201,4 +204,58 @@ public class ChatService {
         // 채팅방 삭제
         chatRoomRepository.delete(chatRoom);
     }
+    // ChatService.java - createOrGetChatRoomWithUser 메서드 수정
+
+    /**
+     * 특정 사용자와 채팅방 생성 또는 조회 (거래용)
+     */
+    @Transactional
+    public ChatRoomDto createOrGetChatRoomWithUser(Long productId, Long userId, Long otherUserId) {
+        log.info("=== createOrGetChatRoomWithUser 시작 ===");
+        log.info("productId: {}, userId: {}, otherUserId: {}", productId, userId, otherUserId);
+
+        // 1. Product 조회
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
+
+        // 2. 두 사용자 조회
+        User currentUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        User otherUser = userRepository.findById(otherUserId)
+                .orElseThrow(() -> new RuntimeException("상대방을 찾을 수 없습니다."));
+
+        // 3. 기존 채팅방 찾기 (양방향)
+        Optional<ChatRoom> existingChatRoom = chatRoomRepository
+                .findByProductAndBuyerAndSeller(product, currentUser, otherUser);
+
+        if (existingChatRoom.isEmpty()) {
+            existingChatRoom = chatRoomRepository
+                    .findByProductAndBuyerAndSeller(product, otherUser, currentUser);
+        }
+
+        if (existingChatRoom.isPresent()) {
+            log.info("✅ 기존 채팅방 발견: {}", existingChatRoom.get().getChatRoomId());
+            return ChatRoomDto.fromEntity(existingChatRoom.get());
+        }
+
+        // 4. 새 채팅방 생성
+        log.info("✅ 새 채팅방 생성");
+
+        User seller = product.getSeller();
+        User buyer = seller.getUserId().equals(userId) ? otherUser : currentUser;
+
+        ChatRoom newChatRoom = ChatRoom.builder()
+                .product(product)
+                .seller(seller)
+                .buyer(buyer)
+                .build();
+
+        chatRoomRepository.save(newChatRoom);
+
+        log.info("✅ 채팅방 생성 성공: {}", newChatRoom.getChatRoomId());
+
+        return ChatRoomDto.fromEntity(newChatRoom);
+    }
+
 }

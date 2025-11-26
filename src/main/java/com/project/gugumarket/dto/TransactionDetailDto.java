@@ -32,6 +32,10 @@ public class TransactionDetailDto {
     private String buyerName;
     private String sellerName;
 
+    // ✅ 거래 당사자 ID 추가
+    private Long sellerId;    // ✅ 판매자 ID
+    private Long buyerId;     // ✅ 구매자 ID
+
     public static TransactionDetailDto fromEntity(Transaction t) {
         var p = t.getProduct();
 
@@ -50,6 +54,10 @@ public class TransactionDetailDto {
                 .bankName(p.getBankName())
                 .accountNumber(p.getAccountNumber())
                 .accountHolder(p.getAccountHolder())
+
+                // ✅ 거래 당사자 ID 추가
+                .sellerId(t.getSeller().getUserId())    // ✅ 추가
+                .buyerId(t.getBuyer().getUserId())      // ✅ 추가
 
                 .buyerName(t.getBuyer().getNickname())
                 .sellerName(t.getSeller().getNickname())

@@ -269,4 +269,49 @@ public class ChatController {
         log.error("❌ Principal이 CustomUserDetails가 아님: {}", principal.getClass().getName());
         throw new RuntimeException("사용자 정보를 찾을 수 없습니다.");
     }
+
+    /**
+     * 특정 사용자와 채팅방 생성 (거래용)
+     * @param request productId, otherUserId
+     * @return ChatRoomDto
+     */
+    @PostMapping("/rooms/with-user")
+    public ResponseEntity<?> createChatRoomWithUser(@RequestBody Map<String, Long> request) {
+        log.info("=== 특정 사용자와 채팅방 생성/조회 요청 시작 ===");
+
+        try {
+            Long userId = getCurrentUserId();
+            log.info("✅ 현재 사용자 ID: {}", userId);
+
+            Long productId = request.get("productId");
+            Long otherUserId = request.get("otherUserId");
+
+            log.info("✅ 상품 ID: {}, 상대방 ID: {}", productId, otherUserId);
+
+            if (productId == null || otherUserId == null) {
+                log.error("❌ productId 또는 otherUserId가 null입니다.");
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "message", "상품 ID와 상대방 ID가 필요합니다."));
+            }
+
+            if (userId.equals(otherUserId)) {
+                log.error("❌ 자기 자신과는 채팅할 수 없습니다.");
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "message", "자기 자신과는 채팅할 수 없습니다."));
+            }
+
+            ChatRoomDto chatRoomDto = chatService.createOrGetChatRoomWithUser(productId, userId, otherUserId);
+
+            log.info("✅ 채팅방 생성/조회 성공: {}", chatRoomDto.getChatRoomId());
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "chatRoom", chatRoomDto
+            ));
+        } catch (Exception e) {
+            log.error("❌ 채팅방 생성/조회 실패", e);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
 }
