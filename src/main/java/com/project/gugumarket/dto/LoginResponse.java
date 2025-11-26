@@ -13,6 +13,9 @@ public class LoginResponse {
     private String accessToken;
     private String refreshToken;
     private String tokenType = "Bearer";
+    // 🆕 여기에 userId 추가!
+    private Long userId;
+
     private String username;
     private String email;
     private String role;

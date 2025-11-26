@@ -70,6 +70,7 @@ public class AuthController {
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .tokenType("Bearer")
+                    .userId(user.getUserId())  // 🆕🔥 이 줄을 꼭 추가해주세요!
                     .username(user.getUserName())
                     .email(user.getEmail())
                     .role(user.getRole())
@@ -131,6 +132,7 @@ public class AuthController {
                     .accessToken(newAccessToken)
                     .refreshToken(newRefreshToken)
                     .tokenType("Bearer")
+                    .userId(user.getUserId())  // 🆕🔥 여기도 추가!
                     .username(user.getUserName())
                     .email(user.getEmail())
                     .role(user.getRole())
