@@ -9,6 +9,7 @@ import com.project.gugumarket.repository.ChatMessageRepository;
 import com.project.gugumarket.repository.ChatRoomRepository;
 import com.project.gugumarket.repository.UserRepository;
 import com.project.gugumarket.security.CustomUserDetails;
+import com.project.gugumarket.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -32,6 +33,7 @@ public class ChatMessageHandler {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
+    private final ChatService chatService; // ← getTotalUnreadCount용 서비스(이미 있을 것)
 
     /**
      * 메시지 전송
@@ -79,9 +81,14 @@ public class ChatMessageHandler {
             chatRoom.setLastMessage(request.getContent());
             chatRoom.setLastMessageAt(LocalDateTime.now());
 
-            // 읽지 않은 메시지 수 증가 (상대방)
+
+            // ✅ 상대방 찾기
             boolean isSeller = chatRoom.getSeller().getUserId().equals(userId);
+            User receiver = isSeller ? chatRoom.getBuyer() : chatRoom.getSeller();
             chatRoom.incrementUnreadCount(!isSeller);
+            // ✅ 상대방에게 채팅 unreadCount 실시간 전송
+            sendChatUnreadCount(receiver);
+
 
             chatRoomRepository.save(chatRoom);
             log.info("✅ 채팅방 정보 업데이트 완료");
@@ -167,4 +174,20 @@ public class ChatMessageHandler {
 
         throw new RuntimeException("사용자 정보를 찾을 수 없습니다.");
     }
+
+    // ✅ 사용자별 총 안 읽은 채팅 수 실시간 전송
+    public void sendChatUnreadCount(User targetUser) {
+        try {
+            long totalUnread = chatService.getTotalUnreadCount(targetUser.getUserId());
+            String dest = "/topic/chat/unread-count/" + targetUser.getUserId();
+
+            messagingTemplate.convertAndSend(dest, totalUnread);
+
+            log.info("💬 실시간 채팅 unread 전송 완료 - userId: {}, dest: {}, count: {}",
+                    targetUser.getUserId(), dest, totalUnread);
+        } catch (Exception e) {
+            log.error("❌ 채팅 unread 전송 실패: {}", e.getMessage(), e);
+        }
+    }
+
 }

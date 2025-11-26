@@ -1,10 +1,12 @@
 package com.project.gugumarket.service;
 
 import com.project.gugumarket.NotificationType;
+import com.project.gugumarket.dto.NotificationDto;
 import com.project.gugumarket.entity.*;
 import com.project.gugumarket.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final SimpMessagingTemplate messagingTemplate;  // ✅ 추가
 
     /**
      * 찜 알림 생성
@@ -28,7 +31,6 @@ public class NotificationService {
         User liker = like.getUser();
         Product product = like.getProduct();
 
-        // 자기 상품을 찜한 경우 알림 생성 안함
         if (seller.getUserId().equals(liker.getUserId())) {
             log.info("자기 상품 찜 - 알림 생성하지 않음");
             return null;
@@ -51,6 +53,9 @@ public class NotificationService {
         Notification saved = notificationRepository.save(notification);
         log.info("찜 알림 생성 완료 - ID: {}, 판매자: {}, 찜한 사람: {}",
                 saved.getNotificationId(), seller.getNickname(), liker.getNickname());
+
+        // ✅ 여기 한 줄 추가
+        sendRealtimeNotification(saved);
 
         return saved;
     }
@@ -85,6 +90,7 @@ public class NotificationService {
         log.info("구매 알림 생성 완료 - ID: {}, 판매자: {}, 구매자: {}",
                 saved.getNotificationId(), seller.getNickname(), buyer.getNickname());
 
+        sendRealtimeNotification(saved);
         return saved;
     }
 
@@ -115,6 +121,7 @@ public class NotificationService {
         Notification saved = notificationRepository.save(notification);
         log.info("거래 완료 알림 생성 완료 - ID: {}", saved.getNotificationId());
 
+        sendRealtimeNotification(saved);
         return saved;
     }
 
@@ -147,7 +154,12 @@ public class NotificationService {
                 .isRead(false)
                 .build();
 
-        return notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+
+
+        sendRealtimeNotification(saved);
+
+        return saved;
     }
 
     /**
@@ -264,8 +276,39 @@ public class NotificationService {
         log.info("신고 처리 알림 생성 완료 - ID: {}, 신고자: {}, 상품: {}",
                 saved.getNotificationId(), reporter.getNickname(), product.getTitle());
 
+        sendRealtimeNotification(saved);
         return saved;
     }
+
+    // ✅ 실시간 알림 전용 메서드 (topic + userId 방식)
+    private void sendRealtimeNotification(Notification notification) {
+        try {
+            NotificationDto dto = NotificationDto.fromEntity(notification);
+
+            Long receiverId = notification.getReceiver().getUserId();
+
+            // 1) 알림 상세용 (원래 쓰던 거 그대로)
+            String notificationDest = "/topic/notifications/" + receiverId;
+            messagingTemplate.convertAndSend(notificationDest, dto);
+
+            // 2) 🔥 알림 뱃지용 unreadCount 전송
+            long unreadCount = notificationRepository.countByReceiverAndIsRead(
+                    notification.getReceiver(),
+                    false
+            );
+
+            String countDest = "/topic/notifications-count/" + receiverId;
+            messagingTemplate.convertAndSend(countDest, unreadCount);
+
+            log.info("🔔 실시간 알림 전송 완료 - detailDest: {}, countDest: {}, type: {}, id: {}, unreadCount: {}",
+                    notificationDest, countDest, notification.getType(),
+                    notification.getNotificationId(), unreadCount);
+
+        } catch (Exception e) {
+            log.error("❌ 실시간 알림 전송 실패: {}", e.getMessage(), e);
+        }
+    }
+
 
 
 }

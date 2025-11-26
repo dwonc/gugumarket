@@ -1,5 +1,7 @@
 package com.project.gugumarket.config;
 
+import com.project.gugumarket.entity.User;
+import com.project.gugumarket.repository.UserRepository;
 import com.project.gugumarket.security.CustomUserDetails;
 import com.project.gugumarket.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ import java.util.Collections;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository; // ✅ 추가
 
     /**
      * 메시지 브로커 설정
@@ -83,22 +86,28 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         try {
                             // ✅ JWT 검증
                             if (jwtTokenProvider.validateToken(token)) {
-                                // ✅ JWT에서 username과 userId 추출
-                                String username = jwtTokenProvider.getUsernameFromToken(token);
+
+                                // ✅ 토큰에서 userId 추출
                                 Long userId = jwtTokenProvider.getUserIdFromToken(token);
 
-                                // ✅ CustomUserDetails 생성
+                                // ✅ DB에서 실제 User 조회 (userName 통일 용도)
+                                User user = userRepository.findById(userId)
+                                        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+                                String principalName = user.getUserName(); // 🔥 WebSocket principal = userName
+
+                                // ✅ CustomUserDetails 생성 (username = userName 으로 고정)
                                 CustomUserDetails userDetails = new CustomUserDetails(
-                                        userId,                          // userId
-                                        username,                        // username
+                                        user.getUserId(),               // userId
+                                        principalName,                  // username (principal name)
                                         "",                             // password (필요 없음)
-                                        true,                           // enabled
-                                        true,                           // accountNonExpired
-                                        true,                           // credentialsNonExpired
-                                        true,                           // accountNonLocked
+                                        true,
+                                        true,
+                                        true,
+                                        true,
                                         Collections.singletonList(
                                                 new SimpleGrantedAuthority("ROLE_USER")
-                                        )                               // authorities
+                                        )
                                 );
 
                                 // ✅ Authentication 객체 생성
@@ -108,10 +117,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                                         userDetails.getAuthorities()
                                 );
 
+                                // 여기서 authentication.getName() == principalName == user.getUserName()
                                 accessor.setUser(authentication);
                                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                                System.out.println("✅ WebSocket 인증 성공 - userId: " + userId + ", username: " + username);
+                                System.out.println("✅ WebSocket 인증 성공 - userId: "
+                                        + user.getUserId() + ", principalName(userName): " + principalName);
                             }
                         } catch (Exception e) {
                             System.err.println("❌ WebSocket JWT 인증 실패: " + e.getMessage());

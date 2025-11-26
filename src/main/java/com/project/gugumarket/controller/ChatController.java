@@ -1,6 +1,9 @@
 package com.project.gugumarket.controller;
 
 import com.project.gugumarket.dto.chat.*;
+import com.project.gugumarket.entity.User;
+import com.project.gugumarket.handler.ChatMessageHandler;
+import com.project.gugumarket.repository.UserRepository;
 import com.project.gugumarket.security.CustomUserDetails;
 import com.project.gugumarket.service.ChatService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,8 @@ import java.util.Map;
 public class ChatController {
 
     private final ChatService chatService;
+    private final UserRepository userRepository;
+    private final ChatMessageHandler chatMessageHandler;
 
     /**
      * 채팅방 생성 또는 조회
@@ -164,9 +169,15 @@ public class ChatController {
             chatService.markMessagesAsRead(chatRoomId, userId);
             log.info("✅ 메시지 읽음 처리 성공");
 
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("사용자 없음"));
+
+            chatMessageHandler.sendChatUnreadCount(user);   // ✔ 정상
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "메시지를 읽음 처리했습니다.");
+
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
