@@ -20,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -29,13 +30,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailService customUserDetailService;
 
-    // 🔥 필터를 건너뛸 경로들 (카카오 추가!)
+    // 🔥 필터를 건너뛸 경로들
     private static final List<String> EXCLUDE_URLS = Arrays.asList(
             "/api/auth/login",
             "/api/auth/refresh",
-            "/api/auth/kakao/**",          // 🔥 카카오 로그인
+            "/api/auth/kakao/**",
             "/api/users/signup",
             "/api/users/check-username",
+            "/api/products/*",
+            "/api/products/*/comments",      // ✅ 추가: 댓글 조회
             "/api/public/**",
             "/h2-console/**",
             "/uploads/**",
@@ -44,10 +47,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/js/**"
     );
 
+    // ✅ 사용자 레벨 조회 경로 정규식
+    private static final Pattern USER_LEVEL_PATTERN = Pattern.compile("^/api/users/\\d+/level$");
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         AntPathMatcher pathMatcher = new AntPathMatcher();
+
+        // ✅ 정규식으로 사용자 레벨 조회 체크
+        if (USER_LEVEL_PATTERN.matcher(path).matches()) {
+            log.debug("🔓 JWT 필터 건너뜀 (레벨 조회): {}", path);
+            return true;
+        }
 
         boolean shouldExclude = EXCLUDE_URLS.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
@@ -112,8 +124,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * ✅ WebSocket에서 사용할 JWT 인증 메서드 추가
-     * - WebSocketConfig에서 호출됨
+     * ✅ WebSocket에서 사용할 JWT 인증 메서드
      */
     public Authentication getAuthentication(String token) {
         try {

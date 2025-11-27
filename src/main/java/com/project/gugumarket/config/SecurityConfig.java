@@ -14,12 +14,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -52,40 +52,46 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+                        // ✅ 정규식으로 사용자 레벨 조회 허용
+                        .requestMatchers(new RegexRequestMatcher("/api/users/\\d+/level", null)).permitAll()
+
                         // ✅ 인증 불필요 경로
                         .requestMatchers(
-                                "/api/auth/**",              // 로그인, 회원가입, 카카오 로그인
+                                // 인증 관련
+                                "/api/auth/**",
                                 "/api/users/signup",
                                 "/api/users/find-username",
                                 "/api/users/verify-email",
                                 "/api/users/reset-password",
                                 "/api/users/check-username",
+
+                                // 메인 & 상품
+                                "/api/main",
+                                "/api/products/list",
+                                "/api/products/*",
+                                "/api/products/*/comments",      // ✅ 추가: 댓글 조회
+                                "/api/categories",
+                                "/api/districts",
                                 "/api/products/map",
                                 "/api/products/map/bounds",
-                                "/api/main",                 // 👈 메인 페이지
-                                "/api/products/list",        // 👈 상품 목록
-                                "/api/products/{id}",        // 👈 상품 상세
-                                "/api/categories",           // 👈 카테고리
-                                "/api/districts",            // 👈 지역
-                                "/api/products/map",           // 🗺️ 추가
-                                "/api/products/map/bounds",    // 🗺️ 추가
-                                // ✅ WebSocket 엔드포인트 허용
+
+                                // WebSocket
                                 "/ws/**",
                                 "/topic/**",
                                 "/app/**",
+
+                                // 정적 리소스
                                 "/api/public/**",
                                 "/uploads/**",
                                 "/images/**",
                                 "/css/**",
                                 "/js/**"
-                                // ❌ "/mypage/**" 제거! (인증 필요)
                         ).permitAll()
 
                         // ✅ 인증 필요 경로
-                        .requestMatchers("/mypage/**").authenticated()  // ⭐ 추가!
+                        .requestMatchers("/mypage/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/products/map/update-coordinates").authenticated()
-                        // ✅ 채팅 API는 인증 필요
                         .requestMatchers("/api/chat/**").authenticated()
 
                         // 나머지는 인증 필요
