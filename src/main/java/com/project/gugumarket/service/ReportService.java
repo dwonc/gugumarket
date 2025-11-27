@@ -84,6 +84,7 @@ import lombok.RequiredArgsConstructor;
 // 🎯🔥✨ [추가 2 시작] Slf4j import 추가 ✨🔥🎯
 import lombok.extern.slf4j.Slf4j;
 // 🎯🔥✨ [추가 2 끝] ✨🔥🎯
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -99,12 +100,11 @@ public class ReportService {
     private final ReportRepository reportRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-    // 🎯🔥✨💫⭐ [추가 4 시작] NotificationService 주입 ⭐💫✨🔥🎯
     private final NotificationService notificationService;
-    // 🎯🔥✨💫⭐ [추가 4 끝] ⭐💫✨🔥🎯
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
-    public Report createReport(Long productId, String username, String reason) {
+    public void createReport(Long productId, String username, String reason) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
 
@@ -120,8 +120,15 @@ public class ReportService {
                 .reporter(reporter)
                 .reason(reason)
                 .build();
+        reportRepository.save(report);
 
-        return reportRepository.save(report);
+        // ✅ 신고 카운트 조회 후 WebSocket 발행 (수정됨)
+        long reportCount = reportRepository.countByProduct_ProductId(productId);
+
+        String destination = "/topic/product/report-count/" + productId;
+        messagingTemplate.convertAndSend(destination, reportCount);
+
+        log.info("🚨 신고 카운트 발행 - productId: {}, count: {}", productId, reportCount);
     }
 
     @Transactional(readOnly = true)
