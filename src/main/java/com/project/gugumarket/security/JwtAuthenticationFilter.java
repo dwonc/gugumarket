@@ -37,8 +37,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/kakao/**",
             "/api/users/signup",
             "/api/users/check-username",
-            "/api/products/*",
-            "/api/products/*/comments",      // ✅ 추가: 댓글 조회
+//            "/api/products/*",
+//            "/api/products/*/comments",      // ✅ 추가: 댓글 조회
             "/api/public/**",
             "/h2-console/**",
             "/uploads/**",
