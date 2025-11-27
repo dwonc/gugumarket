@@ -20,6 +20,7 @@ public class TransactionResponseDto {
     private Integer productPrice;
     private String productImage;
     private String buyerName;
+    private Long buyerId;
     private String sellerName;
     private String depositorName;  // ✅ 추가
     private String status;
@@ -46,6 +47,7 @@ public class TransactionResponseDto {
                 .depositorName(transaction.getDepositorName())  // ✅ 추가
                 .status(transaction.getStatus().name())
                 .transactionDate(transaction.getTransactionDate())
+                .buyerId(transaction.getBuyer().getUserId())
                 .createdDate(transaction.getCreatedDate())  // ✅ 추가
                 .build();
     }
