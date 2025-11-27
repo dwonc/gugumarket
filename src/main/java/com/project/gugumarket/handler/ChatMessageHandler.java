@@ -81,17 +81,17 @@ public class ChatMessageHandler {
             chatRoom.setLastMessage(request.getContent());
             chatRoom.setLastMessageAt(LocalDateTime.now());
 
-
             // ✅ 상대방 찾기
             boolean isSeller = chatRoom.getSeller().getUserId().equals(userId);
             User receiver = isSeller ? chatRoom.getBuyer() : chatRoom.getSeller();
             chatRoom.incrementUnreadCount(!isSeller);
-            // ✅ 상대방에게 채팅 unreadCount 실시간 전송
-            sendChatUnreadCount(receiver);
 
-
+            // ✅ 순서 변경: 먼저 저장!
             chatRoomRepository.save(chatRoom);
             log.info("✅ 채팅방 정보 업데이트 완료");
+
+            // ✅ 저장 후에 카운트 전송
+            sendChatUnreadCount(receiver);
 
             // 6. WebSocket으로 메시지 브로드캐스트
             ChatMessageDto messageDto = ChatMessageDto.fromEntity(message);
