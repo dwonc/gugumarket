@@ -238,16 +238,24 @@ public class NotificationService {
     public List<Notification> getNotifications(User user) {
         return notificationRepository.findByReceiverOrderByCreatedDateDesc(user);
     }
-    @Transactional(readOnly = true)
+    /**
+     * 사용자의 최근 알림을 제한된 개수만큼 조회
+     *
+     * @param user 알림을 조회할 사용자 엔티티
+     * @param limit 조회할 알림의 최대 개수
+     * @return 최근 알림 목록 (생성일 기준 내림차순, 최대 limit개)
+     */
+    @Transactional(readOnly = true) // 읽기 전용 트랜잭션 (성능 최적화)
     public List<Notification> getRecentNotifications(User user, int limit) {
+        // 해당 사용자의 모든 알림을 생성일 기준 내림차순으로 조회
         List<Notification> allNotifications = notificationRepository
                 .findByReceiverOrderByCreatedDateDesc(user);
 
+        // 스트림을 사용하여 지정된 개수만큼만 반환
         return allNotifications.stream()
-                .limit(limit)
-                .collect(Collectors.toList());
+                .limit(limit) // 상위 limit개만 선택
+                .collect(Collectors.toList()); // 리스트로 수집하여 반환
     }
-
 
     // 🎯🔥✨💫⭐🌟 [추가] 신고 처리 완료 알림 생성 🌟⭐💫✨🔥🎯
     /**
