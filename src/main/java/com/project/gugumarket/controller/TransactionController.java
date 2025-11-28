@@ -183,7 +183,7 @@ public class TransactionController {
     }
 
     /**
-     * 거래 취소 (구매자)
+     * 거래 취소 (판매자 또는 구매자)
      */
     @DeleteMapping("/transactions/{transactionId}")
     public ResponseEntity<?> cancelTransaction(@PathVariable Long transactionId,
@@ -199,6 +199,8 @@ public class TransactionController {
         }
 
         try {
+            log.info("거래 취소 요청 - 거래ID: {}, 요청자: {}", transactionId, principal.getName());
+
             transactionService.cancelTransaction(transactionId, principal.getName());
 
             log.info("거래 취소 완료 - 거래 ID: {}", transactionId);
@@ -208,18 +210,18 @@ public class TransactionController {
                     "message", "거래가 취소되었습니다."
             ));
         } catch (IllegalArgumentException e) {
-            log.error("거래 취소 실패: {}", e.getMessage());
+            log.error("거래 취소 실패 (잘못된 요청): {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of(
                             "success", false,
-                            "message", "거래 취소 실패: " + e.getMessage()
+                            "message", e.getMessage()
                     ));
         } catch (Exception e) {
             log.error("거래 취소 중 서버 오류", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
                             "success", false,
-                            "message", "거래 취소 중 오류가 발생했습니다."
+                            "message", "거래 취소 중 오류가 발생했습니다: " + e.getMessage()
                     ));
         }
     }

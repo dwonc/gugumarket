@@ -133,33 +133,55 @@ public class TransactionService {
         log.info("카카오페이 TID 저장 완료 - transactionId: {}, tid: {}", transactionId, tid);
     }
 
-    /**
-     * 거래 취소
-     */
     @Transactional
     public void cancelTransaction(Long transactionId, String username) {
-        Transaction transaction = getTransaction(transactionId);
+        // 1. 사용자 조회
+        User user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 이미 완료된 거래는 취소 불가
+        // 2. 거래 조회
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 거래입니다."));
+
+        // 3. 권한 검증 (판매자 또는 구매자) ✅ 이 부분만 수정
+        Long currentUserId = user.getUserId();
+        Long sellerId = transaction.getSeller().getUserId();
+        Long buyerId = transaction.getBuyer().getUserId();
+
+        boolean isSeller = currentUserId.equals(sellerId);
+        boolean isBuyer = currentUserId.equals(buyerId);
+
+        log.info("거래 취소 시도 - 거래ID: {}, 요청자: {}, isSeller: {}, isBuyer: {}",
+                transactionId, user.getNickname(), isSeller, isBuyer);
+
+        if (!isSeller && !isBuyer) {
+            throw new IllegalArgumentException("거래 당사자만 취소할 수 있습니다.");
+        }
+
+        // 4. 거래 상태 확인
         if (transaction.getStatus() == TransactionStatus.COMPLETED) {
-            throw new IllegalStateException("완료된 거래는 취소할 수 없습니다.");
-        }
-        if (!transaction.getBuyer().getUserName().equals(username)) {
-            throw new IllegalArgumentException("권한이 없습니다");
+            throw new IllegalArgumentException("이미 완료된 거래는 취소할 수 없습니다.");
         }
 
-        // 상품 상태 원복
-        Product product = transaction.getProduct();
-        product.updateStatus(ProductStatus.SALE);
-        productRepository.save(product);
+        if (transaction.getStatus() == TransactionStatus.CANCELLED) {
+            throw new IllegalArgumentException("이미 취소된 거래입니다.");
+        }
 
+        // 5. 거래 취소
         transaction.setStatus(TransactionStatus.CANCELLED);
-        transaction.setCancelReason("사용자 취소");
         transaction.setCancelledAt(LocalDateTime.now());
-
         transactionRepository.save(transaction);
 
-        log.info("거래 취소 - transactionId: {}, username: {}", transactionId, username);
+        // 6. 상품 상태를 다시 판매중으로 변경
+        Product product = transaction.getProduct();
+        product.setStatus(ProductStatus.SALE);
+        productRepository.save(product);
+
+        log.info("거래 취소 완료 - ID: {}, 취소자: {} ({})",
+                transactionId,
+                user.getNickname(),
+                isSeller ? "판매자" : "구매자"
+        );
     }
 
     /**
