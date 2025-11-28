@@ -440,6 +440,7 @@ public class MypageController {
      * 판매 내역 조회
      * @param principal 현재 로그인한 사용자 정보
      * @return 사용자의 판매 내역 목록
+     * ResponseEntity=응답 캡슐화 (200,400,500)
      */
     @GetMapping("/sales")
     public ResponseEntity<Map<String, Object>> salesList(Principal principal) {
