@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.Map;
 
-@RestController                 //JSON만 반환
-@RequiredArgsConstructor
+@RestController                 //REST API 컨트롤러 -> 데이터를 JSON 형태로 반환
+@RequiredArgsConstructor        //자동 생성자
 @RequestMapping("/api")         //API 명시
 public class LikeController {
 
@@ -46,7 +46,9 @@ public class LikeController {
             Product product = productService.getProduct(productId);     //상품 정보 조회
 
             boolean isLiked = likeService.toggleLike(user, product);
+            // 이미 찜하기를 눌렀으면 취소, 안눌렀으면 추가하는 토글 기능
             Long likeCount = likeService.getLikeCount(product);
+            //  현재 상품의 찜하기 수
 
             return ResponseEntity.ok(Map.of(            //성공 응답 200 페이지
                     "success", true,
