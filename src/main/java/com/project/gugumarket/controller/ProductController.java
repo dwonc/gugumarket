@@ -27,48 +27,56 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Slf4j
-@RequiredArgsConstructor
-@RestController
-@RequestMapping("/api")
+@Slf4j  // 로그를 사용할 수 있게 해줌 (log.info(), log.error() 등)
+@RequiredArgsConstructor  // final 필드들을 자동으로 생성자 주입해줌
+@RestController  // 이 클래스가 REST API 컨트롤러임을 선언 (JSON 응답 자동 변환)
+@RequestMapping("/api")  // 모든 요청 URL 앞에 /api가 붙음
 public class ProductController {
 
-    private final ProductService productService;
-    private final UserService userService;
-    private final LikeService likeService;
-    private final CategoryService categoryService;
-    private final ReportService reportService;
+        private final ProductService productService; // 상품 관련 비즈니스 로직
+        private final UserService userService;      // 사용자 관련 비즈니스 로직
+        private final LikeService likeService;      // 좋아요 관련 비즈니스 로직
+        private final CategoryService categoryService; // 카테고리 관련 비즈니스 로직
+        private final ReportService reportService;  // 신고 관련 비즈니스 로직
 
     /**
-     * 상품 등록 폼 페이지
+     * 상품 등록 폼 데이터 조회
      */
-    @GetMapping("/products/new")
+    @GetMapping("/products/new")        // GET 요청 매핑
     public ResponseEntity<?> createForm(Principal principal) {
+        // Principal: Spring Security가 제공하는 현재 로그인한 사용자 정보
+        // JWT 토큰을 파싱해서 사용자 이메일을 principal.getName()으로 가져올 수 있음
 
         if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)       // 401 상태 코드
                     .body(Map.of(
                             "success", false,
                             "message", "로그인이 필요합니다.",
-                            "needLogin", true
+                            "needLogin", true   // 프론트엔드에서 로그인 페이지로 리다이렉트할 때 사용
                     ));
         }
-        try {
-
+        try {   // 현재 로그인한 사용자 정보 가져오기
             User user = userService.getUser(principal.getName());
+            // principal.getName() = 이메일
             UserSimpleResponse userDTO = UserSimpleResponse.from(user);
+            // 엔티티 → DTO 변환
+            
+
             List<CategoryDto> categories = categoryService.getAllCategories();
+            // 카테고리 목록 가져오기 (드롭다운에 표시할 용도)
+
             ProductForm productForm = new ProductForm();
+            // 빈 폼 객체 생성 (프론트엔드에서 폼 초기화용)
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "productDto", productForm,
-                    "categories", categories,
-                    "user", userDTO
+                    "productDto", productForm,      // 빈 폼
+                    "categories", categories,        // 카테고리 목록
+                    "user", userDTO                  // 현재 사용자 정보
             ));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)      // 500 에러
                     .body(Map.of(
                             "success", false,
                             "message", "오류가 발생했습니다: " + e.getMessage()
@@ -79,10 +87,12 @@ public class ProductController {
     /**
      * 상품 등록 처리
      */
-    @PostMapping("/products/write")
+    @PostMapping("/products/write")     // POST 매핑 요청
     public ResponseEntity<?> create(
-            @Valid @RequestBody ProductForm productForm,
+            @Valid @RequestBody ProductForm productForm, 
+            // @Valid: 유효성 검사, @RequestBody: JSON → 객체 변환
             BindingResult bindingResult,
+            // 유효성 검사 결과를 담는 객체
             Principal principal) {
 
         if (principal == null) {
@@ -95,7 +105,7 @@ public class ProductController {
         }
 
         if (bindingResult.hasErrors()) {
-            Map<String, String> errors = new HashMap<>();
+            Map<String, String> errors = new HashMap<>();       // 에러가 있으면 에러 메시지들을 Map으로 만듦
             bindingResult.getFieldErrors().forEach(error ->
                     errors.put(error.getField(), error.getDefaultMessage())
             );
@@ -108,14 +118,14 @@ public class ProductController {
         }
 
         try {
-            User user = userService.getUser(principal.getName());
-            Product product = productService.create(productForm, user);
+            User user = userService.getUser(principal.getName());       // 현재 사용자
+            Product product = productService.create(productForm, user); // DB에 저장
 
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(Map.of(
                             "success", true,
                             "message", "상품이 등록되었습니다.",
-                            "productId", product.getProductId()
+                            "productId", product.getProductId() // 생성된 상품의 ID 반환
                     ));
 
         } catch (Exception e) {
@@ -131,7 +141,8 @@ public class ProductController {
      * 상품 수정 폼 데이터 조회
      */
     @GetMapping("/products/{id}/edit")
-    public ResponseEntity<?> editForm(@PathVariable Long id, Principal principal) {
+    public ResponseEntity<?> editForm(@PathVariable Long id, //URL 에서 상품 ID 추출
+                                        Principal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
@@ -142,9 +153,9 @@ public class ProductController {
         }
 
         try{
-            String currentUser = principal.getName();
-            User user = userService.getUser(currentUser);
-            Product product = productService.getProduct(id);
+            String currentUser = principal.getName();   
+            User user = userService.getUser(currentUser);  // 현재 사용자
+            Product product = productService.getProduct(id);    // 수정할 상품
 
             // ✅ 권한 확인 - 판매자이거나 관리자인 경우만 수정 가능
             if (!product.getSeller().equals(user) && !"ADMIN".equals(user.getRole())) {
@@ -155,6 +166,7 @@ public class ProductController {
                         ));
             }
 
+            // 엔티티 -> DTO 로 변환 ( 프론트엔드가 받기 편한 형태로 변환 )
             ProductForm productDto = new ProductForm();
             productDto.setProductId(product.getProductId());
             productDto.setCategoryId(product.getCategory().getCategoryId());
@@ -171,10 +183,10 @@ public class ProductController {
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "productDto", productDto,
-                    "categories", categories,
-                    "user", userDto,
-                    "isEdit", true
+                    "productDto", productDto,        // 기존 상품 정보
+                    "categories", categories,        // 카테고리 목록
+                    "user", userDto,                 // 사용자 정보
+                    "isEdit", true                   // 수정 모드임을 알림
             ));
 
         } catch (Exception e) {
@@ -189,10 +201,10 @@ public class ProductController {
     /**
      * 상품 수정 처리
      */
-    @PutMapping("/products/{id}")
+    @PutMapping("/products/{id}")       // PUT 매핑 요청
     public ResponseEntity<?> update(
-            @PathVariable Long id,
-            @Valid @RequestBody ProductForm productDto,
+            @PathVariable Long id,      // 수정할 상품 ID
+            @Valid @RequestBody ProductForm productDto, // 수정된 데이터
             BindingResult bindingResult,
             Principal principal) {
 
@@ -205,7 +217,7 @@ public class ProductController {
                     ));
         }
 
-        if (bindingResult.hasErrors()) {
+        if (bindingResult.hasErrors()) {        // 유효성 검사
             Map<String, String> errors = new HashMap<>();
             bindingResult.getFieldErrors().forEach(error ->
                     errors.put(error.getField(), error.getDefaultMessage())
@@ -219,7 +231,7 @@ public class ProductController {
                     ));
         }
 
-        try {
+        try {   // 권한 확인
             String currentUser = principal.getName();
             User user = userService.getUser(currentUser);
             Product product = productService.getProduct(id);
@@ -233,9 +245,9 @@ public class ProductController {
                         ));
             }
 
-            productService.modify(id, productDto, user);
+            productService.modify(id, productDto, user); // 상품  수정
 
-            return ResponseEntity.ok(Map.of(
+            return ResponseEntity.ok(Map.of(    // 성공 응답
                     "success", true,
                     "message", "상품이 수정되었습니다.",
                     "productId", id
@@ -253,9 +265,11 @@ public class ProductController {
     /**
      * 상품 삭제
      */
-    @DeleteMapping("/products/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id, Principal principal) {
-        if (principal == null) {
+    @DeleteMapping("/products/{id}")    // DELETE 매핑 요청
+    public ResponseEntity<?> delete(@PathVariable Long id,      // 삭제할 상품 ID
+                                        Principal principal) {
+        
+        if (principal == null) {      //로그인 확인  
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "success", false,
@@ -264,12 +278,11 @@ public class ProductController {
                     ));
         }
 
-        try {
+        try {   // 권한확인 - 판매자이거나 관리자인 경우만 삭제 가능
             String currentUser = principal.getName();
             User user = userService.getUser(currentUser);
             Product product = productService.getProduct(id);
-
-            // ✅ 권한 확인 - 판매자이거나 관리자인 경우만 삭제 가능
+ 
             if (!product.getSeller().equals(user) && !"ADMIN".equals(user.getRole())) {
                 log.warn("⚠️ 삭제 권한 없음 - 사용자: {}, 판매자: {}, 역할: {}",
                         user.getUserName(),
@@ -283,11 +296,14 @@ public class ProductController {
                         ));
             }
 
+            //  로그 기록
             log.info("✅ 상품 삭제 - ID: {}, 삭제자: {} (역할: {})",
                     id, user.getUserName(), user.getRole());
 
+            // 상품 삭제
             productService.delete(product);
 
+            // 성공 응답
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "상품이 삭제되었습니다."
@@ -306,13 +322,13 @@ public class ProductController {
     /**
      * 상태 변경
      */
-    @PutMapping("/products/{id}/status")
+    @PutMapping("/products/{id}/status")        // PUT 매핑 요청
     public ResponseEntity<?> changeStatus(
-            @PathVariable Long id,
+            @PathVariable Long id,    
             @RequestBody ProductStatusRequest request,
             Principal principal) {
 
-        if (principal == null) {
+        if (principal == null) {        // 로그인 확인
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of(
                             "success", false,
@@ -321,7 +337,7 @@ public class ProductController {
                     ));
         }
 
-        try {
+        try {   // 권한 확인
             String currentUser = principal.getName();
             User user = userService.getUser(currentUser);
             Product product = productService.getProduct(id);
@@ -335,8 +351,10 @@ public class ProductController {
                         ));
             }
 
+            // 상태 변경
             productService.changeStatus(id, request.getStatus());
 
+            //  성공 응답
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "상태가 변경되었습니다.",
@@ -355,43 +373,56 @@ public class ProductController {
     /**
      * 상품 상세 조회
      */
-    @GetMapping("/products/{id}")
+    @GetMapping("/products/{id}")       // GET 요청 매핑
     public ResponseEntity<?> detail(@PathVariable Long id, Principal principal) {
 
         try {
+                // 상품 정보 조회
             Product product = productService.getProduct(id);
 
+                // 조회수 증가 함수
             productService.incrementViewCount(id);
 
+                // product 엔티티 -> DTO 변환
             ProductDetailResponse productDto = ProductDetailResponse.from(product);
 
-            Long likeCount = likeService.getLikeCount(product);
-            long reportCount = reportService.getReportCountByProduct(id);
+                // 추가 정보 조회
+            Long likeCount = likeService.getLikeCount(product); // 좋아요 개수
+            long reportCount = reportService.getReportCountByProduct(id);  // 신고 건 수 
 
+                // 응답 데이터 구성
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("product", productDto);
             response.put("likeCount", likeCount);
             response.put("reportCount", reportCount);
 
-            if (principal != null) {
+                // 로그인  사용자 추가 정보 처리
+            if (principal != null) {    // 로그인한 경우
                 User currentUser = userService.getUser(principal.getName());
+
+                // 현재 사용자가 이 상품을 찜했는지 확인
                 boolean isLiked = likeService.isLiked(currentUser, product);
                 response.put("isLiked", isLiked);
 
+                // 현재 사용자가 판매자인 경우
                 if (product.getSeller().equals(currentUser)) {
+
+                        //이 상품에 관심 표시한 구매자 목록 가져오기
                     List<User> interestedBuyers = likeService.getUsersWhoLikedProduct(id);
 
+                    // User 엔티티 -> DTO 변환
                     List<UserSimpleResponse> buyerList = interestedBuyers.stream()
                             .map(UserSimpleResponse::from)
                             .collect(Collectors.toList());
 
                     response.put("interestedBuyers", buyerList);
                 }
-            } else {
+            } else {    // 비로그인 사용자
                 response.put("isLiked", false);
             }
 
+                // 응답 반환
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -406,40 +437,45 @@ public class ProductController {
     /**
      * 🔥 상품 목록 조회 (필터링 + 정렬)
      */
-    @GetMapping("/products/list")
+    @GetMapping("/products/list")       // GET 매핑 요청
     public ResponseEntity<?> getProductList(
-            @RequestParam(required = false) String district,
+            @RequestParam(required = false) String district,    // 선택적 파라미터
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "0") int page, // 기본값이 있는 파라미터
             @RequestParam(defaultValue = "12") int size,
-            @RequestParam(defaultValue = "createdDate,desc") String[] sort,
+            @RequestParam(defaultValue = "createdDate,desc") String[] sort,     // 배열로 받음
                 Principal principal) {
 
-        try {
-            Sort.Order order;
+        try {   
+            Sort.Order order;   // 정렬 옵션 파싱
 
-            if (sort.length == 2) {
-                String property = sort[0];
-                String direction = sort[1];
+            if (sort.length == 2) {     // ["createDate", "desc"] 형태
+                String property = sort[0];      // 정렬 기준 컬럼
+                String direction = sort[1];     // asc 또는 desc
 
+                        // 방향에 따라 Sort.Order 생성
                 order = direction.equalsIgnoreCase("asc")
                         ? Sort.Order.asc(property)
                         : Sort.Order.desc(property);
             } else {
                 order = Sort.Order.desc("createdDate");
+                // 정렬 파라미터가 이상하면 기본값 사용
             }
 
             Pageable pageable = PageRequest.of(page, size, Sort.by(order));
+            // Pageable : 페이지 번호 + 크기 + 정렬 정보를 담는 객체
 
             Page<ProductDto> products = productService.getProductsWithFilters(
+                // DB에서 상품 조회 ( 필터 + 페이징 + 정렬 )
                     district, categoryId, keyword, pageable);
 
-                    // 🔥 로그인한 사용자의 찜 여부 설정
+        // 🔥 로그인한 사용자의 찜 여부 설정
         if (principal != null) {
                 try {
                     User user = userService.getUser(principal.getName());
                     List<Long> likedProductIds = likeService.getLikedProductIds(user);
+                    // 현재 사용자가 찜한 상품 ID 리스트 가져오기
                     
                     log.info("❤️ 로그인 사용자: {} (ID: {})", user.getUserName(), user.getUserId());
                     log.info("❤️ 찜한 상품 {}개: {}", likedProductIds.size(), likedProductIds);
@@ -447,6 +483,8 @@ public class ProductController {
                     // 각 상품에 찜 여부 설정
                     products.getContent().forEach(productDto -> {
                         boolean isLiked = likedProductIds.contains(productDto.getProductId());
+                        // 찜한 상품 목록에 현재 상품 ID가 있는지 확인
+                        
                         productDto.setIsLiked(isLiked);
                         
                         if (isLiked) {
@@ -463,15 +501,16 @@ public class ProductController {
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("content", products.getContent());
-            response.put("currentPage", products.getNumber());
-            response.put("totalPages", products.getTotalPages());
-            response.put("totalElements", products.getTotalElements());
-            response.put("size", products.getSize());
-            response.put("first", products.isFirst());
-            response.put("last", products.isLast());
+            response.put("content", products.getContent());           // 상품 목록
+            response.put("currentPage", products.getNumber());        // 현재 페이지 (0부터 시작)
+            response.put("totalPages", products.getTotalPages());     // 전체 페이지 수
+            response.put("totalElements", products.getTotalElements()); // 전체 상품 수
+            response.put("size", products.getSize());                 // 페이지 크기
+            response.put("first", products.isFirst());                // 첫 페이지 여부
+            response.put("last", products.isLast());                  // 마지막 페이지 여부
 
-            return ResponseEntity.ok(response);
+
+            return ResponseEntity.ok(response); // 성공 응답 반환
 
         } catch (Exception e) {
             log.error("❌ 상품 목록 조회 실패: {}", e.getMessage());
