@@ -52,6 +52,7 @@ public class MypageController {
      * 마이페이지 메인 화면 데이터 조회
      * @param principal 현재 로그인한 사용자 정보
      * @return 사용자 정보, 찜 목록, 구매/판매 내역, 등록 상품, 알림 등의 데이터
+     * 뼈대를 구축 해서 필터 체인 초기화,stateless 상태에서는 필수적 이다.
      */
     @GetMapping
     public ResponseEntity<Map<String, Object>> mypage(Principal principal) {
