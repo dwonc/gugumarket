@@ -2,6 +2,7 @@ package com.project.gugumarket.dto;
 
 import com.project.gugumarket.ProductStatus;
 import com.project.gugumarket.entity.Product;
+import com.project.gugumarket.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,12 +26,14 @@ public class ProductSimpleDto {
     private Boolean isDeleted;
     private Integer viewCount;
     private Integer likeCount;      // ✅ likes.size()로 계산
+    private String seller;
 
     // ✅ seller, category 엔티티 제외! (순환 참조 방지)
 
     public static ProductSimpleDto fromEntity(Product product) {
         return ProductSimpleDto.builder()
                 .productId(product.getProductId())
+                .seller(product.getSeller().getNickname())
                 .title(product.getTitle())
                 .price(product.getPrice())
                 .status(product.getStatus())
