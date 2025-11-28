@@ -14,8 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.swing.*;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -85,7 +88,6 @@ public class UserService {
      * @param userDto 사용자 정보가 담긴 DTO
      * @return 저장된 User 엔티티
      * @throws IllegalArgumentException 중복된 사용자 또는 유효하지 않은 정보
-     *
      * 처리 순서:
      * 1. 아이디/이메일 중복 체크
      * 2. 비밀번호 유효성 검증 (최소 8자, 영문+숫자)
@@ -93,6 +95,11 @@ public class UserService {
      * 4. User 엔티티 생성 및 저장
      */
     @Transactional  // 트랜잭션 관리 (데이터 일관성 보장)
+//    @Transactional의 역할
+//    Atomicity (원자성)	트랜잭션 내의 모든 작업은 모두 성공하거나, 하나라도 실패하면 **모두 취소(Rollback)**되어야 합니다.	메서드 실행 중 예외 발생 시, 변경된 모든 데이터 작업을 자동으로 롤백합니다.
+//    Consistency (일관성)	트랜잭션이 성공적으로 완료되면, 데이터베이스는 언제나 일관된(유효한) 상태로 유지됩니다.	(주로 애플리케이션 로직과 제약 조건에 의해 보장됨)
+//    Isolation (격리성)	동시에 실행되는 트랜잭션들이 서로에게 영향을 미치지 않도록 격리됩니다.	**격리 수준(Isolation Level)**을 설정하여 동시성 문제를 제어합니다. (기본값은 DB 설정 또는 Spring 설정 따름)
+//    Durability (영속성)	트랜잭션이 성공적으로 완료되면, 그 결과는 영구적으로 데이터베이스에 반영되어야 합니다.	성공적으로 메서드가 종료되면, 변경 사항을 **자동으로 커밋(Commit)**합니다.
     public User create(UserDto userDto) { //username=id
         // 1. 중복 사용자 체크
         if (userRepository.existsByUserName(userDto.getUserName())) {
